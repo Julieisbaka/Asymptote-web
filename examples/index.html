@@ -176,12 +176,10 @@ filldraw(star, yellow, black+1.5);
         status.className = result.warnings.length ? "error" : "info";
       } catch (err) {
         output.innerHTML = "";
-        output.insertAdjacentHTML(
-          "beforeend",
-          `<span style="color:#dc2626;font-size:0.85rem;font-family:monospace;">${
-            err instanceof AsymptoteError ? err.stderr : err.message
-          }</span>`
-        );
+        const errSpan = document.createElement("span");
+        errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
+        errSpan.textContent = err instanceof AsymptoteError ? err.stderr : err.message;
+        output.appendChild(errSpan);
         status.textContent = "Render failed.";
         status.className = "error";
       } finally {
