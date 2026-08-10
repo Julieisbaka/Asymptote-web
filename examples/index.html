@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asymptote Web — Demo</title>
+  <style>
+    *,
+    *::before,
+    *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f8f8f8;
+      color: #222;
+      padding: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1 { margin-bottom: 0.25rem; }
+    p.subtitle { color: #666; margin-bottom: 1.5rem; font-size: 0.95rem; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 640px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .panel { display: flex; flex-direction: column; gap: 0.5rem; }
+    label { font-weight: 600; font-size: 0.9rem; }
+
+    textarea {
+      font-family: "Fira Code", "Cascadia Code", monospace;
+      font-size: 0.85rem;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      resize: vertical;
+      height: 280px;
+      background: #fff;
+      color: #111;
+      width: 100%;
+    }
+
+    textarea:focus { outline: 2px solid #3b82f6; border-color: transparent; }
+
+    button#render-btn {
+      padding: 0.6rem 1.4rem;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      align-self: flex-start;
+      transition: background 0.15s;
+    }
+
+    button#render-btn:hover { background: #2563eb; }
+    button#render-btn:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    #output-panel {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+      min-height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 1rem;
+    }
+
+    #output-panel svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    #status {
+      font-size: 0.85rem;
+      min-height: 1.2em;
+    }
+
+    #status.error { color: #dc2626; white-space: pre-wrap; font-family: monospace; }
+    #status.info  { color: #16a34a; }
+  </style>
+</head>
+<body>
+  <h1>Asymptote Web</h1>
+  <p class="subtitle">
+    Renders <a href="https://asymptote.sourceforge.io/" target="_blank">Asymptote</a>
+    vector graphics entirely in your browser — no server required.
+  </p>
+
+  <div class="layout">
+    <div class="panel">
+      <label for="source">Asymptote source</label>
+      <textarea id="source" spellcheck="false">size(150);
+
+// Draw a coloured pentagram
+int n = 5;
+real r = 1;
+pair[] pts;
+for (int k = 0; k < n; ++k)
+  pts.push(r * dir(90 + 360 * k / n));
+
+path star;
+for (int k = 0; k < n; ++k)
+  star = star -- pts[(2*k) % n];
+star = star -- cycle;
+
+filldraw(star, yellow, black+1.5);
+</textarea>
+      <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+        <button id="render-btn">Render</button>
+        <span id="status" class="info">Loading Asymptote…</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <label>Output (SVG)</label>
+      <div id="output-panel">
+        <span style="color:#aaa; font-size:0.9rem;">Press Render to see output</span>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    In a real deployment replace the paths below with the CDN / dist URLs.
+    The asymptote.js and asymptote.wasm files must be in the same directory.
+  -->
+  <script type="module">
+    // During local dev, point to the built library.
+    // Replace with the published CDN URL for production use.
+    import { createAsymptote, AsymptoteError } from "../dist/asymptote-web.js";
+
+    const btn    = document.getElementById("render-btn");
+    const status = document.getElementById("status");
+    const output = document.getElementById("output-panel");
+
+    let asy = null;
+
+    (async () => {
+      try {
+        asy = await createAsymptote();
+        status.textContent = "Ready";
+        status.className = "info";
+        btn.disabled = false;
+      } catch (err) {
+        status.textContent = "Failed to load Asymptote: " + err.message;
+        status.className = "error";
+      }
+    })();
+
+    btn.disabled = true;
+
+    btn.addEventListener("click", async () => {
+      if (!asy) return;
+      btn.disabled = true;
+      status.textContent = "Rendering…";
+      status.className = "info";
+
+      try {
+        const source = document.getElementById("source").value;
+        const result = await asy.render(source);
+
+        output.innerHTML = result.svg;
+        status.textContent = result.warnings.length
+          ? "Done (with warnings):\n" + result.warnings.join("\n")
+          : "Done ✓";
+        status.className = result.warnings.length ? "error" : "info";
+      } catch (err) {
+        output.innerHTML = "";
+        output.insertAdjacentHTML(
+          "beforeend",
+          `<span style="color:#dc2626;font-size:0.85rem;font-family:monospace;">${
+            err instanceof AsymptoteError ? err.stderr : err.message
+          }</span>`
+        );
+        status.textContent = "Render failed.";
+        status.className = "error";
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
