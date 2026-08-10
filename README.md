@@ -16,7 +16,7 @@
 
 ## Installation
 
-### npm
+### NPM
 
 ```bash
 npm install asymptote-web
@@ -29,7 +29,7 @@ Then copy `node_modules/asymptote-web/dist/asymptote.wasm` next to wherever you 
 ```html
 <script type="module">
   import { createAsymptote } from "https://cdn.jsdelivr.net/npm/asymptote-web/dist/asymptote-web.js";
-  // asymptote.wasm is expected at the same URL base as asymptote-web.js
+  // `asymptote.wasm` is expected at the same URL base as `asymptote-web.js`
 </script>
 ```
 
