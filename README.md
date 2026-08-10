@@ -1,4 +1,4 @@
-# asymptote-web
+# Asymptote-Web
 
 > Run [Asymptote](https://asymptote.sourceforge.io/) — the powerful vector graphics language — entirely in the browser via **WebAssembly**. No server required. Works on any static website.
 
