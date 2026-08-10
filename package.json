@@ -1,0 +1,38 @@
+{
+  "name": "asymptote-web",
+  "version": "0.1.0",
+  "description": "Run the Asymptote vector graphics language entirely in the browser via WebAssembly.",
+  "type": "module",
+  "main": "./dist/asymptote-web.js",
+  "module": "./dist/asymptote-web.js",
+  "types": "./dist/asymptote-web.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/asymptote-web.js",
+      "types": "./dist/asymptote-web.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly --declaration --project tsconfig.build.json",
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "asymptote",
+    "vector-graphics",
+    "wasm",
+    "webassembly",
+    "svg",
+    "browser"
+  ],
+  "license": "LGPL-3.0",
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
+    "vite-plugin-dts": "^3.9.1"
+  }
+}
