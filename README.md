@@ -189,6 +189,13 @@ Without these headers, single-threaded mode is used automatically, which is fine
 
 ---
 
+## Known limitations
+
+- OpenGL based 3D rendering is not supported (Implementation for webGL is planned)
+- Generated PDF may have bugs because diffrent browsers use diffrent PDF renderers (PDFs not yet supported)
+
+---
+
 ## License
 
 LGPL-3.0 — same as Asymptote itself.
