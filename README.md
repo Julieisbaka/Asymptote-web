@@ -9,8 +9,10 @@
 - **100 % client-side** — the full Asymptote compiler runs inside the browser via WASM.
 - **Zero runtime dependencies** — drop in one JS file + one WASM binary.
 - **TypeScript-first** — full type declarations included.
-- **SVG output** — inline-ready vector graphics, scales perfectly at any size.
+- **SVG output** — inline-ready vector graphics, scales perfectly at any size.*
 - **Works everywhere** — Vite, Webpack, esbuild, or plain `<script type="module">`.
+
+*Technically SVGs don't scale perfectly at every size because of math.
 
 ---
 
