@@ -189,9 +189,10 @@ open examples/index.html   # or serve the project root with any static server
 
 ---
 
-## Server headers (optional)
+## Server headers
 
-If you want to enable multi-threading inside the WASM module (Emscripten's `PTHREAD` feature, not enabled by default), your server must send:
+The WASM runtime uses Emscripten's `PTHREAD` feature. Your server must send
+these headers so browsers expose `SharedArrayBuffer`:
 
 ```
 Cross-Origin-Opener-Policy: same-origin

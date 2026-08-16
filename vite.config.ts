@@ -1,5 +1,10 @@
 import { defineConfig } from "vite";
 
+const crossOriginIsolationHeaders = {
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Embedder-Policy": "require-corp",
+};
+
 export default defineConfig({
   build: {
     lib: {
@@ -20,5 +25,11 @@ export default defineConfig({
     sourcemap: true,
     // Don't minify — the WASM binary is already optimised; let bundlers decide.
     minify: false,
+  },
+  server: {
+    headers: crossOriginIsolationHeaders,
+  },
+  preview: {
+    headers: crossOriginIsolationHeaders,
   },
 });
