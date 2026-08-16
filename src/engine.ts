@@ -45,15 +45,22 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
     // The path is relative to this file inside the published dist/.
     // Keep this path dynamic: asymptote.js is a separately published runtime
     // asset next to the wrapper and is not part of the Vite bundle.
-    const glueUrl = "./asymptote.js";
+    const glueUrl = new URL(["./asymptote", ".js"].join(""), import.meta.url).href;
     const { default: factory }: { default: ModuleFactory } = await import(
       /* @vite-ignore */ glueUrl
     );
 
-    // Allow callers to override the WASM URL (CDN, versioned path, etc.)
-    const locateFile = options.wasmUrl
-      ? (filename: string) => (filename.endsWith(".wasm") ? options.wasmUrl! : filename)
-      : undefined;
+    // Emscripten requests both the WASM binary and the preloaded standard
+    // library data file through this callback. Keep both beside the glue.
+    const locateFile = (filename: string) => {
+      if (filename.endsWith(".wasm")) {
+        return options.wasmUrl ?? new URL("asymptote.wasm", glueUrl).href;
+      }
+      if (filename.endsWith(".data")) {
+        return new URL("asy.data", glueUrl).href;
+      }
+      return filename;
+    };
 
     const mod = await factory({ locateFile } as Partial<EmscriptenModule>);
     return mod;

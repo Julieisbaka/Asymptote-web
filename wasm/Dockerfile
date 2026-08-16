@@ -4,7 +4,7 @@
 #   docker build -t asymptote-wasm-builder ./wasm
 #   docker run --rm -v $(pwd)/dist:/out asymptote-wasm-builder
 #
-# The build outputs asymptote.js + asymptote.wasm into /out.
+# The build outputs asymptote.js, asymptote.wasm, and asy.data into /out.
 
 FROM emscripten/emsdk:3.1.51
 
@@ -66,4 +66,4 @@ RUN emconfigure ./configure \
     && emmake make asy -j$(nproc) \
         LFLAGS="-sUSE_ZLIB=1 -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createAsymptoteModule -sENVIRONMENT=web,worker -sALLOW_MEMORY_GROWTH=1 -sFILESYSTEM=1 -sINVOKE_RUN=0 -sEXIT_RUNTIME=0 -sEXPORTED_RUNTIME_METHODS=['FS','callMain','print','printErr'] -sEXPORTED_FUNCTIONS=['_main'] --preload-file base@/usr/local/share/asymptote"
 
-CMD ["sh", "-c", "cp asy /out/asymptote.js && cp asy.wasm /out/asymptote.wasm && echo 'Build complete. Output in /out/'"]
+CMD ["sh", "-c", "cp asy /out/asymptote.js && cp asy.wasm /out/asymptote.wasm && cp asy.data /out/asy.data && echo 'Build complete. Output in /out/'"]

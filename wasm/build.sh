@@ -7,7 +7,7 @@
 # Usage:
 #   ./wasm/build.sh
 #
-# Output: dist/asymptote.js and dist/asymptote.wasm
+# Output: dist/asymptote.js, dist/asymptote.wasm, and dist/asy.data
 
 set -euo pipefail
 
@@ -28,3 +28,4 @@ docker run --rm \
 echo "==> Build complete."
 echo "    dist/asymptote.js"
 echo "    dist/asymptote.wasm"
+echo "    dist/asy.data"
