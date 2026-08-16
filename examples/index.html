@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,7 +8,11 @@
   <style>
     *,
     *::before,
-    *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       font-family: system-ui, sans-serif;
@@ -18,8 +23,15 @@
       margin: 0 auto;
     }
 
-    h1 { margin-bottom: 0.25rem; }
-    p.subtitle { color: #666; margin-bottom: 1.5rem; font-size: 0.95rem; }
+    h1 {
+      margin-bottom: 0.25rem;
+    }
+
+    p.subtitle {
+      color: #666;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
 
     .layout {
       display: grid;
@@ -28,11 +40,21 @@
     }
 
     @media (max-width: 640px) {
-      .layout { grid-template-columns: 1fr; }
+      .layout {
+        grid-template-columns: 1fr;
+      }
     }
 
-    .panel { display: flex; flex-direction: column; gap: 0.5rem; }
-    label { font-weight: 600; font-size: 0.9rem; }
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
 
     textarea {
       font-family: "Fira Code", "Cascadia Code", monospace;
@@ -47,7 +69,10 @@
       width: 100%;
     }
 
-    textarea:focus { outline: 2px solid #3b82f6; border-color: transparent; }
+    textarea:focus {
+      outline: 2px solid #3b82f6;
+      border-color: transparent;
+    }
 
     button#render-btn {
       padding: 0.6rem 1.4rem;
@@ -61,8 +86,14 @@
       transition: background 0.15s;
     }
 
-    button#render-btn:hover { background: #2563eb; }
-    button#render-btn:disabled { background: #93c5fd; cursor: not-allowed; }
+    button#render-btn:hover {
+      background: #2563eb;
+    }
+
+    button#render-btn:disabled {
+      background: #93c5fd;
+      cursor: not-allowed;
+    }
 
     #output-panel {
       border: 1px solid #ccc;
@@ -86,10 +117,18 @@
       min-height: 1.2em;
     }
 
-    #status.error { color: #dc2626; white-space: pre-wrap; font-family: monospace; }
-    #status.info  { color: #16a34a; }
+    #status.error {
+      color: #dc2626;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+
+    #status.info {
+      color: #16a34a;
+    }
   </style>
 </head>
+
 <body>
   <h1>Asymptote Web</h1>
   <p class="subtitle">
@@ -139,7 +178,7 @@ filldraw(star, yellow, black+1.5);
     // Replace with the published CDN URL for production use.
     import { createAsymptote, AsymptoteError } from "../dist/asymptote-web.js";
 
-    const btn    = document.getElementById("render-btn");
+    const btn = document.getElementById("render-btn");
     const status = document.getElementById("status");
     const output = document.getElementById("output-panel");
 
@@ -188,4 +227,5 @@ filldraw(star, yellow, black+1.5);
     });
   </script>
 </body>
+
 </html>
