@@ -110,6 +110,39 @@ export async function createAsymptote(
       el.innerHTML = result.svg;
       return result;
     },
+
+    async mountWebGL(
+      target: string | Element,
+      source: string,
+      renderOptions: RenderOptions = {}
+    ): Promise<RenderResult> {
+      const result = await runAsymptote(
+        source,
+        { ...renderOptions, format: "webgl" },
+        resolvedOptions
+      );
+
+      const el =
+        typeof target === "string"
+          ? document.querySelector(target)
+          : target;
+
+      if (!el) {
+        throw new Error(`asymptote-web: mountWebGL target not found: ${target}`);
+      }
+
+      // The generated HTML is a complete standalone document (own <head>,
+      // styles, and viewer <script>) — embed it in an iframe rather than
+      // splicing it into the host page's DOM.
+      const iframe = document.createElement("iframe");
+      iframe.srcdoc = result.output;
+      iframe.style.border = "none";
+      iframe.style.width = "100%";
+      iframe.style.height = "100%";
+      el.replaceChildren(iframe);
+
+      return result;
+    },
   };
 
   return engine;

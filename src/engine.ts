@@ -36,17 +36,22 @@ type ModuleFactory = (opts?: Partial<EmscriptenModule>) => Promise<EmscriptenMod
 let _modulePromise: Promise<EmscriptenModule> | null = null;
 
 /**
+ * URL of the Emscripten-generated JS glue, relative to this file inside the
+ * published dist/. Kept dynamic: asymptote.js is a separately published
+ * runtime asset next to the wrapper and is not part of the Vite bundle.
+ */
+function getGlueUrl(): string {
+  return new URL(["./asymptote", ".js"].join(""), import.meta.url).href;
+}
+
+/**
  * Load (or return the cached) Emscripten module.
  */
 async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
   if (_modulePromise) return _modulePromise;
 
   _modulePromise = (async (): Promise<EmscriptenModule> => {
-    // Dynamically import the Emscripten-generated JS glue.
-    // The path is relative to this file inside the published dist/.
-    // Keep this path dynamic: asymptote.js is a separately published runtime
-    // asset next to the wrapper and is not part of the Vite bundle.
-    const glueUrl = new URL(["./asymptote", ".js"].join(""), import.meta.url).href;
+    const glueUrl = getGlueUrl();
     const { default: factory }: { default: ModuleFactory } = await import(
       /* @vite-ignore */ glueUrl
     );
@@ -79,7 +84,7 @@ const INPUT_FILE = "/tmp/input.asy";
 function getOutputFormat(
   renderOptions: RenderOptions,
   flags: string[]
-): "svg" | "eps" | "ps" {
+): "svg" | "eps" | "ps" | "webgl" {
   // Asy processes flags from left to right, so a format in flags should take
   // precedence over the convenience option when both are supplied.
   let format = renderOptions.format ?? "svg";
@@ -94,7 +99,7 @@ function getOutputFormat(
           ? flag.slice(9)
           : undefined;
 
-    if (value === "svg" || value === "eps" || value === "ps") {
+    if (value === "svg" || value === "eps" || value === "ps" || value === "webgl") {
       format = value;
       if (flag === "-f" || flag === "--format") i += 1;
     }
@@ -137,8 +142,12 @@ export async function runAsymptote(
     // the external `dvisvgm` tool via fork()/exec(), which WASM can't do.
     // Instead, render Asymptote's native (in-process) EPS output and convert
     // it to SVG ourselves — see eps-to-svg.ts.
-    const asyFormat = format === "svg" ? "eps" : format;
+    // `-f html` is Asymptote's WebGL 3D output (a self-contained document
+    // embedding a <script> reference to the asygl.js viewer) — no conversion
+    // needed, but it does need the bundled asygl.js resolved as -asygl=<url>.
+    const asyFormat = format === "svg" ? "eps" : format === "webgl" ? "html" : format;
     const outputFile = `/tmp/input.${asyFormat}`;
+    const asyglUrl = createOptions.asyglUrl ?? new URL("asygl.js", getGlueUrl()).href;
 
     const args = [
       "-f", asyFormat,
@@ -148,6 +157,7 @@ export async function runAsymptote(
       // external processes (fork) that WASM can't do — force native labels.
       "-tex", "none",
       "-noV",
+      ...(format === "webgl" ? ["-asygl", asyglUrl] : []),
       ...extraFlags,
       INPUT_FILE,
     ];
@@ -173,7 +183,7 @@ export async function runAsymptote(
       // that's what output actually contains.
       format: skipConversion ? "eps" : format,
       // Keep svg populated for backwards compatibility; use output for all
-      // formats because EPS and PS are not SVG.
+      // formats because EPS, PS, and webgl (HTML) are not SVG.
       svg: output,
       warnings: stderrLines.filter((l) => l.startsWith("Warning")),
     };

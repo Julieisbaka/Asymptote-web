@@ -96,7 +96,7 @@ Compiles `source` and returns a `Promise<RenderResult>`.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `format` | `"svg" \| "eps" \| "ps"` | `"svg"` | Output format. EPS and PS are returned as text. |
+| `format` | `"svg" \| "eps" \| "ps" \| "webgl"` | `"svg"` | Output format. EPS and PS are returned as text. `webgl` returns a self-contained HTML document for 3D scenes — use `mountWebGL()` instead of `render()` to display it. |
 | `flags` | `string[]` | `[]` | Extra CLI flags forwarded to `asy`. |
 
 ```ts
@@ -123,14 +123,28 @@ Renders `source` and sets `target.innerHTML` to the resulting SVG.
 
 `target` can be a CSS selector string or an `Element`.
 
+#### `mountWebGL(target, source, options?)`
+
+Renders a 3D `source` (e.g. using `import three;`) and embeds the interactive
+WebGL viewer into `target` via an `<iframe srcdoc>`. Rotate/zoom/pan controls
+are provided by the bundled `asygl.js` viewer.
+
+```ts
+await asy.mountWebGL("#output", `
+  import three;
+  currentprojection=orthographic(5,4,2);
+  draw(unitsphere, blue);
+`);
+```
+
 ---
 
 ### `RenderResult`
 
 ```ts
 interface RenderResult {
-  output: string;     // Generated SVG, EPS, or PS contents
-  format: "svg" | "eps" | "ps";
+  output: string;     // Generated SVG, EPS, PS, or (for webgl) HTML contents
+  format: "svg" | "eps" | "ps" | "webgl";
   svg: string;        // Generated output string; especially convenient for SVG
   warnings: string[]; // Non-fatal warnings from Asymptote
 }
@@ -214,7 +228,7 @@ Without these headers, single-threaded mode is used automatically, which is fine
 
 ## Known limitations
 
-- OpenGL based 3D rendering is not supported (Implementation for webGL is planned)
+- 3D scenes render via WebGL (`format: "webgl"` / `mountWebGL()`), but text labels within 3D scenes are unsupported (same `-tex none` limitation as 2D), and the binary v3d/PRC export format is not supported.
 - Generated PDF may have bugs because diffrent browsers use diffrent PDF renderers (PDFs not yet supported)
 
 ---

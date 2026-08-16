@@ -8,21 +8,25 @@ const crossOriginIsolationHeaders = {
   "Cross-Origin-Embedder-Policy": "require-corp",
 };
 
-// The Emscripten glue (dist/asymptote.js) is a huge, already-built ES module.
-// Vite's dev-server transform pipeline (import-analysis/esbuild) rewrites it
-// and corrupts the invoke_* trampoline bindings the wasm import object needs,
-// producing "LinkError: ... requires a callable" at runtime. Serve it verbatim.
+// The Emscripten glue (dist/asymptote.js) and the bundled WebGL viewer
+// (dist/asygl.js) are huge, already-built plain scripts. Vite's dev-server
+// transform pipeline (import-analysis/esbuild) rewrites them and corrupts
+// the invoke_* trampoline bindings the wasm import object needs, producing
+// "LinkError: ... requires a callable" at runtime. Serve them verbatim.
+const RAW_ASSET_RE = /^\/dist\/(asymptote|asygl)\.js(\?.*)?$/;
+
 function serveEmscriptenGlueRaw(): Plugin {
   const root = fileURLToPath(new URL(".", import.meta.url));
   return {
     name: "serve-emscripten-glue-raw",
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (!req.url || !/^\/dist\/asymptote\.js(\?.*)?$/.test(req.url)) {
+        const match = req.url && RAW_ASSET_RE.exec(req.url);
+        if (!match) {
           next();
           return;
         }
-        const filePath = resolve(root, "dist/asymptote.js");
+        const filePath = resolve(root, `dist/${match[1]}.js`);
         if (!existsSync(filePath)) {
           next();
           return;

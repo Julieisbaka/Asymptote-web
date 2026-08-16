@@ -169,6 +169,29 @@ filldraw(star, yellow, black+1.5);
     </div>
   </div>
 
+  <h2 style="margin-top:2rem;">3D / WebGL demo</h2>
+  <div class="layout">
+    <div class="panel">
+      <label for="source3d">Asymptote source (3D)</label>
+      <textarea id="source3d" spellcheck="false">import three;
+currentprojection=orthographic(5,4,2);
+draw(unitsphere, blue);
+draw(shift(2,0,0)*unitcube, red);
+</textarea>
+      <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+        <button id="render3d-btn">Render 3D</button>
+        <span id="status3d" class="info">Loading Asymptote…</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <label>Output (WebGL)</label>
+      <div id="output3d-panel" style="height:280px;">
+        <span style="color:#aaa; font-size:0.9rem;">Press Render 3D to see output</span>
+      </div>
+    </div>
+  </div>
+
   <!--
     In a real deployment replace the paths below with the CDN / dist URLs.
     The asymptote.js and asymptote.wasm files must be in the same directory.
@@ -182,21 +205,30 @@ filldraw(star, yellow, black+1.5);
     const status = document.getElementById("status");
     const output = document.getElementById("output-panel");
 
+    const btn3d = document.getElementById("render3d-btn");
+    const status3d = document.getElementById("status3d");
+    const output3d = document.getElementById("output3d-panel");
+
     let asy = null;
 
     (async () => {
       try {
         asy = await createAsymptote();
-        status.textContent = "Ready";
-        status.className = "info";
-        btn.disabled = false;
+        for (const [b, s] of [[btn, status], [btn3d, status3d]]) {
+          s.textContent = "Ready";
+          s.className = "info";
+          b.disabled = false;
+        }
       } catch (err) {
-        status.textContent = "Failed to load Asymptote: " + err.message;
-        status.className = "error";
+        for (const s of [status, status3d]) {
+          s.textContent = "Failed to load Asymptote: " + err.message;
+          s.className = "error";
+        }
       }
     })();
 
     btn.disabled = true;
+    btn3d.disabled = true;
 
     btn.addEventListener("click", async () => {
       if (!asy) return;
@@ -223,6 +255,32 @@ filldraw(star, yellow, black+1.5);
         status.className = "error";
       } finally {
         btn.disabled = false;
+      }
+    });
+
+    btn3d.addEventListener("click", async () => {
+      if (!asy) return;
+      btn3d.disabled = true;
+      status3d.textContent = "Rendering…";
+      status3d.className = "info";
+
+      try {
+        const source = document.getElementById("source3d").value;
+        const result = await asy.mountWebGL(output3d, source);
+        status3d.textContent = result.warnings.length
+          ? "Done (with warnings):\n" + result.warnings.join("\n")
+          : "Done ✓";
+        status3d.className = result.warnings.length ? "error" : "info";
+      } catch (err) {
+        output3d.innerHTML = "";
+        const errSpan = document.createElement("span");
+        errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
+        errSpan.textContent = err instanceof AsymptoteError ? err.stderr : err.message;
+        output3d.appendChild(errSpan);
+        status3d.textContent = "Render failed.";
+        status3d.className = "error";
+      } finally {
+        btn3d.disabled = false;
       }
     });
   </script>

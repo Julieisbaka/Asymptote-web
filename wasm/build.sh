@@ -7,7 +7,7 @@
 # Usage:
 #   ./wasm/build.sh
 #
-# Output: dist/asymptote.js, dist/asymptote.wasm, and dist/asy.data
+# Output: dist/asymptote.js, dist/asymptote.wasm, dist/asy.data, and dist/asygl.js
 
 set -euo pipefail
 
@@ -29,3 +29,4 @@ echo "==> Build complete."
 echo "    dist/asymptote.js"
 echo "    dist/asymptote.wasm"
 echo "    dist/asy.data"
+echo "    dist/asygl.js"

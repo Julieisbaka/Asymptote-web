@@ -3,7 +3,7 @@
  */
 
 /** Output formats supported by the Asymptote driver. */
-export type OutputFormat = "svg" | "eps" | "ps";
+export type OutputFormat = "svg" | "eps" | "ps" | "webgl";
 
 /** Options accepted by {@link AsymptoteEngine.render}. */
 export interface RenderOptions {
@@ -42,11 +42,22 @@ export interface CreateOptions {
    * Override this when hosting the WASM file on a CDN or a different path.
    */
   wasmUrl?: string;
+
+  /**
+   * URL of the bundled `asygl.js` WebGL viewer, used for `format: "webgl"`
+   * output. Defaults to the path relative to `asymptote.js` in the same
+   * directory. Override this when hosting it on a CDN or a different path.
+   */
+  asyglUrl?: string;
 }
 
 /** Result returned by {@link AsymptoteEngine.render}. */
 export interface RenderResult {
-  /** The generated output, such as SVG, EPS, or PostScript. */
+  /**
+   * The generated output: SVG, EPS, or PostScript markup, or (when
+   * `format` is `"webgl"`) a complete, self-contained HTML document
+   * embedding the 3D scene and a `<script>` reference to the WebGL viewer.
+   */
   output: string;
   /** The format of {@link output}. */
   format: OutputFormat;
@@ -83,6 +94,27 @@ export interface AsymptoteEngine {
     target: string | Element,
     source: string,
     options?: RenderOptions
+  ): Promise<RenderResult>;
+
+  /**
+   * Render a 3D Asymptote scene and mount the interactive WebGL viewer into
+   * an `<iframe>` placed inside the target element.
+   *
+   * The generated output (Asymptote's `-f html` format) is a complete,
+   * self-contained HTML document — it is embedded via `<iframe srcdoc>`
+   * rather than spliced into the host page, since it brings its own
+   * `<head>`/styles/`<script>` and viewer state. Rotate/zoom/pan controls
+   * are provided by the bundled `asygl.js` viewer itself.
+   *
+   * @param target - CSS selector string or an `Element`.
+   * @param source - Asymptote source code (should contain a 3D scene, e.g. `import three;`).
+   * @param options - Optional render options (`format` is always `"webgl"`).
+   * @throws {AsymptoteError} when Asymptote exits with a non-zero status.
+   */
+  mountWebGL(
+    target: string | Element,
+    source: string,
+    options?: Omit<RenderOptions, "format">
   ): Promise<RenderResult>;
 }
 
