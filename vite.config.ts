@@ -28,6 +28,7 @@ export default defineConfig({
   },
   server: {
     headers: crossOriginIsolationHeaders,
+    open: "/examples/index.html",
   },
   preview: {
     headers: crossOriginIsolationHeaders,
