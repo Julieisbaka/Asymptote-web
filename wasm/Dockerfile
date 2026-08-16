@@ -49,27 +49,13 @@ RUN for p in /patches/*.patch; do \
     done
 
 # ---------------------------------------------------------------------------
-# Build Boehm GC with Emscripten (static, threading disabled)
-# ---------------------------------------------------------------------------
-ARG GC_VERSION=8.2.4
-RUN wget -q "https://github.com/ivmai/bdwgc/releases/download/v${GC_VERSION}/gc-${GC_VERSION}.tar.gz" \
-    -O /tmp/gc.tar.gz \
-    && tar -xzf /tmp/gc.tar.gz -C /tmp \
-    && cd /tmp/gc-${GC_VERSION} \
-    && emconfigure ./configure \
-        --host=wasm32-unknown-emscripten \
-        --disable-shared \
-        --disable-threads \
-        --prefix=/usr/local/emscripten-sysroot \
-    && emmake make -j$(nproc) install \
-    && rm -rf /tmp/gc*
-
-# ---------------------------------------------------------------------------
 # Configure & build Asymptote with Emscripten
 # ---------------------------------------------------------------------------
 RUN emconfigure ./configure \
     --disable-gl \
     --disable-offscreen \
+    --disable-gc \
+    --disable-lsp \
     --without-readline \
     --without-fftw \
     --without-gsl \
