@@ -18,6 +18,19 @@ export interface RenderOptions {
    * Example: `["-nosafe"]`
    */
   flags?: string[];
+
+  /**
+   * When `format` is `"svg"`, Asymptote itself has no native SVG writer, so
+   * `render()` asks Asymptote for EPS and converts it to SVG in-process (see
+   * {@link epsToSvg}). Set this to `true` to skip that automatic conversion
+   * and get the raw EPS text back instead — useful if you want to intercept
+   * it and post-process it yourself (e.g. with your own modified copy of
+   * {@link epsToSvg}, or a different converter entirely).
+   *
+   * Has no effect when `format` is `"eps"` or `"ps"`, since no conversion
+   * happens for those formats regardless.
+   */
+  raw?: boolean;
 }
 
 /** Options accepted by {@link createAsymptote}. */

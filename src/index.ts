@@ -17,6 +17,7 @@
  */
 
 import { runAsymptote } from "./engine.js";
+import { epsToSvg } from "./eps-to-svg.js";
 import {
   type AsymptoteEngine,
   type CreateOptions,
@@ -32,6 +33,30 @@ export type {
   RenderOptions,
   RenderResult,
 } from "./types.js";
+
+/**
+ * Convert standalone EPS or PS content (e.g. produced by an earlier
+ * `asy -f eps`/`asy -f ps` run, or any file already on disk) to SVG.
+ *
+ * This is the same in-process converter `render({ format: "svg" })` uses
+ * internally, exposed directly so existing EPS/PS files can be converted
+ * without needing an Asymptote engine instance at all.
+ *
+ * @example
+ * ```ts
+ * import { epsToSvg } from "asymptote-web";
+ *
+ * const eps = await (await fetch("drawing.eps")).text();
+ * document.querySelector("#output").innerHTML = epsToSvg(eps);
+ * ```
+ */
+export { epsToSvg };
+
+/**
+ * Alias of {@link epsToSvg} — Asymptote's PS output uses the same operator
+ * subset as its EPS output, so both can be converted with the same function.
+ */
+export const psToSvg = epsToSvg;
 
 /**
  * Initialise the Asymptote WebAssembly engine and return a rendering instance.

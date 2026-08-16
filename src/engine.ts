@@ -164,11 +164,14 @@ export async function runAsymptote(
     }
 
     const rawOutput = mod.FS.readFile(outputFile, { encoding: "utf8" });
-    const output = format === "svg" ? epsToSvg(rawOutput) : rawOutput;
+    const skipConversion = format === "svg" && renderOptions.raw === true;
+    const output = format === "svg" && !skipConversion ? epsToSvg(rawOutput) : rawOutput;
 
     return {
       output,
-      format,
+      // Report "eps" when the automatic SVG conversion was skipped, since
+      // that's what output actually contains.
+      format: skipConversion ? "eps" : format,
       // Keep svg populated for backwards compatibility; use output for all
       // formats because EPS and PS are not SVG.
       svg: output,

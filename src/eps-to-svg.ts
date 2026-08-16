@@ -123,7 +123,32 @@ function tokenize(text: string): string[] {
 const NUMBER_RE = /^[+-]?(\d+\.?\d*|\.\d+)$/;
 
 /**
- * Convert Asymptote-generated EPS content to an SVG document string.
+ * Convert EPS/PS content into an SVG document string, entirely in-process
+ * (no external tools, no fork/exec — safe to call in WASM or any browser).
+ *
+ * This understands the constrained PostScript operator subset Asymptote's
+ * own EPS/PS writer emits (paths, fills, strokes, colors, clipping, and
+ * `gsave`/`grestore`/`translate`/`scale`/`rotate` transforms). It is not a
+ * general-purpose PostScript interpreter: arbitrary PS from other tools,
+ * embedded raster images, and PostScript shading/gradients are not
+ * supported and are silently ignored rather than throwing.
+ *
+ * Since this only depends on plain string parsing, it works equally well
+ * on EPS/PS files produced outside of this library (e.g. from a prior
+ * `asy -f eps` run, or files already on disk) — it does not require an
+ * Asymptote engine instance.
+ *
+ * @param eps - The full text of an EPS or PS file (must include a
+ * `%%BoundingBox` or `%%HiResBoundingBox` comment to size the SVG).
+ * @returns A standalone `<svg>` document string.
+ *
+ * @example
+ * ```ts
+ * import { epsToSvg } from "asymptote-web";
+ *
+ * const svg = epsToSvg(await (await fetch("drawing.eps")).text());
+ * document.querySelector("#output").innerHTML = svg;
+ * ```
  */
 export function epsToSvg(eps: string): string {
   const bboxMatch = /%%HiResBoundingBox:\s*([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)/.exec(eps)
