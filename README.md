@@ -100,6 +100,9 @@ Compiles `source` and returns a `Promise<RenderResult>`.
 | `format` | `"svg" \| "eps" \| "ps" \| "webgl"` | `"svg"` | Output format. EPS and PS are returned as text. `webgl` returns a self-contained HTML document for 3D scenes — use `mountWebGL()` instead of `render()` to display it. |
 | `flags` | `string[]` | `[]` | Extra CLI flags forwarded to `asy`. |
 | `offline` | `boolean` | `false` | For WebGL output, embed the AsyGL viewer in the generated HTML instead of loading it from `asyglUrl`. Extra `flags` are appended afterward, so `-nooffline` can override this option. |
+| `position` | `[number, number]` | auto | Initial WebGL camera position. |
+| `devicePixelRatio` | `number` | auto | Device-pixel ratio used by the WebGL viewer. |
+| `autobillboard` | `boolean` | auto | Make 3D labels face the viewer by default. |
 
 ```ts
 const { svg, warnings } = await asy.render("size(50); draw(unitcircle);");
@@ -157,6 +160,21 @@ await asy.mountWebGL("#output", source, {
   flags: ["-nooffline"],
 });
 ```
+
+The initial camera and 3D label behavior can also be configured with typed
+options:
+
+```ts
+await asy.mountWebGL("#output", source, {
+  position: [100, 80],
+  devicePixelRatio: 2,
+  autobillboard: true,
+});
+```
+
+These options apply only to WebGL output. Raw flags remain available for
+additional Asymptote viewer settings, and are appended afterward so they can
+override the convenience options.
 
 ---
 

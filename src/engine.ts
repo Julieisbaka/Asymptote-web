@@ -81,6 +81,22 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
 
 const INPUT_FILE = "/tmp/input.asy";
 
+function getWebGLFlags(renderOptions: RenderOptions): string[] {
+  const flags: string[] = [];
+
+  if (renderOptions.position) {
+    flags.push("-position", renderOptions.position.join(","));
+  }
+  if (renderOptions.devicePixelRatio !== undefined) {
+    flags.push("-devicepixelratio", String(renderOptions.devicePixelRatio));
+  }
+  if (renderOptions.autobillboard !== undefined) {
+    flags.push(renderOptions.autobillboard ? "-autobillboard" : "-noautobillboard");
+  }
+
+  return flags;
+}
+
 function getOutputFormat(
   renderOptions: RenderOptions,
   flags: string[]
@@ -159,6 +175,7 @@ export async function runAsymptote(
       "-noV",
       ...(format === "webgl" ? ["-asygl", asyglUrl] : []),
       ...(format === "webgl" && renderOptions.offline ? ["-offline"] : []),
+      ...(format === "webgl" ? getWebGLFlags(renderOptions) : []),
       ...extraFlags,
       INPUT_FILE,
     ];

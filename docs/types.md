@@ -28,6 +28,9 @@ interface RenderOptions {
   format?: OutputFormat;
   flags?: string[];
   offline?: boolean;
+  position?: [number, number];
+  devicePixelRatio?: number;
+  autobillboard?: boolean;
 }
 ```
 
@@ -42,6 +45,10 @@ interface RenderOptions {
   from the bundled or configured `asyglUrl`.
 - `flags` are appended after convenience options, so
   `flags: ["-nooffline"]` overrides `offline: true`.
+- `position`, `devicePixelRatio`, and `autobillboard` are typed WebGL
+  convenience options. They map to Asymptote's `-position`,
+  `-devicepixelratio`, and `-autobillboard`/`-noautobillboard` flags.
+- WebGL convenience options are ignored for SVG, EPS, and PS output.
 
 ## `RenderResult`
 

@@ -30,6 +30,25 @@ export interface RenderOptions {
   offline?: boolean;
 
   /**
+   * Initial WebGL camera position in screen coordinates. Maps to Asymptote's
+   * `-position x,y` option. Has no effect for non-WebGL output.
+   */
+  position?: [number, number];
+
+  /**
+   * Device-pixel ratio used by the WebGL viewer. Maps to Asymptote's
+   * `-devicepixelratio` option. Has no effect for non-WebGL output.
+   */
+  devicePixelRatio?: number;
+
+  /**
+   * Whether 3D labels face the viewer by default. Maps to Asymptote's
+   * `-autobillboard` / `-noautobillboard` options. Has no effect for
+   * non-WebGL output.
+   */
+  autobillboard?: boolean;
+
+  /**
    * When `format` is `"svg"`, Asymptote itself has no native SVG writer, so
    * `render()` asks Asymptote for EPS and converts it to SVG in-process (see
    * {@link epsToSvg}). Set this to `true` to skip that automatic conversion
