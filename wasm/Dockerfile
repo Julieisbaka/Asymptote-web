@@ -53,6 +53,7 @@ RUN for p in /patches/*.patch; do \
 # ---------------------------------------------------------------------------
 RUN emconfigure ./configure \
     --disable-gl \
+    --disable-vulkan \
     --disable-offscreen \
     --disable-gc \
     --disable-lsp \
@@ -60,28 +61,9 @@ RUN emconfigure ./configure \
     --without-fftw \
     --without-gsl \
     --without-sigsegv \
-    CXXFLAGS="-O2 -DNOSYM -DNO_PARALLEL -DBLOCKING_SLEEP" \
+    CXXFLAGS="-O2 -DNO_PARALLEL -DBLOCKING_SLEEP" \
     LDFLAGS="-sUSE_ZLIB=1" \
-    && emmake make asy -j$(nproc)
+    && emmake make asy -j$(nproc) \
+        LFLAGS="-sUSE_ZLIB=1 -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createAsymptoteModule -sENVIRONMENT=web,worker -sALLOW_MEMORY_GROWTH=1 -sFILESYSTEM=1 -sINVOKE_RUN=0 -sEXIT_RUNTIME=0 -sEXPORTED_RUNTIME_METHODS=['FS','callMain','print','printErr'] -sEXPORTED_FUNCTIONS=['_main'] --preload-file base@/usr/local/share/asymptote"
 
-# ---------------------------------------------------------------------------
-# Link the final WASM module
-# ---------------------------------------------------------------------------
-RUN emcc \
-    -O2 \
-    -s MODULARIZE=1 \
-    -s EXPORT_ES6=1 \
-    -s EXPORT_NAME="createAsymptoteModule" \
-    -s ENVIRONMENT="web,worker" \
-    -s ALLOW_MEMORY_GROWTH=1 \
-    -s FILESYSTEM=1 \
-    -s INVOKE_RUN=0 \
-    -s EXIT_RUNTIME=0 \
-    -s EXPORTED_RUNTIME_METHODS='["FS","callMain","print","printErr"]' \
-    -s EXPORTED_FUNCTIONS='["_main"]' \
-    --preload-file base@/usr/local/share/asymptote \
-    -o /out/asymptote.js \
-    asy.o \
-    $(find . -name '*.o' ! -name 'asy.o' | tr '\n' ' ')
-
-CMD ["echo", "Build complete. Output in /out/"]
+CMD ["sh", "-c", "cp asy /out/asymptote.js && cp asy.wasm /out/asymptote.wasm && echo 'Build complete. Output in /out/'"]
