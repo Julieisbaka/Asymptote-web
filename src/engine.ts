@@ -43,7 +43,9 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
   _modulePromise = (async (): Promise<EmscriptenModule> => {
     // Dynamically import the Emscripten-generated JS glue.
     // The path is relative to this file inside the published dist/.
-    const glueUrl = new URL("./asymptote.js", import.meta.url).href;
+    // Keep this path dynamic: asymptote.js is a separately published runtime
+    // asset next to the wrapper and is not part of the Vite bundle.
+    const glueUrl = "./asymptote.js";
     const { default: factory }: { default: ModuleFactory } = await import(
       /* @vite-ignore */ glueUrl
     );
