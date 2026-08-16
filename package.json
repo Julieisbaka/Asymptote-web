@@ -19,7 +19,8 @@
     "build": "vite build && tsc --emitDeclarationOnly --declaration --project tsconfig.build.json",
     "dev": "vite",
     "typecheck": "tsc --noEmit",
-      "lint": "eslint src"
+    "lint": "eslint src",
+    "prepack": "npm run build && bash ./wasm/build.sh"
   },
   "keywords": [
     "asymptote",
