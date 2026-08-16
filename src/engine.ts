@@ -65,10 +65,36 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
 // ---------------------------------------------------------------------------
 
 const INPUT_FILE = "/tmp/input.asy";
-const OUTPUT_FILE = "/tmp/input.svg"; // asy names output after the input stem
+
+function getOutputFormat(
+  renderOptions: RenderOptions,
+  flags: string[]
+): "svg" | "eps" | "ps" {
+  // Asy processes flags from left to right, so a format in flags should take
+  // precedence over the convenience option when both are supplied.
+  let format = renderOptions.format ?? "svg";
+
+  for (let i = 0; i < flags.length; i += 1) {
+    const flag = flags[i];
+    const value = flag === "-f" || flag === "--format"
+      ? flags[i + 1]
+      : flag.startsWith("-f=")
+        ? flag.slice(3)
+        : flag.startsWith("--format=")
+          ? flag.slice(9)
+          : undefined;
+
+    if (value === "svg" || value === "eps" || value === "ps") {
+      format = value;
+      if (flag === "-f" || flag === "--format") i += 1;
+    }
+  }
+
+  return format;
+}
 
 /**
- * Execute Asymptote inside the WASM module and return the SVG output.
+ * Execute Asymptote inside the WASM module and return the generated output.
  *
  * @internal
  */
@@ -94,12 +120,13 @@ export async function runAsymptote(
     // Write source into the virtual filesystem
     mod.FS.writeFile(INPUT_FILE, source);
 
-    const format = renderOptions.format ?? "svg";
     const extraFlags = renderOptions.flags ?? [];
+    const format = getOutputFormat(renderOptions, extraFlags);
+    const outputFile = `/tmp/input.${format}`;
 
     const args = [
       "-f", format,
-      "-o", OUTPUT_FILE,
+      "-o", outputFile,
       ...extraFlags,
       INPUT_FILE,
     ];
@@ -115,10 +142,14 @@ export async function runAsymptote(
       );
     }
 
-    const svg = mod.FS.readFile(OUTPUT_FILE, { encoding: "utf8" });
+    const output = mod.FS.readFile(outputFile, { encoding: "utf8" });
 
     return {
-      svg,
+      output,
+      format,
+      // Keep svg populated for backwards compatibility; use output for all
+      // formats because EPS and PS are not SVG.
+      svg: output,
       warnings: stderrLines.filter((l) => l.startsWith("Warning")),
     };
   } finally {

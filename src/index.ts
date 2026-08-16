@@ -28,6 +28,7 @@ export { AsymptoteError } from "./types.js";
 export type {
   AsymptoteEngine,
   CreateOptions,
+  OutputFormat,
   RenderOptions,
   RenderResult,
 } from "./types.js";
@@ -67,6 +68,10 @@ export async function createAsymptote(
       renderOptions: RenderOptions = {}
     ): Promise<RenderResult> {
       const result = await runAsymptote(source, renderOptions, resolvedOptions);
+
+      if (result.format !== "svg") {
+        throw new Error("asymptote-web: mount only supports SVG output");
+      }
 
       const el =
         typeof target === "string"

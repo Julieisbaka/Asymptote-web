@@ -10,6 +10,7 @@
 - **Zero runtime dependencies** — drop in one JS file + one WASM binary.
 - **TypeScript-first** — full type declarations included.
 - **SVG output** — inline-ready vector graphics, scales perfectly at any size.*
+- **EPS and PostScript output** — return print-oriented output as text.
 - **Works everywhere** — Vite, Webpack, esbuild, or plain `<script type="module">`.
 
 *Technically SVGs don't scale perfectly at every size because of math.
@@ -68,6 +69,9 @@ await asy.mount("#output", `
 
 ## API
 
+For a complete description of the exported TypeScript types, see the
+[type reference](docs/types.md).
+
 ### `createAsymptote(options?)`
 
 Loads the Asymptote WASM module and returns an [`AsymptoteEngine`](#asymptoteengine).
@@ -92,12 +96,26 @@ Compiles `source` and returns a `Promise<RenderResult>`.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `format` | `"svg"` | `"svg"` | Output format (only `svg` is browser-safe). |
+| `format` | `"svg" \| "eps" \| "ps"` | `"svg"` | Output format. EPS and PS are returned as text. |
 | `flags` | `string[]` | `[]` | Extra CLI flags forwarded to `asy`. |
 
 ```ts
 const { svg, warnings } = await asy.render("size(50); draw(unitcircle);");
 ```
+
+The format-independent `output` field contains the generated file contents,
+and `format` identifies the selected format. The `svg` field contains the same
+string and is convenient when the selected format is SVG.
+
+```ts
+const { output, format } = await asy.render("draw(unitcircle);", {
+  format: "eps",
+});
+// output is the EPS text and format is "eps"
+```
+
+The format can also be selected through forwarded flags, for example
+`flags: ["-f", "eps"]`. `mount()` only accepts SVG output.
 
 #### `mount(target, source, options?)`
 
@@ -111,7 +129,9 @@ Renders `source` and sets `target.innerHTML` to the resulting SVG.
 
 ```ts
 interface RenderResult {
-  svg: string;        // Rendered SVG markup
+  output: string;     // Generated SVG, EPS, or PS contents
+  format: "svg" | "eps" | "ps";
+  svg: string;        // Generated output string; especially convenient for SVG
   warnings: string[]; // Non-fatal warnings from Asymptote
 }
 ```

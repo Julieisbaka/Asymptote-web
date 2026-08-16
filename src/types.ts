@@ -2,13 +2,16 @@
  * Public TypeScript types for asymptote-web.
  */
 
+/** Output formats supported by the Asymptote driver. */
+export type OutputFormat = "svg" | "eps" | "ps";
+
 /** Options accepted by {@link AsymptoteEngine.render}. */
 export interface RenderOptions {
   /**
    * Output format. Defaults to `"svg"`.
-   * Only `"svg"` is guaranteed to be supported in all browsers.
+   * EPS and PS are returned as text and are not mountable in the browser.
    */
-  format?: "svg";
+  format?: OutputFormat;
 
   /**
    * Additional command-line flags forwarded to `asy`.
@@ -30,7 +33,11 @@ export interface CreateOptions {
 
 /** Result returned by {@link AsymptoteEngine.render}. */
 export interface RenderResult {
-  /** The rendered SVG markup string (when successful). */
+  /** The generated output, such as SVG, EPS, or PostScript. */
+  output: string;
+  /** The format of {@link output}. */
+  format: OutputFormat;
+  /** The generated output, also available through the format-independent `output` field. */
   svg: string;
   /** Any warnings or informational messages emitted by Asymptote. */
   warnings: string[];
@@ -42,7 +49,7 @@ export interface RenderResult {
  */
 export interface AsymptoteEngine {
   /**
-   * Render Asymptote source code and return an SVG string.
+   * Render Asymptote source code and return the generated output.
    *
    * @param source - Asymptote source code.
    * @param options - Optional render options.
@@ -56,7 +63,8 @@ export interface AsymptoteEngine {
    * @param target - CSS selector string or an `Element`.
    * @param source - Asymptote source code.
    * @param options - Optional render options.
-   * @throws {AsymptoteError} when Asymptote exits with a non-zero status.
+    * @throws {AsymptoteError} when Asymptote exits with a non-zero status.
+    * @throws {Error} when the selected output format is not SVG.
    */
   mount(
     target: string | Element,
