@@ -8,6 +8,7 @@
  */
 
 import { AsymptoteError, type CreateOptions, type RenderOptions, type RenderResult } from "./types.js";
+import { epsToSvg } from "./eps-to-svg.js";
 
 // ---------------------------------------------------------------------------
 // Emscripten module shape (minimal subset we rely on)
@@ -131,11 +132,22 @@ export async function runAsymptote(
 
     const extraFlags = renderOptions.flags ?? [];
     const format = getOutputFormat(renderOptions, extraFlags);
-    const outputFile = `/tmp/input.${format}`;
+
+    // Asymptote has no in-process SVG writer: `-f svg` normally shells out to
+    // the external `dvisvgm` tool via fork()/exec(), which WASM can't do.
+    // Instead, render Asymptote's native (in-process) EPS output and convert
+    // it to SVG ourselves — see eps-to-svg.ts.
+    const asyFormat = format === "svg" ? "eps" : format;
+    const outputFile = `/tmp/input.${asyFormat}`;
 
     const args = [
-      "-f", format,
-      "-o", outputFile,
+      "-f", asyFormat,
+      // Asymptote appends the format extension to the -o prefix itself.
+      "-o", "/tmp/input",
+      // No LaTeX toolchain is available in WASM, and using it would spawn
+      // external processes (fork) that WASM can't do — force native labels.
+      "-tex", "none",
+      "-noV",
       ...extraFlags,
       INPUT_FILE,
     ];
@@ -151,7 +163,8 @@ export async function runAsymptote(
       );
     }
 
-    const output = mod.FS.readFile(outputFile, { encoding: "utf8" });
+    const rawOutput = mod.FS.readFile(outputFile, { encoding: "utf8" });
+    const output = format === "svg" ? epsToSvg(rawOutput) : rawOutput;
 
     return {
       output,

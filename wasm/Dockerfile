@@ -61,8 +61,8 @@ RUN emconfigure ./configure \
     --without-fftw \
     --without-gsl \
     --without-sigsegv \
-    CXXFLAGS="-O2 -DNO_PARALLEL -DBLOCKING_SLEEP -fexceptions" \
-    LDFLAGS="-sUSE_ZLIB=1 -fexceptions" \
+    CXXFLAGS="-O2 -DNO_PARALLEL -DBLOCKING_SLEEP -fexceptions -sDISABLE_EXCEPTION_CATCHING=0" \
+    LDFLAGS="-sUSE_ZLIB=1 -fexceptions -sDISABLE_EXCEPTION_CATCHING=0" \
     && emmake make asy -j$(nproc) \
         LFLAGS="-sUSE_ZLIB=1 -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createAsymptoteModule -sENVIRONMENT=web,worker -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=268435456 -sMAXIMUM_MEMORY=2147483648 -sSTACK_SIZE=16777216 -sDISABLE_EXCEPTION_CATCHING=0 -fexceptions -sASSERTIONS=1 -sFILESYSTEM=1 -sINVOKE_RUN=0 -sEXIT_RUNTIME=0 -sEXPORTED_RUNTIME_METHODS=['FS','callMain','print','printErr'] -sEXPORTED_FUNCTIONS=['_main'] --preload-file base@/usr/local/share/asymptote"
 
