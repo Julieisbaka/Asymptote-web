@@ -74,7 +74,7 @@
       border-color: transparent;
     }
 
-    button#render-btn {
+    button.render-btn {
       padding: 0.6rem 1.4rem;
       background: #3b82f6;
       color: #fff;
@@ -86,16 +86,16 @@
       transition: background 0.15s;
     }
 
-    button#render-btn:hover {
+    button.render-btn:hover {
       background: #2563eb;
     }
 
-    button#render-btn:disabled {
+    button.render-btn:disabled {
       background: #93c5fd;
       cursor: not-allowed;
     }
 
-    #output-panel {
+    .output-panel {
       border: 1px solid #ccc;
       border-radius: 6px;
       background: #fff;
@@ -107,23 +107,29 @@
       padding: 1rem;
     }
 
-    #output-panel svg {
+    .output-panel svg {
       max-width: 100%;
       height: auto;
     }
 
-    #status {
+    .output-panel iframe {
+      width: 100%;
+      height: 100%;
+      min-height: 280px;
+    }
+
+    .status {
       font-size: 0.85rem;
       min-height: 1.2em;
     }
 
-    #status.error {
+    .status.error {
       color: #dc2626;
       white-space: pre-wrap;
       font-family: monospace;
     }
 
-    #status.info {
+    .status.info {
       color: #16a34a;
     }
   </style>
@@ -156,14 +162,14 @@ star = star -- cycle;
 filldraw(star, yellow, black+1.5);
 </textarea>
       <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
-        <button id="render-btn">Render</button>
-        <span id="status" class="info">Loading Asymptote…</span>
+        <button id="render-btn" class="render-btn">Render</button>
+        <span id="status" class="status info">Loading Asymptote…</span>
       </div>
     </div>
 
     <div class="panel">
       <label>Output (SVG)</label>
-      <div id="output-panel">
+      <div id="output-panel" class="output-panel">
         <span style="color:#aaa; font-size:0.9rem;">Press Render to see output</span>
       </div>
     </div>
@@ -179,14 +185,14 @@ draw(unitsphere, blue);
 draw(shift(2,0,0)*unitcube, red);
 </textarea>
       <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
-        <button id="render3d-btn">Render 3D</button>
-        <span id="status3d" class="info">Loading Asymptote…</span>
+        <button id="render3d-btn" class="render-btn">Render 3D</button>
+        <span id="status3d" class="status info">Loading Asymptote…</span>
       </div>
     </div>
 
     <div class="panel">
       <label>Output (WebGL)</label>
-      <div id="output3d-panel" style="height:280px;">
+      <div id="output3d-panel" class="output-panel">
         <span style="color:#aaa; font-size:0.9rem;">Press Render 3D to see output</span>
       </div>
     </div>
@@ -216,13 +222,13 @@ draw(shift(2,0,0)*unitcube, red);
         asy = await createAsymptote();
         for (const [b, s] of [[btn, status], [btn3d, status3d]]) {
           s.textContent = "Ready";
-          s.className = "info";
+          s.className = "status info";
           b.disabled = false;
         }
       } catch (err) {
         for (const s of [status, status3d]) {
           s.textContent = "Failed to load Asymptote: " + err.message;
-          s.className = "error";
+          s.className = "status error";
         }
       }
     })();
@@ -234,7 +240,7 @@ draw(shift(2,0,0)*unitcube, red);
       if (!asy) return;
       btn.disabled = true;
       status.textContent = "Rendering…";
-      status.className = "info";
+      status.className = "status info";
 
       try {
         const source = document.getElementById("source").value;
@@ -244,7 +250,7 @@ draw(shift(2,0,0)*unitcube, red);
         status.textContent = result.warnings.length
           ? "Done (with warnings):\n" + result.warnings.join("\n")
           : "Done ✓";
-        status.className = result.warnings.length ? "error" : "info";
+        status.className = result.warnings.length ? "status error" : "status info";
       } catch (err) {
         output.innerHTML = "";
         const errSpan = document.createElement("span");
@@ -252,7 +258,7 @@ draw(shift(2,0,0)*unitcube, red);
         errSpan.textContent = err instanceof AsymptoteError ? err.stderr : err.message;
         output.appendChild(errSpan);
         status.textContent = "Render failed.";
-        status.className = "error";
+        status.className = "status error";
       } finally {
         btn.disabled = false;
       }
@@ -262,7 +268,7 @@ draw(shift(2,0,0)*unitcube, red);
       if (!asy) return;
       btn3d.disabled = true;
       status3d.textContent = "Rendering…";
-      status3d.className = "info";
+      status3d.className = "status info";
 
       try {
         const source = document.getElementById("source3d").value;
@@ -270,7 +276,7 @@ draw(shift(2,0,0)*unitcube, red);
         status3d.textContent = result.warnings.length
           ? "Done (with warnings):\n" + result.warnings.join("\n")
           : "Done ✓";
-        status3d.className = result.warnings.length ? "error" : "info";
+        status3d.className = result.warnings.length ? "status error" : "status info";
       } catch (err) {
         output3d.innerHTML = "";
         const errSpan = document.createElement("span");
@@ -278,7 +284,7 @@ draw(shift(2,0,0)*unitcube, red);
         errSpan.textContent = err instanceof AsymptoteError ? err.stderr : err.message;
         output3d.appendChild(errSpan);
         status3d.textContent = "Render failed.";
-        status3d.className = "error";
+        status3d.className = "status error";
       } finally {
         btn3d.disabled = false;
       }
