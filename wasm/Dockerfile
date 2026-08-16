@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     python3 \
     wget \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
@@ -74,7 +75,7 @@ RUN emconfigure ./configure \
     --without-gsl \
     --without-sigsegv \
     CXXFLAGS="-O2 -DNOSYM -DNO_PARALLEL -DBLOCKING_SLEEP" \
-    LDFLAGS="" \
+    LDFLAGS="-sUSE_ZLIB=1" \
     && emmake make asy -j$(nproc)
 
 # ---------------------------------------------------------------------------
