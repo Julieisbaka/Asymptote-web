@@ -47,6 +47,11 @@ COPY patches/ /patches/
 RUN for p in /patches/*.patch; do \
       [ -f "$p" ] && patch -p1 < "$p" || true; \
     done
+# Python-based patches: targeted source replacements too awkward to express
+# as clean unified diffs (e.g. swapping out a whole function body).
+RUN for p in /patches/*.py; do \
+      [ -f "$p" ] && python3 "$p" || true; \
+    done
 
 # ---------------------------------------------------------------------------
 # Configure & build Asymptote with Emscripten
