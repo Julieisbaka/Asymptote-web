@@ -79,6 +79,7 @@ Loads the Asymptote WASM module and returns an [`AsymptoteEngine`](#asymptoteeng
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `wasmUrl` | `string` | auto | Override the path/URL of `asymptote.wasm`. Useful when the WASM file is on a CDN or at a non-standard path. |
+| `asyglUrl` | `string` | auto | Override the path/URL of the `asygl.js` WebGL viewer. Useful when normal (non-offline) WebGL output loads the viewer from a CDN or other hosted location. |
 
 ```ts
 const asy = await createAsymptote({
@@ -98,6 +99,7 @@ Compiles `source` and returns a `Promise<RenderResult>`.
 |---|---|---|---|
 | `format` | `"svg" \| "eps" \| "ps" \| "webgl"` | `"svg"` | Output format. EPS and PS are returned as text. `webgl` returns a self-contained HTML document for 3D scenes — use `mountWebGL()` instead of `render()` to display it. |
 | `flags` | `string[]` | `[]` | Extra CLI flags forwarded to `asy`. |
+| `offline` | `boolean` | `false` | For WebGL output, embed the AsyGL viewer in the generated HTML instead of loading it from `asyglUrl`. Extra `flags` are appended afterward, so `-nooffline` can override this option. |
 
 ```ts
 const { svg, warnings } = await asy.render("size(50); draw(unitcircle);");
@@ -135,6 +137,25 @@ await asy.mountWebGL("#output", `
   currentprojection=orthographic(5,4,2);
   draw(unitsphere, blue);
 `);
+```
+
+For a self-contained WebGL document that can be deployed without a separate
+viewer script, enable `offline`. Normal WebGL output uses the bundled (or
+custom `asyglUrl`) viewer script, which remains useful when the viewer should
+be cached or hosted separately.
+
+```ts
+await asy.mountWebGL("#output", source, { offline: true });
+```
+
+Raw command-line flags are appended afterward, so `-nooffline` can override
+the convenience option when needed:
+
+```ts
+await asy.mountWebGL("#output", source, {
+  offline: true,
+  flags: ["-nooffline"],
+});
 ```
 
 ---

@@ -184,6 +184,10 @@ currentprojection=orthographic(5,4,2);
 draw(unitsphere, blue);
 draw(shift(2,0,0)*unitcube, red);
 </textarea>
+      <label style="font-weight:400; display:flex; gap:0.5rem; align-items:center;">
+        <input id="offline-webgl" type="checkbox" />
+        Embed the WebGL viewer for offline use
+      </label>
       <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
         <button id="render3d-btn" class="render-btn">Render 3D</button>
         <span id="status3d" class="status info">Loading Asymptote…</span>
@@ -272,7 +276,8 @@ draw(shift(2,0,0)*unitcube, red);
 
       try {
         const source = document.getElementById("source3d").value;
-        const result = await asy.mountWebGL(output3d, source);
+        const offline = document.getElementById("offline-webgl").checked;
+        const result = await asy.mountWebGL(output3d, source, { offline });
         status3d.textContent = result.warnings.length
           ? "Done (with warnings):\n" + result.warnings.join("\n")
           : "Done ✓";

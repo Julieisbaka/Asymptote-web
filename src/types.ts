@@ -20,6 +20,16 @@ export interface RenderOptions {
   flags?: string[];
 
   /**
+   * When `format` is `"webgl"`, embed the AsyGL viewer in the generated HTML
+   * instead of loading it from `asyglUrl`. This makes the HTML self-contained
+   * for offline or static-file deployments. Extra `flags` are appended after
+   * this convenience option, so `flags: ["-nooffline"]` can override it.
+   *
+   * Has no effect for other output formats.
+   */
+  offline?: boolean;
+
+  /**
    * When `format` is `"svg"`, Asymptote itself has no native SVG writer, so
    * `render()` asks Asymptote for EPS and converts it to SVG in-process (see
    * {@link epsToSvg}). Set this to `true` to skip that automatic conversion

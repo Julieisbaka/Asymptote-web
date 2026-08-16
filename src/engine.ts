@@ -158,6 +158,7 @@ export async function runAsymptote(
       "-tex", "none",
       "-noV",
       ...(format === "webgl" ? ["-asygl", asyglUrl] : []),
+      ...(format === "webgl" && renderOptions.offline ? ["-offline"] : []),
       ...extraFlags,
       INPUT_FILE,
     ];
