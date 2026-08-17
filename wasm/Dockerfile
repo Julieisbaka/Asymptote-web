@@ -71,9 +71,9 @@ RUN emconfigure ./configure \
     --without-fftw \
     --without-gsl \
     --without-sigsegv \
-    CXXFLAGS="-O2 -DNO_PARALLEL -DBLOCKING_SLEEP -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -Ibackports/glm-headers" \
-    LDFLAGS="-sUSE_ZLIB=1 -fexceptions -sDISABLE_EXCEPTION_CATCHING=0" \
+    CXXFLAGS="-O2 -flto -DNO_PARALLEL -DBLOCKING_SLEEP -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -Ibackports/glm-headers" \
+    LDFLAGS="-flto -sUSE_ZLIB=1 -fexceptions -sDISABLE_EXCEPTION_CATCHING=0" \
     && emmake make asy -j$(nproc) \
-        LFLAGS="-sUSE_ZLIB=1 -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createAsymptoteModule -sENVIRONMENT=web,worker -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=134217728 -sMAXIMUM_MEMORY=2147483648 -sSTACK_SIZE=16777216 -sDISABLE_EXCEPTION_CATCHING=0 -fexceptions -sASSERTIONS=0 -sFILESYSTEM=1 -sINVOKE_RUN=0 -sEXIT_RUNTIME=0 -sEXPORTED_RUNTIME_METHODS=['FS','callMain','print','printErr'] -sEXPORTED_FUNCTIONS=['_main'] --preload-file base@/usr/local/share/asymptote"
+        LFLAGS="-flto -sUSE_ZLIB=1 -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createAsymptoteModule -sENVIRONMENT=web,worker -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=134217728 -sMAXIMUM_MEMORY=2147483648 -sSTACK_SIZE=16777216 -sDISABLE_EXCEPTION_CATCHING=0 -fexceptions -sASSERTIONS=0 -sFILESYSTEM=1 -sINVOKE_RUN=0 -sEXIT_RUNTIME=0 -sEXPORTED_RUNTIME_METHODS=['FS','callMain','print','printErr'] -sEXPORTED_FUNCTIONS=['_main'] --preload-file base@/usr/local/share/asymptote"
 
 CMD ["sh", "-c", "cp asy /out/asymptote.js && cp asy.wasm /out/asymptote.wasm && cp asy.data /out/asy.data && cp base/webgl/asygl.js /out/asygl.js && echo 'Build complete. Output in /out/'"]
