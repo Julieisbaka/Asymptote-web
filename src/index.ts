@@ -58,6 +58,22 @@ export { epsToSvg };
  */
 export const psToSvg = epsToSvg;
 
+function outputMimeType(format: RenderResult["format"]): string {
+  switch (format) {
+    case "svg":
+      return "image/svg+xml";
+    case "webgl":
+      return "text/html";
+    case "eps":
+    case "ps":
+      return "application/postscript";
+  }
+}
+
+function defaultFilename(format: RenderResult["format"]): string {
+  return `asymptote.${format === "webgl" ? "html" : format}`;
+}
+
 /**
  * Initialise the Asymptote WebAssembly engine and return a rendering instance.
  *
@@ -85,6 +101,41 @@ export async function createAsymptote(
       renderOptions: RenderOptions = {}
     ): Promise<RenderResult> {
       return runAsymptote(source, renderOptions, resolvedOptions);
+    },
+
+    async renderToBlob(
+      source: string,
+      renderOptions: RenderOptions = {}
+    ): Promise<Blob> {
+      const result = await runAsymptote(source, renderOptions, resolvedOptions);
+      return new Blob([result.output], { type: outputMimeType(result.format) });
+    },
+
+    async renderBatch(
+      sources: readonly string[],
+      renderOptions: RenderOptions = {}
+    ): Promise<RenderResult[]> {
+      const results: RenderResult[] = [];
+      for (const source of sources) {
+        results.push(await runAsymptote(source, renderOptions, resolvedOptions));
+      }
+      return results;
+    },
+
+    async download(
+      source: string,
+      filename?: string,
+      renderOptions: RenderOptions = {}
+    ): Promise<RenderResult> {
+      const result = await runAsymptote(source, renderOptions, resolvedOptions);
+      const blob = new Blob([result.output], { type: outputMimeType(result.format) });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename ?? defaultFilename(result.format);
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      return result;
     },
 
     async mount(

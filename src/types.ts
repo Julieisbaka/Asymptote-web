@@ -111,6 +111,41 @@ export interface AsymptoteEngine {
   render(source: string, options?: RenderOptions): Promise<RenderResult>;
 
   /**
+   * Render source code and return the generated output as a browser Blob.
+   *
+   * @param source - Asymptote source code.
+   * @param options - Optional render options.
+   */
+  renderToBlob(source: string, options?: RenderOptions): Promise<Blob>;
+
+  /**
+   * Render multiple sources sequentially.
+   *
+   * Renders are intentionally processed one at a time because the WASM
+   * engine uses a shared virtual filesystem.
+   *
+   * @param sources - Asymptote source strings to render.
+   * @param options - Optional render options applied to every source.
+   */
+  renderBatch(
+    sources: readonly string[],
+    options?: RenderOptions
+  ): Promise<RenderResult[]>;
+
+  /**
+   * Render source code and trigger a browser download.
+   *
+   * @param source - Asymptote source code.
+   * @param filename - Download filename. Defaults based on the output format.
+   * @param options - Optional render options.
+   */
+  download(
+    source: string,
+    filename?: string,
+    options?: RenderOptions
+  ): Promise<RenderResult>;
+
+  /**
    * Render Asymptote source code and mount the resulting SVG into a DOM element.
    *
    * @param target - CSS selector string or an `Element`.

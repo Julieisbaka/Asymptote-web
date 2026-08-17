@@ -69,146 +69,25 @@ await asy.mount("#output", `
 
 ## API
 
-For a complete description of the exported TypeScript types, see the
-[type reference](docs/types.md).
+The complete function guide is in [docs/api.md](docs/api.md), including
+examples for rendering, downloads, batch rendering, WebGL, output formats,
+errors, and standalone EPS/PS conversion.
 
-### `createAsymptote(options?)`
+The exact exported TypeScript interfaces are in the [type reference](docs/types.md).
 
-Loads the Asymptote WASM module and returns an [`AsymptoteEngine`](#asymptoteengine).
+### Quick API overview
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `wasmUrl` | `string` | auto | Override the path/URL of `asymptote.wasm`. Useful when the WASM file is on a CDN or at a non-standard path. |
-| `asyglUrl` | `string` | auto | Override the path/URL of the `asygl.js` WebGL viewer. Useful when normal (non-offline) WebGL output loads the viewer from a CDN or other hosted location. |
+- `createAsymptote()` initializes the browser WASM engine.
+- `render()` returns SVG, EPS, PS, or WebGL HTML.
+- `renderToBlob()` returns rendered output as a browser `Blob`.
+- `renderBatch()` renders several sources sequentially.
+- `download()` triggers a browser download.
+- `mount()` inserts SVG into an element.
+- `mountWebGL()` embeds an interactive 3D viewer.
+- `epsToSvg()` and `psToSvg()` convert standalone PostScript output.
 
-```ts
-const asy = await createAsymptote({
-  wasmUrl: "https://example.com/assets/asymptote.wasm",
-});
-```
-
----
-
-### `AsymptoteEngine`
-
-#### `render(source, options?)`
-
-Compiles `source` and returns a `Promise<RenderResult>`.
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `format` | `"svg" \| "eps" \| "ps" \| "webgl"` | `"svg"` | Output format. EPS and PS are returned as text. `webgl` returns a self-contained HTML document for 3D scenes — use `mountWebGL()` instead of `render()` to display it. |
-| `flags` | `string[]` | `[]` | Extra CLI flags forwarded to `asy`. |
-| `offline` | `boolean` | `false` | For WebGL output, embed the AsyGL viewer in the generated HTML instead of loading it from `asyglUrl`. Extra `flags` are appended afterward, so `-nooffline` can override this option. |
-| `position` | `[number, number]` | auto | Initial WebGL camera position. |
-| `devicePixelRatio` | `number` | auto | Device-pixel ratio used by the WebGL viewer. |
-| `autobillboard` | `boolean` | auto | Make 3D labels face the viewer by default. |
-
-```ts
-const { svg, warnings } = await asy.render("size(50); draw(unitcircle);");
-```
-
-The format-independent `output` field contains the generated file contents,
-and `format` identifies the selected format. The `svg` field contains the same
-string and is convenient when the selected format is SVG.
-
-```ts
-const { output, format } = await asy.render("draw(unitcircle);", {
-  format: "eps",
-});
-// output is the EPS text and format is "eps"
-```
-
-The format can also be selected through forwarded flags, for example
-`flags: ["-f", "eps"]`. `mount()` only accepts SVG output.
-
-#### `mount(target, source, options?)`
-
-Renders `source` and sets `target.innerHTML` to the resulting SVG.
-
-`target` can be a CSS selector string or an `Element`.
-
-#### `mountWebGL(target, source, options?)`
-
-Renders a 3D `source` (e.g. using `import three;`) and embeds the interactive
-WebGL viewer into `target` via an `<iframe srcdoc>`. Rotate/zoom/pan controls
-are provided by the bundled `asygl.js` viewer.
-
-```ts
-await asy.mountWebGL("#output", `
-  import three;
-  currentprojection=orthographic(5,4,2);
-  draw(unitsphere, blue);
-`);
-```
-
-For a self-contained WebGL document that can be deployed without a separate
-viewer script, enable `offline`. Normal WebGL output uses the bundled (or
-custom `asyglUrl`) viewer script, which remains useful when the viewer should
-be cached or hosted separately.
-
-```ts
-await asy.mountWebGL("#output", source, { offline: true });
-```
-
-Raw command-line flags are appended afterward, so `-nooffline` can override
-the convenience option when needed:
-
-```ts
-await asy.mountWebGL("#output", source, {
-  offline: true,
-  flags: ["-nooffline"],
-});
-```
-
-The initial camera and 3D label behavior can also be configured with typed
-options:
-
-```ts
-await asy.mountWebGL("#output", source, {
-  position: [100, 80],
-  devicePixelRatio: 2,
-  autobillboard: true,
-});
-```
-
-These options apply only to WebGL output. Raw flags remain available for
-additional Asymptote viewer settings, and are appended afterward so they can
-override the convenience options.
-
----
-
-### `RenderResult`
-
-```ts
-interface RenderResult {
-  output: string;     // Generated SVG, EPS, PS, or (for webgl) HTML contents
-  format: "svg" | "eps" | "ps" | "webgl";
-  svg: string;        // Generated output string; especially convenient for SVG
-  warnings: string[]; // Non-fatal warnings from Asymptote
-}
-```
-
----
-
-### `AsymptoteError`
-
-Thrown when Asymptote exits with a non-zero status.
-
-```ts
-import { AsymptoteError } from "asymptote-web";
-
-try {
-  await asy.render("this is not valid asymptote code @@@@");
-} catch (err) {
-  if (err instanceof AsymptoteError) {
-    console.error("Exit code:", err.exitCode);
-    console.error("Stderr:", err.stderr);
-  }
-}
-```
-
----
+See [docs/api.md](docs/api.md) for usage guidance and [docs/types.md](docs/types.md)
+for the complete type signatures.
 
 ## Building from source
 

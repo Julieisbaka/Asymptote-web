@@ -31,6 +31,7 @@ interface RenderOptions {
   position?: [number, number];
   devicePixelRatio?: number;
   autobillboard?: boolean;
+  raw?: boolean;
 }
 ```
 
@@ -49,6 +50,8 @@ interface RenderOptions {
   convenience options. They map to Asymptote's `-position`,
   `-devicepixelratio`, and `-autobillboard`/`-noautobillboard` flags.
 - WebGL convenience options are ignored for SVG, EPS, and PS output.
+- `raw` applies only to the default SVG mode. When `true`, it skips the
+  in-process EPS-to-SVG conversion and returns native EPS text instead.
 
 ## `RenderResult`
 
@@ -88,6 +91,16 @@ output. It is not needed when `offline: true` is used.
 ```ts
 interface AsymptoteEngine {
   render(source: string, options?: RenderOptions): Promise<RenderResult>;
+  renderToBlob(source: string, options?: RenderOptions): Promise<Blob>;
+  renderBatch(
+    sources: readonly string[],
+    options?: RenderOptions,
+  ): Promise<RenderResult[]>;
+  download(
+    source: string,
+    filename?: string,
+    options?: RenderOptions,
+  ): Promise<RenderResult>;
   mount(
     target: string | Element,
     source: string,
@@ -105,6 +118,16 @@ interface AsymptoteEngine {
 SVG output and throws if EPS or PS is selected.
 `mountWebGL()` renders a 3D scene into an iframe. Pass `{ offline: true }`
 to embed the viewer script in the generated HTML.
+
+`renderToBlob()` returns the rendered output as a browser `Blob`, using an
+appropriate MIME type for the selected format. `renderBatch()` renders each
+source sequentially and returns the results in the same order. Sequential
+processing is required because the WASM engine uses a shared virtual
+filesystem.
+
+`download()` triggers a browser download and returns the corresponding
+`RenderResult`. If `filename` is omitted, it defaults to
+`asymptote.svg`, `asymptote.eps`, `asymptote.ps`, or `asymptote.html`.
 
 ## `AsymptoteError`
 
