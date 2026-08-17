@@ -215,7 +215,10 @@ for displaying compiler diagnostics in an editor or playground.
 
 `epsToSvg()` converts EPS or PS text to SVG without creating an engine. The
 converter is intentionally limited to the PostScript subset emitted by
-Asymptote's native writer.
+Asymptote's native writer. It supports basic `show` text output, common
+PostScript fonts, opacity, paths, clipping, colors, and transforms. Text that
+Asymptote emits as glyph outlines is preserved as vector paths; standard
+PostScript text sequences are emitted as SVG `<text>` elements.
 
 ```ts
 import { epsToSvg, psToSvg } from "asymptote-web";

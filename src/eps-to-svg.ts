@@ -5,8 +5,9 @@
  * Asymptote has no native SVG backend: `-f svg` normally shells out to the
  * external `dvisvgm` tool via fork()/exec(), which isn't available in WASM.
  * Since Asymptote's own EPS output only ever uses a small, well-known
- * operator subset (paths, fills, strokes, colors, clipping, transforms —
- * no arbitrary user PostScript), we can interpret it directly in-process.
+ * operator subset (paths, fills, strokes, colors, clipping, transforms,
+ * opacity, and basic text — no arbitrary user PostScript), we can interpret
+ * it directly in-process.
  */
 
 type Matrix = { a: number; b: number; c: number; d: number; e: number; f: number };
@@ -38,6 +39,8 @@ interface GraphicsState {
   fill: string;
   stroke: string;
   opacity: number;
+  fontFamily: string;
+  fontSize: number;
   linewidth: number;
   linecap: number;
   linejoin: number;
@@ -119,13 +122,86 @@ function stripComments(text: string): string {
 }
 
 function tokenize(text: string): string[] {
-  return text
-    .replace(/([[\]])/g, " $1 ")
-    .split(/\s+/)
-    .filter((t) => t.length > 0);
+  const tokens: string[] = [];
+  let i = 0;
+  while (i < text.length) {
+    if (/\s/.test(text[i])) {
+      i += 1;
+      continue;
+    }
+    if (text[i] === "[" || text[i] === "]") {
+      tokens.push(text[i]);
+      i += 1;
+      continue;
+    }
+    if (text[i] === "(") {
+      const start = i;
+      let depth = 0;
+      let escaped = false;
+      do {
+        const char = text[i];
+        if (escaped) escaped = false;
+        else if (char === "\\") escaped = true;
+        else if (char === "(") depth += 1;
+        else if (char === ")") depth -= 1;
+        i += 1;
+      } while (i < text.length && depth > 0);
+      tokens.push(text.slice(start, i));
+      continue;
+    }
+    const start = i;
+    while (i < text.length && !/\s/.test(text[i]) && !/[\[\]]/.test(text[i])) i += 1;
+    tokens.push(text.slice(start, i));
+  }
+  return tokens;
 }
 
 const NUMBER_RE = /^[+-]?(\d+\.?\d*|\.\d+)$/;
+
+function unescapePostScriptString(token: string): string {
+  const body = token.slice(1, -1);
+  return body.replace(/\\([\\()nrtbf])/g, (_, escaped: string) => {
+    switch (escaped) {
+      case "n": return "\n";
+      case "r": return "\r";
+      case "t": return "\t";
+      case "b": return "\b";
+      case "f": return "\f";
+      default: return escaped;
+    }
+  });
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function toCssFontFamily(font: string): string {
+  switch (font) {
+    case "Times-Roman":
+    case "Times-Bold":
+    case "Times-Italic":
+    case "Times-BoldItalic":
+      return "Times New Roman, serif";
+    case "Helvetica":
+    case "Helvetica-Bold":
+    case "Helvetica-Oblique":
+    case "Helvetica-BoldOblique":
+      return "Arial, sans-serif";
+    case "Courier":
+    case "Courier-Bold":
+    case "Courier-Oblique":
+    case "Courier-BoldOblique":
+      return "Courier New, monospace";
+    default:
+      return font;
+  }
+}
 
 /**
  * Convert EPS/PS content into an SVG document string, entirely in-process
@@ -171,13 +247,15 @@ export function epsToSvg(eps: string): string {
 
   let clipCounter = 0;
   const defs: string[] = [];
-  const paths: string[] = [];
+  const elements: string[] = [];
 
   let state: GraphicsState = {
     ctm: IDENTITY,
     fill: "black",
     stroke: "black",
     opacity: 1,
+    fontFamily: "sans-serif",
+    fontSize: 12,
     linewidth: 1,
     linecap: 0,
     linejoin: 0,
@@ -192,7 +270,7 @@ export function epsToSvg(eps: string): string {
   let currentSubpath: PathSegment[] = [];
   let currentPoint: [number, number] = [0, 0];
 
-  const stack: (number | number[])[] = [];
+  const stack: (number | number[] | string)[] = [];
   const popN = (n: number): number[] => {
     const nums: number[] = [];
     for (let i = 0; i < n; i += 1) {
@@ -255,15 +333,32 @@ export function epsToSvg(eps: string): string {
       const dash = state.dasharray.length > 0
         ? ` stroke-dasharray="${state.dasharray.join(",")}" stroke-dashoffset="${state.dashoffset}"`
         : "";
-      paths.push(
+      elements.push(
         `<path d="${d}" fill="none" stroke="${state.stroke}" stroke-width="${state.linewidth}" ` +
         `stroke-linecap="${LINECAP[state.linecap] ?? "butt"}" stroke-linejoin="${LINEJOIN[state.linejoin] ?? "miter"}" ` +
         `stroke-miterlimit="${state.miterlimit}"${dash}${opacityAttr}${clipAttr}/>`
       );
     } else {
       const rule = mode === "eofill" ? ' fill-rule="evenodd"' : "";
-      paths.push(`<path d="${d}" fill="${state.fill}"${rule}${opacityAttr}${clipAttr}/>`);
+      elements.push(`<path d="${d}" fill="${state.fill}"${rule}${opacityAttr}${clipAttr}/>`);
     }
+  };
+
+  const doShow = (text: string) => {
+    const [x, y] = toSvg(currentPoint[0], currentPoint[1]);
+    const scale = Math.sqrt(state.ctm.a ** 2 + state.ctm.b ** 2);
+    const angle = -(Math.atan2(state.ctm.b, state.ctm.a) * 180) / Math.PI;
+    const transform = angle !== 0
+      ? ` transform="rotate(${angle.toFixed(3)} ${x.toFixed(3)} ${y.toFixed(3)})"`
+      : "";
+    const opacityAttr = state.opacity < 1
+      ? ` opacity="${formatOpacity(state.opacity)}"`
+      : "";
+    elements.push(
+      `<text x="${x.toFixed(3)}" y="${y.toFixed(3)}" fill="${state.fill}" ` +
+      `font-family="${escapeXml(toCssFontFamily(state.fontFamily))}" font-size="${(state.fontSize * scale).toFixed(3)}"` +
+      `${transform}${opacityAttr}>${escapeXml(text)}</text>`
+    );
   };
 
   for (let i = 0; i < tokens.length; i += 1) {
@@ -271,6 +366,10 @@ export function epsToSvg(eps: string): string {
 
     if (NUMBER_RE.test(tok)) {
       stack.push(parseFloat(tok));
+      continue;
+    }
+    if (tok.startsWith("(") && tok.endsWith(")")) {
+      stack.push(unescapePostScriptString(tok));
       continue;
     }
     if (tok === "[") {
@@ -283,7 +382,10 @@ export function epsToSvg(eps: string): string {
       stack.push(arr);
       continue;
     }
-    if (tok.startsWith("/")) continue; // stray name literal (unused)
+    if (tok.startsWith("/")) {
+      stack.push(tok.slice(1));
+      continue;
+    }
 
     switch (tok) {
       case "newpath":
@@ -363,11 +465,30 @@ export function epsToSvg(eps: string): string {
       case "setcmykcolor":
         state.fill = state.stroke = toColor(popN(4));
         break;
+      case "findfont": {
+        const font = stack.pop();
+        if (typeof font === "string") state.fontFamily = font;
+        break;
+      }
+      case "scalefont": {
+        const size = stack.pop();
+        stack.pop(); // font name/object, retained as state.fontFamily by findfont
+        if (typeof size === "number") state.fontSize = size;
+        break;
+      }
+      case "setfont":
+        stack.pop();
+        break;
       case "setopacityalpha":
       case "setalpha":
       case "setopacity":
         state.opacity = popN(1)[0];
         break;
+      case "show": {
+        const text = stack.pop();
+        if (typeof text === "string") doShow(text);
+        break;
+      }
       case "setlinewidth":
       case "Setlinewidth":
         state.linewidth = popN(1)[0];
@@ -416,7 +537,7 @@ export function epsToSvg(eps: string): string {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" ` +
     `viewBox="0 0 ${width} ${height}">` +
     (defs.length > 0 ? `<defs>${defs.join("")}</defs>` : "") +
-    paths.join("") +
+    elements.join("") +
     `</svg>`
   );
 }
