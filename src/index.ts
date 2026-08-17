@@ -25,6 +25,7 @@ import {
   type RenderResult,
 } from "./types.js";
 
+export type { EpsToSvgOptions } from "./eps-to-svg.js";
 export { AsymptoteError } from "./types.js";
 export type {
   AsymptoteEngine,
@@ -57,6 +58,26 @@ export { epsToSvg };
  * subset as its EPS output, so both can be converted with the same function.
  */
 export const psToSvg = epsToSvg;
+
+function updateSvgElement(target: Element, svgText: string): boolean {
+  const current = target.firstElementChild;
+  if (!current || current.tagName.toLowerCase() !== "svg") return false;
+
+  const parsed = new DOMParser().parseFromString(svgText, "image/svg+xml");
+  const next = parsed.documentElement;
+  if (next.tagName.toLowerCase() !== "svg") return false;
+
+  for (const attribute of Array.from(current.attributes)) {
+    current.removeAttribute(attribute.name);
+  }
+  for (const attribute of Array.from(next.attributes)) {
+    current.setAttribute(attribute.name, attribute.value);
+  }
+  current.replaceChildren(
+    ...Array.from(next.childNodes).map((node) => document.importNode(node, true))
+  );
+  return true;
+}
 
 function outputMimeType(format: RenderResult["format"]): string {
   switch (format) {
@@ -158,7 +179,9 @@ export async function createAsymptote(
         throw new Error(`asymptote-web: mount target not found: ${target}`);
       }
 
-      el.innerHTML = result.svg;
+      if (!(renderOptions.reuseSvg && updateSvgElement(el, result.svg))) {
+        el.innerHTML = result.svg;
+      }
       return result;
     },
 

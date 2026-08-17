@@ -60,6 +60,20 @@ export interface RenderOptions {
    * happens for those formats regardless.
    */
   raw?: boolean;
+
+  /**
+   * Number of decimal places used for SVG coordinates. Defaults to 3.
+   * Lower values can reduce output size, but may reduce geometric precision.
+   * Has no effect for EPS, PS, or WebGL output.
+   */
+  svgPrecision?: number;
+
+  /**
+   * When used with {@link AsymptoteEngine.mount}, update an existing direct
+   * child SVG instead of replacing it. Disabled by default to preserve the
+   * existing DOM behavior and event semantics.
+   */
+  reuseSvg?: boolean;
 }
 
 /** Options accepted by {@link createAsymptote}. */

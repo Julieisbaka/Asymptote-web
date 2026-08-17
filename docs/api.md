@@ -55,6 +55,8 @@ document.querySelector("#output").innerHTML = result.output;
 | `devicePixelRatio` | `number` | automatic | WebGL viewer device-pixel ratio. |
 | `autobillboard` | `boolean` | automatic | Make 3D labels face the viewer by default. |
 | `raw` | `boolean` | `false` | For the default SVG mode, return the native EPS instead of converting it to SVG. |
+| `svgPrecision` | `number` | `3` | Opt-in number of decimal places for generated SVG coordinates. Valid range: 0–12. |
+| `reuseSvg` | `boolean` | `false` | For `mount()`, reuse an existing direct child SVG instead of replacing it. |
 
 The default SVG path is WASM-safe: Asymptote generates native EPS and the
 package converts that EPS to SVG in-process. The browser build forces
@@ -83,6 +85,12 @@ await asy.render("draw(unitcircle);", {
 Flags are appended after the convenience options. This means a later flag can
 override a convenience option, for example `flags: ["-nooffline"]` overrides
 `offline: true` for WebGL output.
+
+`svgPrecision` is opt-in. The default remains three decimal places; lower
+precision can reduce SVG size at the cost of geometric precision. `reuseSvg`
+is only used by `mount()` and is disabled by default. When enabled, an
+existing direct child `<svg>` keeps its root DOM node while its attributes and
+children are updated.
 
 ### `renderToBlob(source, options?)`
 
@@ -226,6 +234,9 @@ import { epsToSvg, psToSvg } from "asymptote-web";
 const eps = await (await fetch("drawing.eps")).text();
 const svg = epsToSvg(eps);
 ```
+
+Pass `{ precision: 1 }` to opt into shorter coordinate formatting. Omitting
+the option preserves the default three-decimal output.
 
 `psToSvg` is an alias of `epsToSvg`.
 

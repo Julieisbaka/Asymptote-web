@@ -32,6 +32,8 @@ interface RenderOptions {
   devicePixelRatio?: number;
   autobillboard?: boolean;
   raw?: boolean;
+  svgPrecision?: number;
+  reuseSvg?: boolean;
 }
 ```
 
@@ -52,6 +54,10 @@ interface RenderOptions {
 - WebGL convenience options are ignored for SVG, EPS, and PS output.
 - `raw` applies only to the default SVG mode. When `true`, it skips the
   in-process EPS-to-SVG conversion and returns native EPS text instead.
+- `svgPrecision` is opt-in and controls generated coordinate decimals from 0
+  through 12. The default remains 3.
+- `reuseSvg` is opt-in and applies to `mount()`. It preserves an existing
+  direct child SVG root while updating its generated content.
 
 ## `RenderResult`
 

@@ -158,6 +158,12 @@ function tokenize(text: string): string[] {
 
 const NUMBER_RE = /^[+-]?(\d+\.?\d*|\.\d+)$/;
 
+/** Options for the in-process EPS/PS-to-SVG converter. */
+export interface EpsToSvgOptions {
+  /** Number of decimal places used for generated coordinates. Defaults to 3. */
+  precision?: number;
+}
+
 function unescapePostScriptString(token: string): string {
   const body = token.slice(1, -1);
   return body.replace(/\\([\\()nrtbf])/g, (_, escaped: string) => {
@@ -231,7 +237,12 @@ function toCssFontFamily(font: string): string {
  * document.querySelector("#output").innerHTML = svg;
  * ```
  */
-export function epsToSvg(eps: string): string {
+export function epsToSvg(eps: string, options: EpsToSvgOptions = {}): string {
+  const precision = options.precision ?? 3;
+  if (!Number.isInteger(precision) || precision < 0 || precision > 12) {
+    throw new RangeError("epsToSvg: precision must be an integer from 0 to 12");
+  }
+  const formatNumber = (value: number): string => value.toFixed(precision);
   const bboxMatch = /%%HiResBoundingBox:\s*([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)/.exec(eps)
     ?? /%%BoundingBox:\s*([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)/.exec(eps);
 
@@ -297,13 +308,13 @@ export function epsToSvg(eps: string): string {
       for (const seg of sp) {
         if (seg.op === "M" || seg.op === "L") {
           const [sx, sy] = toSvg(seg.x, seg.y);
-          parts.push(`${seg.op}${sx.toFixed(3)},${sy.toFixed(3)}`);
+          parts.push(`${seg.op}${formatNumber(sx)},${formatNumber(sy)}`);
         } else if (seg.op === "C") {
           const [x1, y1] = toSvg(seg.x1, seg.y1);
           const [x2, y2] = toSvg(seg.x2, seg.y2);
           const [x, y] = toSvg(seg.x, seg.y);
           parts.push(
-            `C${x1.toFixed(3)},${y1.toFixed(3)} ${x2.toFixed(3)},${y2.toFixed(3)} ${x.toFixed(3)},${y.toFixed(3)}`
+            `C${formatNumber(x1)},${formatNumber(y1)} ${formatNumber(x2)},${formatNumber(y2)} ${formatNumber(x)},${formatNumber(y)}`
           );
         } else {
           parts.push("Z");
@@ -349,14 +360,14 @@ export function epsToSvg(eps: string): string {
     const scale = Math.sqrt(state.ctm.a ** 2 + state.ctm.b ** 2);
     const angle = -(Math.atan2(state.ctm.b, state.ctm.a) * 180) / Math.PI;
     const transform = angle !== 0
-      ? ` transform="rotate(${angle.toFixed(3)} ${x.toFixed(3)} ${y.toFixed(3)})"`
+      ? ` transform="rotate(${formatNumber(angle)} ${formatNumber(x)} ${formatNumber(y)})"`
       : "";
     const opacityAttr = state.opacity < 1
       ? ` opacity="${formatOpacity(state.opacity)}"`
       : "";
     elements.push(
-      `<text x="${x.toFixed(3)}" y="${y.toFixed(3)}" fill="${state.fill}" ` +
-      `font-family="${escapeXml(toCssFontFamily(state.fontFamily))}" font-size="${(state.fontSize * scale).toFixed(3)}"` +
+      `<text x="${formatNumber(x)}" y="${formatNumber(y)}" fill="${state.fill}" ` +
+      `font-family="${escapeXml(toCssFontFamily(state.fontFamily))}" font-size="${formatNumber(state.fontSize * scale)}"` +
       `${transform}${opacityAttr}>${escapeXml(text)}</text>`
     );
   };

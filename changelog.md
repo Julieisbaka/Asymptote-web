@@ -11,4 +11,6 @@
   transformed positions, escaped text content, and opacity support.
 - Preserved caret and common LaTeX-like characters (`$`, `^`, `_`, braces,
   tilde, pipe, and backslash) in the WASM fallback text renderer.
+- Added opt-in `reuseSvg` mounting and `svgPrecision` coordinate formatting;
+  existing rendering and DOM behavior remain unchanged by default.
   

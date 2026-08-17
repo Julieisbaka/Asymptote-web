@@ -193,7 +193,9 @@ export async function runAsymptote(
 
     const rawOutput = mod.FS.readFile(outputFile, { encoding: "utf8" });
     const skipConversion = format === "svg" && renderOptions.raw === true;
-    const output = format === "svg" && !skipConversion ? epsToSvg(rawOutput) : rawOutput;
+    const output = format === "svg" && !skipConversion
+      ? epsToSvg(rawOutput, { precision: renderOptions.svgPrecision })
+      : rawOutput;
 
     return {
       output,
