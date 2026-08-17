@@ -9,4 +9,6 @@
   commands such as `setopacityalpha`.
 - Added basic PostScript text conversion with font-family mapping, font size,
   transformed positions, escaped text content, and opacity support.
+- Preserved caret and common LaTeX-like characters (`$`, `^`, `_`, braces,
+  tilde, pipe, and backslash) in the WASM fallback text renderer.
   

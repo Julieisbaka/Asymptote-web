@@ -100,7 +100,7 @@ ORIGINAL = '''patharray2 *textpath(stringarray *s, penarray *p)
 # them like the existing flat array literals elsewhere in this file, e.g.
 # runpair.in's `real p[]={...}`). Each byte's low 5 bits are columns
 # left(bit4)-to-right(bit0).
-GLYPH_CHARS = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,!?:;'\"-+=/()"
+GLYPH_CHARS = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,!?:;'\"-+=/()^$_{}~|\\"
 GLYPH_ROWS = {
     ' ': (0,0,0,0,0,0,0),
     '0': (0b01110,0b10001,0b10011,0b10101,0b11001,0b10001,0b01110),
@@ -153,6 +153,14 @@ GLYPH_ROWS = {
     '/': (0b00001,0b00010,0b00100,0b00100,0b01000,0b10000,0b10000),
     '(': (0b00010,0b00100,0b01000,0b01000,0b01000,0b00100,0b00010),
     ')': (0b01000,0b00100,0b00010,0b00010,0b00010,0b00100,0b01000),
+    '^': (0b00100,0b01010,0b10001,0,0,0,0),
+    '$': (0b00100,0b01111,0b10100,0b01110,0b00101,0b11110,0b00100),
+    '_': (0,0,0,0,0,0,0b11111),
+    '{': (0b00011,0b00100,0b00100,0b11000,0b00100,0b00100,0b00011),
+    '}': (0b11000,0b00100,0b00100,0b00011,0b00100,0b00100,0b11000),
+    '~': (0,0b01001,0b10110,0,0,0,0),
+    '|': (0b00100,0b00100,0b00100,0b00100,0b00100,0b00100,0b00100),
+    '\\': (0b10000,0b10000,0b01000,0b00100,0b00010,0b00001,0b00001),
 }
 
 
@@ -245,10 +253,30 @@ def main():
     with open(PATH, "r", encoding="utf-8") as f:
         content = f.read()
 
-    if ORIGINAL not in content:
-        sys.exit("native-text-font.py: could not find expected textpath() source to replace")
-
-    content = content.replace(ORIGINAL, build_replacement(), 1)
+    replacement = build_replacement()
+    if ORIGINAL in content:
+        content = content.replace(ORIGINAL, replacement, 1)
+    else:
+        # Docker may reuse a layer where an earlier version of this patch has
+        # already replaced textpath(). Replace that generated function too so
+        # rebuilding after a glyph-table change is deterministic and safe.
+        marker = "patharray2 *textpath(stringarray *s, penarray *p)"
+        start = content.find(marker)
+        if start == -1:
+            sys.exit("native-text-font.py: could not find textpath() to replace")
+        brace_start = content.find("{", start)
+        depth = 0
+        end = brace_start
+        while end < len(content):
+            if content[end] == "{":
+                depth += 1
+            elif content[end] == "}":
+                depth -= 1
+                if depth == 0:
+                    end += 1
+                    break
+            end += 1
+        content = content[:start] + replacement.rstrip() + content[end:]
 
     with open(PATH, "w", encoding="utf-8") as f:
         f.write(content)
