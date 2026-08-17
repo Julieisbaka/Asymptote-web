@@ -75,6 +75,9 @@ errors, and standalone EPS/PS conversion.
 
 The exact exported TypeScript interfaces are in the [type reference](docs/types.md).
 
+For repeatable render timing comparisons, use the browser
+[performance benchmark](docs/performance.md).
+
 ### Quick API overview
 
 - `createAsymptote()` initializes the browser WASM engine.

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asymptote Web — Performance Benchmark</title>
+  <style>
+    :root {
+      font-family: system-ui, sans-serif;
+      color: #222;
+      background: #f8f8f8;
+    }
+
+    body {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    h1 { margin-bottom: 0.25rem; }
+    p { color: #555; }
+
+    button {
+      padding: 0.6rem 1.2rem;
+      border: 0;
+      border-radius: 6px;
+      color: white;
+      background: #2563eb;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:disabled { background: #93c5fd; cursor: wait; }
+
+    #status {
+      min-height: 1.5rem;
+      margin: 1rem 0;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+
+    .metric {
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: white;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1.25rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      padding: 0.55rem;
+      border: 1px solid #ddd;
+      text-align: right;
+    }
+
+    th:first-child, td:first-child { text-align: left; }
+
+    pre {
+      max-height: 260px;
+      overflow: auto;
+      padding: 1rem;
+      border-radius: 6px;
+      background: #1f2937;
+      color: #e5e7eb;
+    }
+
+    .note { font-size: 0.9rem; }
+  </style>
+</head>
+
+<body>
+  <h1>Asymptote Web Performance Benchmark</h1>
+  <p>
+    One warm-up render is excluded, followed by ten identical measured SVG
+    renders. Keep the browser, tab state, and build unchanged when comparing
+    results.
+  </p>
+
+  <button id="run" disabled>Loading WASM…</button>
+  <button id="download" disabled>Download JSON</button>
+  <div id="status">Initializing…</div>
+  <div id="summary" class="summary"></div>
+  <table>
+    <thead>
+      <tr><th>Iteration</th><th>Duration (ms)</th><th>Heap used</th><th>Output bytes</th></tr>
+    </thead>
+    <tbody id="results"></tbody>
+  </table>
+  <p class="note">
+    Memory uses Chromium's non-standard <code>performance.memory</code> when
+    available. It reports JavaScript heap usage, not total WebAssembly memory.
+    Browser CPU percentage is not reliably exposed, so render duration is used
+    as the comparable CPU-work measurement.
+  </p>
+  <h2>Benchmark source</h2>
+  <pre id="source"></pre>
+
+  <script type="module">
+    import { createAsymptote } from "../dist/asymptote-web.js";
+
+    const ITERATIONS = 10;
+    const source = `size(220);
+import graph;
+
+real f(real x) { return sin(x) * exp(-x / 8); }
+
+grid(0, -1, 18, 1, gray + 0.4bp);
+draw(graph(f, 0, 18, n=500), blue + 1.5bp);
+draw((0, 0)--(18, 0), black + 0.8bp);
+for (int i = 0; i <= 18; ++i) {
+  draw((i, -0.05)--(i, 0.05), black + 0.5bp);
+}
+label("sin(x) exp(-x/8)", (12, 0.8), blue);
+`;
+
+    const runButton = document.querySelector("#run");
+    const downloadButton = document.querySelector("#download");
+    const status = document.querySelector("#status");
+    const summary = document.querySelector("#summary");
+    const resultsBody = document.querySelector("#results");
+    document.querySelector("#source").textContent = source;
+
+    let engine;
+    let lastReport;
+
+    function heapBytes() {
+      const memory = performance.memory;
+      return memory && Number.isFinite(memory.usedJSHeapSize)
+        ? memory.usedJSHeapSize
+        : null;
+    }
+
+    function formatBytes(bytes) {
+      if (bytes === null) return "Unavailable";
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MiB`;
+    }
+
+    function formatMs(value) {
+      return `${value.toFixed(3)} ms`;
+    }
+
+    function median(values) {
+      const sorted = [...values].sort((a, b) => a - b);
+      const middle = Math.floor(sorted.length / 2);
+      return sorted.length % 2
+        ? sorted[middle]
+        : (sorted[middle - 1] + sorted[middle]) / 2;
+    }
+
+    function addMetric(label, value) {
+      const element = document.createElement("div");
+      element.className = "metric";
+      element.innerHTML = `<strong>${value}</strong><span>${label}</span>`;
+      summary.appendChild(element);
+    }
+
+    function renderReport(report) {
+      const durations = report.samples.map((sample) => sample.durationMs);
+      const average = durations.reduce((sum, value) => sum + value, 0) / durations.length;
+      const reportWithStats = {
+        ...report,
+        averageMs: average,
+        medianMs: median(durations),
+        minMs: Math.min(...durations),
+        maxMs: Math.max(...durations),
+        totalMs: durations.reduce((sum, value) => sum + value, 0),
+      };
+      lastReport = reportWithStats;
+
+      summary.replaceChildren();
+      addMetric("Average", formatMs(reportWithStats.averageMs));
+      addMetric("Median", formatMs(reportWithStats.medianMs));
+      addMetric("Minimum", formatMs(reportWithStats.minMs));
+      addMetric("Maximum", formatMs(reportWithStats.maxMs));
+      addMetric("Total", formatMs(reportWithStats.totalMs));
+      addMetric("Memory delta", report.memoryDeltaBytes === null
+        ? "Unavailable"
+        : formatBytes(report.memoryDeltaBytes));
+
+      resultsBody.replaceChildren();
+      for (const sample of report.samples) {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${sample.iteration}</td>` +
+          `<td>${formatMs(sample.durationMs)}</td>` +
+          `<td>${formatBytes(sample.heapUsedBytes)}</td>` +
+          `<td>${sample.outputBytes}</td>`;
+        resultsBody.appendChild(row);
+      }
+      downloadButton.disabled = false;
+      return reportWithStats;
+    }
+
+    async function runBenchmark() {
+      runButton.disabled = true;
+      downloadButton.disabled = true;
+      summary.replaceChildren();
+      resultsBody.replaceChildren();
+      status.textContent = "Warm-up render…";
+
+      await engine.render(source);
+      const heapBefore = heapBytes();
+      const samples = [];
+      let outputBytes = 0;
+
+      for (let iteration = 1; iteration <= ITERATIONS; iteration += 1) {
+        status.textContent = `Measured render ${iteration}/${ITERATIONS}…`;
+        const start = performance.now();
+        const result = await engine.render(source);
+        const durationMs = performance.now() - start;
+        outputBytes = new TextEncoder().encode(result.output).byteLength;
+        samples.push({
+          iteration,
+          durationMs,
+          heapUsedBytes: heapBytes(),
+          outputBytes,
+        });
+      }
+
+      const heapAfter = heapBytes();
+      const report = renderReport({
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        iterations: ITERATIONS,
+        warmupExcluded: true,
+        outputFormat: "svg",
+        source,
+        heapBeforeBytes: heapBefore,
+        heapAfterBytes: heapAfter,
+        memoryDeltaBytes: heapBefore === null || heapAfter === null
+          ? null
+          : heapAfter - heapBefore,
+        samples,
+      });
+      status.textContent = `Complete: ${ITERATIONS} measured renders.`;
+      runButton.disabled = false;
+      return report;
+    }
+
+    runButton.addEventListener("click", () => {
+      runBenchmark().catch((error) => {
+        status.textContent = `Benchmark failed: ${error.message}`;
+        runButton.disabled = false;
+      });
+    });
+
+    downloadButton.addEventListener("click", () => {
+      if (!lastReport) return;
+      const blob = new Blob([JSON.stringify(lastReport, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "asymptote-benchmark.json";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+    });
+
+    try {
+      engine = await createAsymptote();
+      status.textContent = "Ready.";
+      runButton.textContent = "Run benchmark";
+      runButton.disabled = false;
+    } catch (error) {
+      status.textContent = `Failed to load WASM: ${error.message}`;
+    }
+  </script>
+</body>
+
+</html>
