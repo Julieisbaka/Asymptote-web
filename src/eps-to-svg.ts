@@ -37,6 +37,7 @@ interface GraphicsState {
   ctm: Matrix;
   fill: string;
   stroke: string;
+  opacity: number;
   linewidth: number;
   linecap: number;
   linejoin: number;
@@ -71,6 +72,10 @@ function toColor(nums: number[]): string {
 
 const LINECAP = ["butt", "round", "square"];
 const LINEJOIN = ["miter", "round", "bevel"];
+
+function formatOpacity(value: number): string {
+  return Math.max(0, Math.min(1, value)).toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+}
 
 /**
  * Strip `/name { ... } bind? def` procedure definitions (brace-balanced,
@@ -172,6 +177,7 @@ export function epsToSvg(eps: string): string {
     ctm: IDENTITY,
     fill: "black",
     stroke: "black",
+    opacity: 1,
     linewidth: 1,
     linecap: 0,
     linejoin: 0,
@@ -242,6 +248,9 @@ export function epsToSvg(eps: string): string {
     const d = pathToD();
     if (d.length === 0) return;
     const clipAttr = state.clipId ? ` clip-path="url(#${state.clipId})"` : "";
+    const opacityAttr = state.opacity < 1
+      ? ` opacity="${formatOpacity(state.opacity)}"`
+      : "";
     if (mode === "stroke") {
       const dash = state.dasharray.length > 0
         ? ` stroke-dasharray="${state.dasharray.join(",")}" stroke-dashoffset="${state.dashoffset}"`
@@ -249,11 +258,11 @@ export function epsToSvg(eps: string): string {
       paths.push(
         `<path d="${d}" fill="none" stroke="${state.stroke}" stroke-width="${state.linewidth}" ` +
         `stroke-linecap="${LINECAP[state.linecap] ?? "butt"}" stroke-linejoin="${LINEJOIN[state.linejoin] ?? "miter"}" ` +
-        `stroke-miterlimit="${state.miterlimit}"${dash}${clipAttr}/>`
+        `stroke-miterlimit="${state.miterlimit}"${dash}${opacityAttr}${clipAttr}/>`
       );
     } else {
       const rule = mode === "eofill" ? ' fill-rule="evenodd"' : "";
-      paths.push(`<path d="${d}" fill="${state.fill}"${rule}${clipAttr}/>`);
+      paths.push(`<path d="${d}" fill="${state.fill}"${rule}${opacityAttr}${clipAttr}/>`);
     }
   };
 
@@ -353,6 +362,11 @@ export function epsToSvg(eps: string): string {
         break;
       case "setcmykcolor":
         state.fill = state.stroke = toColor(popN(4));
+        break;
+      case "setopacityalpha":
+      case "setalpha":
+      case "setopacity":
+        state.opacity = popN(1)[0];
         break;
       case "setlinewidth":
       case "Setlinewidth":

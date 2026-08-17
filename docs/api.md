@@ -225,3 +225,7 @@ const svg = epsToSvg(eps);
 ```
 
 `psToSvg` is an alias of `epsToSvg`.
+
+The converter supports Asymptote opacity commands such as
+`setopacityalpha`. Opacity is preserved on generated SVG paths using the
+`opacity` attribute, including across `gsave`/`grestore` state changes.
