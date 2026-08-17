@@ -119,10 +119,11 @@
     const ITERATIONS = 10;
     const source = `size(220);
 import graph;
+import math;
 
 real f(real x) { return sin(x) * exp(-x / 8); }
 
-grid(0, -1, 18, 1, gray + 0.4bp);
+  add(shift(0, -1) * grid(18, 2, gray + 0.4bp));
 draw(graph(f, 0, 18, n=500), blue + 1.5bp);
 draw((0, 0)--(18, 0), black + 0.8bp);
 for (int i = 0; i <= 18; ++i) {
