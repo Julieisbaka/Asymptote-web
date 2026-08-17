@@ -59,6 +59,10 @@ export default defineConfig({
     sourcemap: true,
     // Don't minify — the WASM binary is already optimised; let bundlers decide.
     minify: false,
+    // The WASM build writes asymptote.js, asymptote.wasm, asy.data, and
+    // asygl.js into dist separately. Preserve those files when rebuilding the
+    // TypeScript wrapper.
+    emptyOutDir: false,
   },
   server: {
     headers: crossOriginIsolationHeaders,
