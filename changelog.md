@@ -13,4 +13,5 @@
   tilde, pipe, and backslash) in the WASM fallback text renderer.
 - Added opt-in `reuseSvg` mounting and `svgPrecision` coordinate formatting;
   existing rendering and DOM behavior remain unchanged by default.
+- Performance stuff
   
