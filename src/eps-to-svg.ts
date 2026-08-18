@@ -46,7 +46,10 @@ export function epsToSvg(eps: string, options: EpsToSvgOptions = {}): string {
   if (!Number.isInteger(precision) || precision < 0 || precision > 12) {
     throw new RangeError("epsToSvg: precision must be an integer from 0 to 12");
   }
-  const formatNumber = (value: number): string => value.toFixed(precision);
+  const formatNumber = (value: number): string => {
+    if (value === 0) return "0";
+    return value.toFixed(precision).replace(/(?:\.0+|(?:(\.\d*?)0+))$/, "$1");
+  };
   const bboxMatch = /%%HiResBoundingBox:\s*([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)/.exec(eps)
     ?? /%%BoundingBox:\s*([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)/.exec(eps);
 

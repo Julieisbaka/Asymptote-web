@@ -1,3 +1,9 @@
+# 0.0.8
+
+- Improve SVG gradients
+- Skip unnecessary parsing
+- Prevent duplicate gradient definitions
+
 # 0.0.7
 
 ## Added

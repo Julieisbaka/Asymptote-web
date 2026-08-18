@@ -43,7 +43,10 @@ export class SvgWriter {
   private gradientCounter = 0;
   private readonly defs: string[] = [];
   private readonly elements: string[] = [];
+  private readonly gradientIds = new Map<string, string>();
   private pathParts: string[] = [];
+  private pathD = "";
+  private pathDirty = true;
   private currentX = 0;
   private currentY = 0;
 
@@ -61,6 +64,8 @@ export class SvgWriter {
 
   newPath(): void {
     this.pathParts = [];
+    this.pathD = "";
+    this.pathDirty = false;
   }
 
   appendPoint(state: GraphicsState, op: "M" | "L", x: number, y: number): void {
@@ -70,6 +75,7 @@ export class SvgWriter {
     this.pathParts.push(
       `${op}${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`
     );
+    this.pathDirty = true;
   }
 
   appendCurve(state: GraphicsState, x1: number, y1: number, x2: number, y2: number, x: number, y: number): void {
@@ -85,10 +91,12 @@ export class SvgWriter {
       `${this.formatNumber(ax2 - this.llx)},${this.formatNumber(this.height - (ay2 - this.lly))} ` +
       `${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`
     );
+    this.pathDirty = true;
   }
 
   closePath(): void {
     this.pathParts.push("Z");
+    this.pathDirty = true;
   }
 
   clip(state: GraphicsState, evenodd: boolean): void {
@@ -147,31 +155,40 @@ export class SvgWriter {
   }
 
   private pathToD(): string {
-    return this.pathParts.join(" ");
+    if (this.pathDirty) {
+      this.pathD = this.pathParts.join(" ");
+      this.pathDirty = false;
+    }
+    return this.pathD;
   }
 
   private gradientFill(gradient: Gradient, state: GraphicsState): string {
+    const { a, b, c, d, e, f } = state.ctm;
+    const transform = [a, -b, c, -d, e - this.llx, this.height + this.lly - f];
+    const key = [
+      gradient.kind,
+      ...Object.entries(gradient)
+        .filter(([name]) => name !== "kind" && name !== "stops")
+        .flatMap(([, value]) => [String(value)]),
+      ...transform.map(String),
+      ...gradient.stops.flatMap((stop) => [stop.offset, stop.color, stop.opacity].map(String)),
+    ].join("|");
+    const existingId = this.gradientIds.get(key);
+    if (existingId) return `url(#${existingId})`;
+
     const id = `asy-gradient-${this.gradientCounter += 1}`;
-    const point = (x: number, y: number): [number, number] => {
-      const { a, b, c, d, e, f } = state.ctm;
-      const px = a * x + c * y + e;
-      const py = b * x + d * y + f;
-      return [px - this.llx, this.height - (py - this.lly)];
-    };
+    this.gradientIds.set(key, id);
     const stops = gradient.stops.map((stop: GradientStop) =>
       `<stop offset="${formatOpacity(stop.offset)}" stop-color="${stop.color}"` +
       `${stop.opacity < 1 ? ` stop-opacity="${formatOpacity(stop.opacity)}"` : ""}/>`
     ).join("");
     let definition: string;
     if (gradient.kind === "linear") {
-      const [x1, y1] = point(gradient.x1, gradient.y1);
-      const [x2, y2] = point(gradient.x2, gradient.y2);
-      definition = `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${this.formatNumber(x1)}" y1="${this.formatNumber(y1)}" x2="${this.formatNumber(x2)}" y2="${this.formatNumber(y2)}">${stops}</linearGradient>`;
+      const matrix = transform.map((value) => this.formatNumber(value)).join(" ");
+      definition = `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" gradientTransform="matrix(${matrix})" x1="${this.formatNumber(gradient.x1)}" y1="${this.formatNumber(gradient.y1)}" x2="${this.formatNumber(gradient.x2)}" y2="${this.formatNumber(gradient.y2)}">${stops}</linearGradient>`;
     } else {
-      const [x1, y1] = point(gradient.x1, gradient.y1);
-      const [x2, y2] = point(gradient.x2, gradient.y2);
-      const scale = (Math.hypot(state.ctm.a, state.ctm.b) + Math.hypot(state.ctm.c, state.ctm.d)) / 2;
-      definition = `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${this.formatNumber(x2)}" cy="${this.formatNumber(y2)}" r="${this.formatNumber(gradient.r2 * scale)}" fx="${this.formatNumber(x1)}" fy="${this.formatNumber(y1)}">${stops}</radialGradient>`;
+      const matrix = transform.map((value) => this.formatNumber(value)).join(" ");
+      definition = `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" gradientTransform="matrix(${matrix})" cx="${this.formatNumber(gradient.x2)}" cy="${this.formatNumber(gradient.y2)}" r="${this.formatNumber(gradient.r2)}" fx="${this.formatNumber(gradient.x1)}" fy="${this.formatNumber(gradient.y1)}">${stops}</radialGradient>`;
     }
     this.defs.push(definition);
     return `url(#${id})`;
