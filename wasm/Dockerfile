@@ -41,6 +41,12 @@ RUN wget -q "https://sourceforge.net/projects/asymptote/files/${ASY_VERSION}/asy
 
 WORKDIR /src/asymptote
 
+# This argument is deliberately consumed by a build step below. It separates
+# Docker cache keys for an unmodified baseline and a source-pruned candidate.
+# Valid values are "baseline" and "candidate". The candidate is the
+# browser-optimized default; baseline remains available for size comparisons.
+ARG WASM_PRUNE=candidate
+
 # glm is header-only; vendor just the glm/ subtree (not all of /usr/include,
 # which would shadow emscripten's own libc headers with the host's glibc).
 RUN mkdir -p backports/glm-headers && cp -r /usr/include/glm backports/glm-headers/
@@ -49,14 +55,33 @@ RUN mkdir -p backports/glm-headers && cp -r /usr/include/glm backports/glm-heade
 # Copy patches and apply them
 # ---------------------------------------------------------------------------
 COPY patches/ /patches/
-RUN for p in /patches/*.patch; do \
-      [ -f "$p" ] && patch -p1 < "$p" || true; \
+RUN set -eux; \
+        for p in /patches/*.patch; do \
+            [ -e "$p" ] || continue; \
+            patch --batch --forward -p1 < "$p"; \
     done
 # Python-based patches: targeted source replacements too awkward to express
 # as clean unified diffs (e.g. swapping out a whole function body).
-RUN for p in /patches/*.py; do \
-      [ -f "$p" ] && python3 "$p" || true; \
+RUN set -eux; \
+        for p in /patches/*.py; do \
+            [ -e "$p" ] || continue; \
+            python3 "$p"; \
     done
+# Candidate-only source changes are never applied to the baseline. Consuming
+# WASM_PRUNE here prevents Docker from reusing a baseline configuration/build
+# layer for a candidate artifact.
+RUN set -eux; \
+        test "$WASM_PRUNE" = baseline || test "$WASM_PRUNE" = candidate; \
+        if [ "$WASM_PRUNE" = candidate ]; then \
+            for p in /patches/candidate/*.patch; do \
+                [ -e "$p" ] || continue; \
+                patch --batch --forward -p1 < "$p"; \
+            done; \
+            for p in /patches/candidate/*.py; do \
+                [ -e "$p" ] || continue; \
+                python3 "$p"; \
+            done; \
+        fi
 
 # ---------------------------------------------------------------------------
 # Configure & build Asymptote with Emscripten

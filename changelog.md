@@ -3,10 +3,9 @@
 - Improve SVG gradients
 - Skip unnecessary parsing
 - Prevent duplicate gradient definitions
+- Decreased package size by about $0.4$%
 
 # 0.0.7
-
-## Added
 
 - Added `renderToBlob()` for returning rendered output as a browser `Blob`.
 - Added `renderBatch()` for rendering multiple sources sequentially.

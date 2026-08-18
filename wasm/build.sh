@@ -14,6 +14,17 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DIST_DIR="${REPO_ROOT}/dist"
+# Use the verified browser-optimized build by default. Set WASM_PRUNE=baseline
+# explicitly to reproduce the unpruned artifact for comparison.
+WASM_PRUNE="${WASM_PRUNE:-candidate}"
+
+case "${WASM_PRUNE}" in
+  baseline|candidate) ;;
+  *)
+    echo "WASM_PRUNE must be 'baseline' or 'candidate', got: ${WASM_PRUNE}" >&2
+    exit 2
+    ;;
+esac
 
 # Git Bash can resolve Docker Desktop's Windows credential helper as a Linux
 # executable (`/usr/bin/docker-credential-desktop.exe`). The build only pulls
@@ -31,15 +42,18 @@ docker_cmd() {
   DOCKER_CONFIG="${DOCKER_CONFIG_DIR}" docker "$@"
 }
 
-echo "==> Building Asymptote WASM build image…"
-docker_cmd build -t asymptote-wasm-builder "${SCRIPT_DIR}"
+echo "==> Building ${WASM_PRUNE} Asymptote WASM build image…"
+docker_cmd build \
+  --build-arg "WASM_PRUNE=${WASM_PRUNE}" \
+  -t "asymptote-wasm-builder:${WASM_PRUNE}" \
+  "${SCRIPT_DIR}"
 
 mkdir -p "${DIST_DIR}"
 
 echo "==> Running build, output → ${DIST_DIR}"
 docker_cmd run --rm \
   -v "${DIST_DIR}:/out" \
-  asymptote-wasm-builder
+  "asymptote-wasm-builder:${WASM_PRUNE}"
 
 echo "==> Build complete."
 echo "    dist/asymptote.js"
