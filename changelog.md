@@ -3,7 +3,7 @@
 - Improve SVG gradients
 - Skip unnecessary parsing
 - Prevent duplicate gradient definitions
-- Decreased package size by about $0.4$%
+- Decreased package size by patching asymptote source code that cannot be used in the browser
 
 # 0.0.7
 
