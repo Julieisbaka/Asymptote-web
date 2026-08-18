@@ -18,8 +18,9 @@
   "scripts": {
     "build": "vite build && tsc --emitDeclarationOnly --declaration --project tsconfig.build.json",
     "dev": "vite",
+    "test": "npm run build && node --test test/*.test.js",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src",
+    "lint": "eslint src test",
     "prepack": "npm run build && bash ./wasm/build.sh"
   },
   "keywords": [
