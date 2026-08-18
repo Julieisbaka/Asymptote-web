@@ -25,15 +25,6 @@ function compose(m1: Matrix, m2: Matrix): Matrix {
   };
 }
 
-function apply(m: Matrix, x: number, y: number): [number, number] {
-  return [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f];
-}
-
-type PathSegment =
-  | { op: "M" | "L"; x: number; y: number }
-  | { op: "C"; x1: number; y1: number; x2: number; y2: number; x: number; y: number }
-  | { op: "Z" };
-
 interface GraphicsState {
   ctm: Matrix;
   fill: string;
@@ -81,79 +72,110 @@ function formatOpacity(value: number): string {
 }
 
 /**
- * Strip `/name { ... } bind? def` procedure definitions (brace-balanced,
- * since Asymptote's boilerplate contains nested `{ }` in `ifelse` blocks).
- * We never need to execute these bodies — the only one Asymptote emits
- * (`Setlinewidth`) is handled as a builtin alias for `setlinewidth`.
+ * Reads the constrained PostScript emitted by Asymptote on demand. Comments
+ * and `/name { ... } bind? def` boilerplate are skipped rather than copied
+ * into intermediate strings or a complete token array.
  */
-function stripProcDefs(text: string): string {
-  let out = "";
-  let i = 0;
-  while (i < text.length) {
-    if (text[i] === "/") {
-      const nameMatch = /^\/[^\s{}/]+/.exec(text.slice(i));
-      if (nameMatch) {
-        let j = i + nameMatch[0].length;
-        while (j < text.length && /\s/.test(text[j])) j += 1;
-        if (text[j] === "{") {
-          let depth = 0;
-          let k = j;
-          do {
-            if (text[k] === "{") depth += 1;
-            else if (text[k] === "}") depth -= 1;
-            k += 1;
-          } while (k < text.length && depth > 0);
-          // Skip trailing "bind" and "def" keywords.
-          const rest = /^\s*(bind\s+)?def/.exec(text.slice(k));
-          i = rest ? k + rest[0].length : k;
-          out += " ";
-          continue;
+class PostScriptTokenizer {
+  private index = 0;
+
+  constructor(private readonly source: string) {}
+
+  next(): string | null {
+    while (this.index < this.source.length) {
+      this.skipIgnored();
+      if (this.index >= this.source.length) return null;
+
+      const start = this.index;
+      const first = this.source[this.index];
+      if (first === "[" || first === "]") {
+        this.index += 1;
+        return first;
+      }
+      if (first === "(") return this.readString();
+
+      while (
+        this.index < this.source.length &&
+        !/\s/.test(this.source[this.index]) &&
+        this.source[this.index] !== "[" &&
+        this.source[this.index] !== "]"
+      ) {
+        this.index += 1;
+      }
+      return this.source.slice(start, this.index);
+    }
+    return null;
+  }
+
+  private skipIgnored(): void {
+    while (this.index < this.source.length) {
+      const char = this.source[this.index];
+      if (/\s/.test(char)) {
+        this.index += 1;
+      } else if (char === "%") {
+        while (this.index < this.source.length && this.source[this.index] !== "\n") {
+          this.index += 1;
         }
+      } else if (char === "/" && this.skipProcedureDefinition()) {
+        // Continue to skip whitespace following the procedure definition.
+      } else {
+        return;
       }
     }
-    out += text[i];
-    i += 1;
   }
-  return out;
-}
 
-function stripComments(text: string): string {
-  return text.replace(/%[^\n]*/g, "");
-}
+  private skipProcedureDefinition(): boolean {
+    const start = this.index;
+    let nameEnd = start + 1;
+    while (
+      nameEnd < this.source.length &&
+      !/\s/.test(this.source[nameEnd]) &&
+      !"{}/".includes(this.source[nameEnd])
+    ) {
+      nameEnd += 1;
+    }
+    if (nameEnd === start + 1) return false;
 
-function tokenize(text: string): string[] {
-  const tokens: string[] = [];
-  let i = 0;
-  while (i < text.length) {
-    if (/\s/.test(text[i])) {
-      i += 1;
-      continue;
+    let bodyStart = nameEnd;
+    while (bodyStart < this.source.length && /\s/.test(this.source[bodyStart])) bodyStart += 1;
+    if (this.source[bodyStart] !== "{") return false;
+
+    let depth = 0;
+    let bodyEnd = bodyStart;
+    do {
+      if (this.source[bodyEnd] === "{") depth += 1;
+      else if (this.source[bodyEnd] === "}") depth -= 1;
+      bodyEnd += 1;
+    } while (bodyEnd < this.source.length && depth > 0);
+
+    let suffix = bodyEnd;
+    while (suffix < this.source.length && /\s/.test(this.source[suffix])) suffix += 1;
+    if (this.source.startsWith("bind", suffix) && /\s/.test(this.source[suffix + 4] ?? "")) {
+      suffix += 4;
+      while (suffix < this.source.length && /\s/.test(this.source[suffix])) suffix += 1;
     }
-    if (text[i] === "[" || text[i] === "]") {
-      tokens.push(text[i]);
-      i += 1;
-      continue;
+    if (this.source.startsWith("def", suffix)) {
+      this.index = suffix + 3;
+    } else {
+      this.index = bodyEnd;
     }
-    if (text[i] === "(") {
-      const start = i;
-      let depth = 0;
-      let escaped = false;
-      do {
-        const char = text[i];
-        if (escaped) escaped = false;
-        else if (char === "\\") escaped = true;
-        else if (char === "(") depth += 1;
-        else if (char === ")") depth -= 1;
-        i += 1;
-      } while (i < text.length && depth > 0);
-      tokens.push(text.slice(start, i));
-      continue;
-    }
-    const start = i;
-    while (i < text.length && !/\s/.test(text[i]) && !/[\[\]]/.test(text[i])) i += 1;
-    tokens.push(text.slice(start, i));
+    return true;
   }
-  return tokens;
+
+  private readString(): string {
+    const start = this.index;
+    let depth = 0;
+    let escaped = false;
+    do {
+      const char = this.source[this.index];
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === "(") depth += 1;
+      else if (char === ")") depth -= 1;
+      this.index += 1;
+    } while (this.index < this.source.length && depth > 0);
+    return this.source.slice(start, this.index);
+  }
 }
 
 const NUMBER_RE = /^[+-]?(\d+\.?\d*|\.\d+)$/;
@@ -253,8 +275,7 @@ export function epsToSvg(eps: string, options: EpsToSvgOptions = {}): string {
   const width = urx - llx;
   const height = ury - lly;
 
-  const body = stripProcDefs(stripComments(eps));
-  const tokens = tokenize(body);
+  const tokens = new PostScriptTokenizer(eps);
 
   let clipCounter = 0;
   const defs: string[] = [];
@@ -277,9 +298,9 @@ export function epsToSvg(eps: string, options: EpsToSvgOptions = {}): string {
   };
   const stateStack: GraphicsState[] = [];
 
-  let subpaths: PathSegment[][] = [];
-  let currentSubpath: PathSegment[] = [];
-  let currentPoint: [number, number] = [0, 0];
+  let pathParts: string[] = [];
+  let currentX = 0;
+  let currentY = 0;
 
   const stack: (number | number[] | string)[] = [];
   const popN = (n: number): number[] => {
@@ -291,38 +312,31 @@ export function epsToSvg(eps: string, options: EpsToSvgOptions = {}): string {
     return nums;
   };
 
-  const toAbs = (x: number, y: number): [number, number] => apply(state.ctm, x, y);
-  const toSvg = (x: number, y: number): [number, number] => [x - llx, height - (y - lly)];
-
-  const finishSubpath = () => {
-    if (currentSubpath.length > 0) {
-      subpaths.push(currentSubpath);
-      currentSubpath = [];
-    }
+  const appendPoint = (op: "M" | "L", x: number, y: number) => {
+    const { a, b, c, d, e, f } = state.ctm;
+    currentX = a * x + c * y + e;
+    currentY = b * x + d * y + f;
+    pathParts.push(
+      `${op}${formatNumber(currentX - llx)},${formatNumber(height - (currentY - lly))}`
+    );
   };
 
-  const pathToD = (): string => {
-    finishSubpath();
-    const parts: string[] = [];
-    for (const sp of subpaths) {
-      for (const seg of sp) {
-        if (seg.op === "M" || seg.op === "L") {
-          const [sx, sy] = toSvg(seg.x, seg.y);
-          parts.push(`${seg.op}${formatNumber(sx)},${formatNumber(sy)}`);
-        } else if (seg.op === "C") {
-          const [x1, y1] = toSvg(seg.x1, seg.y1);
-          const [x2, y2] = toSvg(seg.x2, seg.y2);
-          const [x, y] = toSvg(seg.x, seg.y);
-          parts.push(
-            `C${formatNumber(x1)},${formatNumber(y1)} ${formatNumber(x2)},${formatNumber(y2)} ${formatNumber(x)},${formatNumber(y)}`
-          );
-        } else {
-          parts.push("Z");
-        }
-      }
-    }
-    return parts.join(" ");
+  const appendCurve = (x1: number, y1: number, x2: number, y2: number, x: number, y: number) => {
+    const { a, b, c, d, e, f } = state.ctm;
+    const ax1 = a * x1 + c * y1 + e;
+    const ay1 = b * x1 + d * y1 + f;
+    const ax2 = a * x2 + c * y2 + e;
+    const ay2 = b * x2 + d * y2 + f;
+    currentX = a * x + c * y + e;
+    currentY = b * x + d * y + f;
+    pathParts.push(
+      `C${formatNumber(ax1 - llx)},${formatNumber(height - (ay1 - lly))} ` +
+      `${formatNumber(ax2 - llx)},${formatNumber(height - (ay2 - lly))} ` +
+      `${formatNumber(currentX - llx)},${formatNumber(height - (currentY - lly))}`
+    );
   };
+
+  const pathToD = (): string => pathParts.join(" ");
 
   const doClip = (evenodd: boolean) => {
     const d = pathToD();
@@ -356,7 +370,8 @@ export function epsToSvg(eps: string, options: EpsToSvgOptions = {}): string {
   };
 
   const doShow = (text: string) => {
-    const [x, y] = toSvg(currentPoint[0], currentPoint[1]);
+    const x = currentX - llx;
+    const y = height - (currentY - lly);
     const scale = Math.sqrt(state.ctm.a ** 2 + state.ctm.b ** 2);
     const angle = -(Math.atan2(state.ctm.b, state.ctm.a) * 180) / Math.PI;
     const transform = angle !== 0
@@ -372,8 +387,7 @@ export function epsToSvg(eps: string, options: EpsToSvgOptions = {}): string {
     );
   };
 
-  for (let i = 0; i < tokens.length; i += 1) {
-    const tok = tokens[i];
+  for (let tok = tokens.next(); tok !== null; tok = tokens.next()) {
 
     if (NUMBER_RE.test(tok)) {
       stack.push(parseFloat(tok));
@@ -385,10 +399,8 @@ export function epsToSvg(eps: string, options: EpsToSvgOptions = {}): string {
     }
     if (tok === "[") {
       const arr: number[] = [];
-      i += 1;
-      while (i < tokens.length && tokens[i] !== "]") {
-        arr.push(parseFloat(tokens[i]));
-        i += 1;
+      for (let value = tokens.next(); value !== null && value !== "]"; value = tokens.next()) {
+        arr.push(parseFloat(value));
       }
       stack.push(arr);
       continue;
@@ -400,50 +412,35 @@ export function epsToSvg(eps: string, options: EpsToSvgOptions = {}): string {
 
     switch (tok) {
       case "newpath":
-        subpaths = [];
-        currentSubpath = [];
+        pathParts = [];
         break;
       case "moveto": {
         const [x, y] = popN(2);
-        finishSubpath();
-        const [ax, ay] = toAbs(x, y);
-        currentSubpath.push({ op: "M", x: ax, y: ay });
-        currentPoint = [ax, ay];
+        appendPoint("M", x, y);
         break;
       }
       case "lineto": {
         const [x, y] = popN(2);
-        const [ax, ay] = toAbs(x, y);
-        currentSubpath.push({ op: "L", x: ax, y: ay });
-        currentPoint = [ax, ay];
+        appendPoint("L", x, y);
         break;
       }
       case "rmoveto": {
         const [dx, dy] = popN(2);
-        finishSubpath();
-        const [ax, ay] = toAbs(currentPoint[0] + dx, currentPoint[1] + dy);
-        currentSubpath.push({ op: "M", x: ax, y: ay });
-        currentPoint = [ax, ay];
+        appendPoint("M", currentX + dx, currentY + dy);
         break;
       }
       case "rlineto": {
         const [dx, dy] = popN(2);
-        const [ax, ay] = toAbs(currentPoint[0] + dx, currentPoint[1] + dy);
-        currentSubpath.push({ op: "L", x: ax, y: ay });
-        currentPoint = [ax, ay];
+        appendPoint("L", currentX + dx, currentY + dy);
         break;
       }
       case "curveto": {
         const [x1, y1, x2, y2, x3, y3] = popN(6);
-        const [ax1, ay1] = toAbs(x1, y1);
-        const [ax2, ay2] = toAbs(x2, y2);
-        const [ax3, ay3] = toAbs(x3, y3);
-        currentSubpath.push({ op: "C", x1: ax1, y1: ay1, x2: ax2, y2: ay2, x: ax3, y: ay3 });
-        currentPoint = [ax3, ay3];
+        appendCurve(x1, y1, x2, y2, x3, y3);
         break;
       }
       case "closepath":
-        currentSubpath.push({ op: "Z" });
+        pathParts.push("Z");
         break;
       case "gsave":
         stateStack.push(cloneState(state));
