@@ -243,3 +243,34 @@ the option preserves the default three-decimal output.
 The converter supports Asymptote opacity commands such as
 `setopacityalpha`. Opacity is preserved on generated SVG paths using the
 `opacity` attribute, including across `gsave`/`grestore` state changes.
+
+### Gradients
+
+Linear and radial gradients are supported when their geometry and color stops
+are explicit and parseable. The converter-friendly operators accept a flat
+stop array containing repeated `offset r g b` groups:
+
+```postscript
+% x1 y1 x2 y2 [offset r g b ...] setlineargradient
+0 0 100 0 [0 1 0 0 1 0 0 1] setlineargradient
+newpath 0 0 moveto 100 0 lineto 100 100 lineto closepath fill
+
+% x1 y1 r1 x2 y2 r2 [offset r g b ...] setradialgradient
+50 50 0 50 50 70 [0 1 1 1 1 0 0 0] setradialgradient
+newpath 0 0 moveto 100 0 lineto 100 100 lineto closepath fill
+```
+
+Common Level 2-style shading dictionaries are also recognized for shading
+types 2 and 3 when they provide `/Coords` and either `/C0` plus `/C1` or a
+`/ColorStops` array. For example:
+
+```postscript
+<< /ShadingType 2 /Coords [0 0 100 100]
+  /C0 [1 0 0] /C1 [0 0 1] >> shfill
+```
+
+`makepattern`/`setpattern` forms are accepted when the pattern contains such a
+shading dictionary. Transforms are applied to gradient geometry, and existing
+path clipping and opacity are retained. Mesh, function-based, unsupported
+color spaces, malformed dictionaries, and incomplete stop arrays are ignored
+gracefully; they do not make `epsToSvg()` throw.
