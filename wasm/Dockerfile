@@ -6,7 +6,7 @@
 #
 # The build outputs asymptote.js, asymptote.wasm, and asy.data into /out.
 
-FROM emscripten/emsdk:3.1.51
+FROM emscripten/emsdk:6.0.7
 
 # ---------------------------------------------------------------------------
 # System dependencies needed to build Asymptote

@@ -4,6 +4,7 @@
 - Skip unnecessary parsing
 - Prevent duplicate gradient definitions
 - Decreased package size by patching asymptote source code that cannot be used in the browser
+- Updated emscripten to 6.0.7
 
 # 0.0.7
 
