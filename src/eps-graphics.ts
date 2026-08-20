@@ -84,3 +84,17 @@ export function toColor(nums: number[]): string {
   }
   return "black";
 }
+
+export function hsbToColor(hue: number, saturation: number, brightness: number): string {
+  const h = ((hue % 1) + 1) % 1;
+  const s = Math.max(0, Math.min(1, saturation));
+  const v = Math.max(0, Math.min(1, brightness));
+  const sector = h * 6;
+  const index = Math.floor(sector);
+  const fraction = sector - index;
+  const p = v * (1 - s);
+  const q = v * (1 - s * fraction);
+  const t = v * (1 - s * (1 - fraction));
+  const rgb = [[v, t, p], [q, v, p], [p, v, t], [p, q, v], [t, p, v], [v, p, q]][index % 6];
+  return `rgb(${rgb.map((value) => Math.round(value * 255)).join(",")})`;
+}

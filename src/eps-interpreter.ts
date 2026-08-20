@@ -2,6 +2,7 @@ import {
   cloneState,
   compose,
   IDENTITY,
+  hsbToColor,
   toColor,
   type Gradient,
   type GraphicsState,
@@ -35,6 +36,10 @@ function unescapePostScriptString(token: string): string {
       default: return escaped;
     }
   });
+}
+
+function textChars(text: string): number[] {
+  return Array.from(text, (char) => char.codePointAt(0) ?? 0);
 }
 
 export class PostScriptInterpreter {
@@ -160,6 +165,12 @@ export class PostScriptInterpreter {
         this.state.fill = this.state.stroke = toColor(this.popN(4));
         this.state.gradient = null;
         break;
+      case "sethsbcolor": {
+        const [h, s, b] = this.popN(3);
+        this.state.fill = this.state.stroke = hsbToColor(h, s, b);
+        this.state.gradient = null;
+        break;
+      }
       case "setlineargradient":
         this.state.gradient = this.makeExplicitGradient("linear");
         break;
@@ -188,6 +199,33 @@ export class PostScriptInterpreter {
       case "show": {
         const text = this.stack.pop();
         if (typeof text === "string") this.writer.show(this.state, text);
+        break;
+      }
+      case "ashow": {
+        const text = this.stack.pop();
+        const [ax, ay] = this.popN(2);
+        if (typeof text === "string") this.writer.show(this.state, text, textChars(text).map(() => [ax, ay]));
+        break;
+      }
+      case "widthshow": {
+        const text = this.stack.pop();
+        const char = this.popN(1)[0];
+        const [cx, cy] = this.popN(2);
+        if (typeof text === "string") {
+          this.writer.show(this.state, text, textChars(text).map((value) =>
+            value === char ? [cx, cy] : [0, 0]));
+        }
+        break;
+      }
+      case "awidthshow": {
+        const text = this.stack.pop();
+        const char = this.popN(1)[0];
+        const [cx, cy] = this.popN(2);
+        const [ax, ay] = this.popN(2);
+        if (typeof text === "string") {
+          this.writer.show(this.state, text, textChars(text).map((value) =>
+            value === char ? [ax + cx, ay + cy] : [ax, ay]));
+        }
         break;
       }
       case "setlinewidth":

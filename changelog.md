@@ -1,3 +1,8 @@
+# 0.0.9
+- Replaced the 5×7 glyph table with a compact vector font while preserving the existing `textpath()` patch interface. 
+- Added HSB colors, basic text spacing operators, and broader font mappings.
+eport ignored operators, images, mesh shadings, and unsupported color spaces instead of silently dropping the
+
 # 0.0.8
 
 - Improve SVG gradients

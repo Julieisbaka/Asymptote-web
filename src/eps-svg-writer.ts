@@ -16,25 +16,58 @@ function escapeXml(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
-function toCssFontFamily(font: string): string {
+interface CssFont {
+  family: string;
+  weight?: string;
+  style?: string;
+}
+
+function toCssFont(font: string): CssFont {
   switch (font) {
     case "Times-Roman":
+    case "Times":
+    case "TimesNewRoman":
+      return { family: "Times New Roman, serif" };
     case "Times-Bold":
+    case "TimesNewRoman-Bold":
+      return { family: "Times New Roman, serif", weight: "bold" };
     case "Times-Italic":
+    case "TimesNewRoman-Italic":
+      return { family: "Times New Roman, serif", style: "italic" };
     case "Times-BoldItalic":
-      return "Times New Roman, serif";
+    case "TimesNewRoman-BoldItalic":
+      return { family: "Times New Roman, serif", weight: "bold", style: "italic" };
     case "Helvetica":
+    case "Arial":
+    case "ArialMT":
+      return { family: "Arial, sans-serif" };
     case "Helvetica-Bold":
+    case "Arial-BoldMT":
+      return { family: "Arial, sans-serif", weight: "bold" };
     case "Helvetica-Oblique":
+    case "Arial-ItalicMT":
+      return { family: "Arial, sans-serif", style: "italic" };
     case "Helvetica-BoldOblique":
-      return "Arial, sans-serif";
+    case "Arial-BoldItalicMT":
+      return { family: "Arial, sans-serif", weight: "bold", style: "italic" };
     case "Courier":
+    case "CourierNew":
+      return { family: "Courier New, monospace" };
     case "Courier-Bold":
+    case "CourierNew-Bold":
+      return { family: "Courier New, monospace", weight: "bold" };
     case "Courier-Oblique":
+    case "CourierNew-Italic":
+      return { family: "Courier New, monospace", style: "italic" };
     case "Courier-BoldOblique":
-      return "Courier New, monospace";
+    case "CourierNew-BoldItalic":
+      return { family: "Courier New, monospace", weight: "bold", style: "italic" };
+    case "Symbol":
+      return { family: "Symbol, serif" };
+    case "ZapfDingbats":
+      return { family: "Zapf Dingbats, sans-serif" };
     default:
-      return font;
+      return { family: font || "sans-serif" };
   }
 }
 
@@ -128,20 +161,38 @@ export class SvgWriter {
     }
   }
 
-  show(state: GraphicsState, text: string): void {
+  show(state: GraphicsState, text: string, adjustments: Array<[number, number]> = []): void {
     const x = this.currentX - this.llx;
     const y = this.height - (this.currentY - this.lly);
     const scale = Math.sqrt(state.ctm.a ** 2 + state.ctm.b ** 2);
     const angle = -(Math.atan2(state.ctm.b, state.ctm.a) * 180) / Math.PI;
+    const font = toCssFont(state.fontFamily);
     const transform = angle !== 0
       ? ` transform="rotate(${this.formatNumber(angle)} ${this.formatNumber(x)} ${this.formatNumber(y)})"`
       : "";
     const opacityAttr = state.opacity < 1 ? ` opacity="${formatOpacity(state.opacity)}"` : "";
+    const weightAttr = font.weight ? ` font-weight="${font.weight}"` : "";
+    const styleAttr = font.style ? ` font-style="${font.style}"` : "";
+    const chars = Array.from(text);
+    const content = adjustments.length === 0
+      ? escapeXml(text)
+      : chars.map((char, index) => {
+        if (index === 0) return `<tspan>${escapeXml(char)}</tspan>`;
+        const [dx, dy] = adjustments[index - 1] ?? [0, 0];
+        const tx = state.ctm.a * dx + state.ctm.c * dy;
+        const ty = -(state.ctm.b * dx + state.ctm.d * dy);
+        return `<tspan dx="${this.formatNumber(tx)}" dy="${this.formatNumber(ty)}">${escapeXml(char)}</tspan>`;
+      }).join("");
     this.elements.push(
       `<text x="${this.formatNumber(x)}" y="${this.formatNumber(y)}" fill="${state.fill}" ` +
-      `font-family="${escapeXml(toCssFontFamily(state.fontFamily))}" font-size="${this.formatNumber(state.fontSize * scale)}"` +
-      `${transform}${opacityAttr}>${escapeXml(text)}</text>`
+      `font-family="${escapeXml(font.family)}" font-size="${this.formatNumber(state.fontSize * scale)}"` +
+      `${weightAttr}${styleAttr}${transform}${opacityAttr}>${content}</text>`
     );
+    const advance = state.fontSize * 0.6 * chars.length;
+    const extraX = adjustments.reduce((sum, value) => sum + value[0], 0);
+    const extraY = adjustments.reduce((sum, value) => sum + value[1], 0);
+    this.currentX += state.ctm.a * (advance + extraX) + state.ctm.c * extraY;
+    this.currentY += state.ctm.b * (advance + extraX) + state.ctm.d * extraY;
   }
 
   serialize(): string {

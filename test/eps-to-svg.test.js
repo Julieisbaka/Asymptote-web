@@ -54,6 +54,34 @@ test("preserves radial gradients and opacity", () => {
   assert.match(svg, /opacity="0\.5"/);
 });
 
+test("converts HSB colors to RGB", () => {
+  const svg = convert("0 1 1 sethsbcolor newpath 0 0 moveto 10 0 lineto stroke");
+
+  assert.match(svg, /stroke="rgb\(255,0,0\)"/);
+});
+
+test("maps styled and symbolic PostScript fonts", () => {
+  const svg = convert(
+    "/Helvetica-BoldOblique findfont 12 scalefont setfont 10 20 moveto (A) show " +
+    "/Symbol findfont 12 scalefont setfont 20 20 moveto (b) show"
+  );
+
+  assert.match(svg, /font-family="Arial, sans-serif"[^>]*font-weight="bold"[^>]*font-style="italic"/);
+  assert.match(svg, /font-family="Symbol, serif"/);
+});
+
+test("emits per-character spacing adjustments", () => {
+  const svg = convert(
+    "10 20 moveto 1 0 (AB) ashow " +
+    "10 40 moveto 2 0 32 (A B) widthshow " +
+    "10 60 moveto 1 0 2 0 65 (AB) awidthshow"
+  );
+
+  assert.match(svg, /<tspan dx="1" dy="0">B<\/tspan>/);
+  assert.match(svg, /<tspan dx="2" dy="0">B<\/tspan>/);
+  assert.match(svg, /<tspan dx="3" dy="0">B<\/tspan>/);
+});
+
 test("rejects invalid precision", () => {
   assert.throws(() => epsToSvg(header, { precision: 13 }), RangeError);
 });
