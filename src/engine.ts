@@ -19,6 +19,9 @@ interface EmscriptenModule {
     writeFile(path: string, data: string | Uint8Array, opts?: { encoding?: string }): void;
     readFile(path: string, opts: { encoding: "utf8" }): string;
     mkdir(path: string): void;
+    unlink(path: string): void;
+    rmdir(path: string): void;
+    readdir(path: string): string[];
     analyzePath(path: string): { exists: boolean };
   };
   callMain(args: string[]): number;
@@ -79,7 +82,47 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
 // Core render logic
 // ---------------------------------------------------------------------------
 
-const INPUT_FILE = "/tmp/input.asy";
+const RENDER_ROOT = "/tmp/asymptote-web";
+let renderCounter = 0;
+let renderQueue: Promise<void> = Promise.resolve();
+
+function enqueueRender<T>(task: () => Promise<T>): Promise<T> {
+  const result = renderQueue.then(task);
+  renderQueue = result.then(() => undefined, () => undefined);
+  return result;
+}
+
+function ensureDirectory(mod: EmscriptenModule, path: string): void {
+  const parts = path.split("/").filter(Boolean);
+  let current = "";
+  for (const part of parts) {
+    current += `/${part}`;
+    if (!mod.FS.analyzePath(current).exists) mod.FS.mkdir(current);
+  }
+}
+
+function virtualFilePath(renderDir: string, relativePath: string): string {
+  const normalized = relativePath.replace(/\\/g, "/");
+  if (!normalized || normalized.startsWith("/") || /^[A-Za-z]:/.test(normalized)) {
+    throw new TypeError(`Render file path must be relative: ${relativePath}`);
+  }
+  const parts = normalized.split("/");
+  if (parts.some((part) => !part || part === "." || part === "..")) {
+    throw new TypeError(`Render file path must not contain empty, '.' or '..' segments: ${relativePath}`);
+  }
+  return `${renderDir}/${parts.join("/")}`;
+}
+
+function removeTree(mod: EmscriptenModule, path: string): void {
+  try {
+    for (const entry of mod.FS.readdir(path)) {
+      if (entry !== "." && entry !== "..") removeTree(mod, `${path}/${entry}`);
+    }
+    mod.FS.rmdir(path);
+  } catch {
+    if (mod.FS.analyzePath(path).exists) mod.FS.unlink(path);
+  }
+}
 
 function getWebGLFlags(renderOptions: RenderOptions): string[] {
   const flags: string[] = [];
@@ -129,12 +172,25 @@ function getOutputFormat(
  *
  * @internal
  */
-export async function runAsymptote(
+export function runAsymptote(
+  source: string,
+  renderOptions: RenderOptions,
+  createOptions: CreateOptions
+): Promise<RenderResult> {
+  return enqueueRender(() => runAsymptoteUnsafe(source, renderOptions, createOptions));
+}
+
+async function runAsymptoteUnsafe(
   source: string,
   renderOptions: RenderOptions,
   createOptions: CreateOptions
 ): Promise<RenderResult> {
   const mod = await loadModule(createOptions);
+  const renderDir = `${RENDER_ROOT}/render-${++renderCounter}`;
+  const inputFile = `${renderDir}/input.asy`;
+  const outputPrefix = `${renderDir}/output`;
+  ensureDirectory(mod, RENDER_ROOT);
+  ensureDirectory(mod, renderDir);
 
   // Capture stdout + stderr
   const stdoutLines: string[] = [];
@@ -148,8 +204,15 @@ export async function runAsymptote(
   mod.printErr = (text: string) => stderrLines.push(text);
 
   try {
-    // Write source into the virtual filesystem
-    mod.FS.writeFile(INPUT_FILE, source);
+    // Write source and caller-provided files into this render's isolated
+    // virtual filesystem. Relative imports resolve beside input.asy.
+    mod.FS.writeFile(inputFile, source);
+    for (const [relativePath, data] of Object.entries(renderOptions.files ?? {})) {
+      const path = virtualFilePath(renderDir, relativePath);
+      const directory = path.slice(0, path.lastIndexOf("/"));
+      ensureDirectory(mod, directory);
+      mod.FS.writeFile(path, data);
+    }
 
     const extraFlags = renderOptions.flags ?? [];
     const format = getOutputFormat(renderOptions, extraFlags);
@@ -162,13 +225,13 @@ export async function runAsymptote(
     // embedding a <script> reference to the asygl.js viewer) — no conversion
     // needed, but it does need the bundled asygl.js resolved as -asygl=<url>.
     const asyFormat = format === "svg" ? "eps" : format === "webgl" ? "html" : format;
-    const outputFile = `/tmp/input.${asyFormat}`;
+    const outputFile = `${outputPrefix}.${asyFormat}`;
     const asyglUrl = createOptions.asyglUrl ?? new URL("asygl.js", getGlueUrl()).href;
 
     const args = [
       "-f", asyFormat,
       // Asymptote appends the format extension to the -o prefix itself.
-      "-o", "/tmp/input",
+      "-o", outputPrefix,
       // No LaTeX toolchain is available in WASM, and using it would spawn
       // external processes (fork) that WASM can't do — force native labels.
       "-tex", "none",
@@ -177,7 +240,7 @@ export async function runAsymptote(
       ...(format === "webgl" && renderOptions.offline ? ["-offline"] : []),
       ...(format === "webgl" ? getWebGLFlags(renderOptions) : []),
       ...extraFlags,
-      INPUT_FILE,
+      inputFile,
     ];
 
     const exitCode = mod.callMain(args);
@@ -214,5 +277,6 @@ export async function runAsymptote(
   } finally {
     mod.print = origPrint;
     mod.printErr = origPrintErr;
+    if (mod.FS.analyzePath(renderDir).exists) removeTree(mod, renderDir);
   }
 }

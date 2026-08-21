@@ -151,6 +151,10 @@ Without these headers, single-threaded mode is used automatically, which is fine
 
 - 3D scenes render via WebGL (`format: "webgl"` / `mountWebGL()`), but text labels within 3D scenes are unsupported (same `-tex none` limitation as 2D), and the binary v3d/PRC export format is not supported.
 - Generated PDF may have bugs because diffrent browsers use diffrent PDF renderers (PDFs not yet supported)
+- Browser builds report `convert()` and `animate()` as unavailable instead of attempting to launch ImageMagick or an external viewer.
+- Browser-provided imports and assets can be mounted with the `render()` `files` option; host filesystem paths are not accessible.
+- Explicit `texsize()` calls use approximate native metrics, while `texpath()` reports unavailable because TeX shaping is not bundled.
+- Trusted pre-rendered LaTeX SVG can be inserted with the opt-in `asy.unsafe.mount()` DOM hook.
 
 ---
 

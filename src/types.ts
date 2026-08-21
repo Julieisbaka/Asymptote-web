@@ -20,6 +20,14 @@ export interface RenderOptions {
   flags?: string[];
 
   /**
+   * Files to place in the render's isolated virtual filesystem. Keys are
+   * relative paths, such as `lib/helpers.asy` or `data/image.dat`.
+   * Values may be text or binary data. Host filesystem paths and URLs are not
+   * read automatically; fetch or select files in JavaScript first.
+   */
+  files?: Record<string, string | Uint8Array>;
+
+  /**
    * When `format` is `"webgl"`, embed the AsyGL viewer in the generated HTML
    * instead of loading it from `asyglUrl`. This makes the HTML self-contained
    * for offline or static-file deployments. Extra `flags` are appended after
@@ -111,6 +119,15 @@ export interface RenderResult {
 }
 
 /**
+ * Trusted-content hook for direct SVG DOM customization before mounting.
+ *
+ * **WARNING: unsafe API.** The callback may insert raw SVG/HTML and execute
+ * any DOM operations available to the page. Only pass content and callbacks
+ * controlled by the application; never pass untrusted or user-supplied data.
+ */
+export type UnsafeSvgCustomizer = (svg: SVGSVGElement) => void;
+
+/**
  * An initialised Asymptote rendering engine.
  * Obtain one via {@link createAsymptote}.
  */
@@ -173,6 +190,21 @@ export interface AsymptoteEngine {
     source: string,
     options?: RenderOptions
   ): Promise<RenderResult>;
+
+  /**
+    * **WARNING: unsafe API.** Trusted direct-DOM mounting API for pre-rendered
+    * labels or other SVG fragments. The callback runs on the live SVG element
+    * before it is mounted and may insert raw markup or perform arbitrary DOM
+    * operations. Never pass untrusted or user-controlled content to it.
+   */
+  readonly unsafe: {
+    mount(
+      target: string | Element,
+      source: string,
+      customize: UnsafeSvgCustomizer,
+      options?: RenderOptions
+    ): Promise<RenderResult>;
+  };
 
   /**
    * Render a 3D Asymptote scene and mount the interactive WebGL viewer into

@@ -50,6 +50,7 @@ document.querySelector("#output").innerHTML = result.output;
 |---|---|---|---|
 | `format` | `"svg" \| "eps" \| "ps" \| "webgl"` | `"svg"` | Output format. WebGL returns HTML for the interactive viewer. |
 | `flags` | `string[]` | `[]` | Additional command-line arguments forwarded to Asymptote. |
+| `files` | `Record<string, string \| Uint8Array>` | `{}` | Files mounted into the isolated browser filesystem for imports and assets. |
 | `offline` | `boolean` | `false` | For WebGL, embed the AsyGL viewer into the generated HTML. |
 | `position` | `[number, number]` | automatic | Initial WebGL camera position. |
 | `devicePixelRatio` | `number` | automatic | WebGL viewer device-pixel ratio. |
@@ -62,6 +63,11 @@ The default SVG path is WASM-safe: Asymptote generates native EPS and the
 package converts that EPS to SVG in-process. The browser build forces
 `-tex none` and `-noV`, because LaTeX and external viewer tools are not
 available inside the WASM runtime.
+
+Ordinary labels use the bundled native vector fallback. Explicit `texsize()`
+calls return approximate native metrics, while explicit `texpath()` calls
+return an empty path array and emit a warning because TeX shaping is not
+available in the browser build.
 
 EPS and PS output can be retrieved as text:
 
@@ -86,11 +92,43 @@ Flags are appended after the convenience options. This means a later flag can
 override a convenience option, for example `flags: ["-nooffline"]` overrides
 `offline: true` for WebGL output.
 
+`files` provides browser-side imports without exposing the host filesystem:
+
+```ts
+await asy.render(`include "lib/helpers.asy"; draw(helperPath);`, {
+  files: {
+    "lib/helpers.asy": "path helperPath = unitsquare;",
+    "data/values.bin": new Uint8Array([1, 2, 3]),
+  },
+});
+```
+
+File keys must be relative and cannot contain `.` or `..` path segments. Files
+are mounted beside the temporary input file and removed after rendering. Each
+render uses an isolated virtual directory and renders are serialized because
+the WASM module has shared global state.
+
 `svgPrecision` is opt-in. The default remains three decimal places; lower
 precision can reduce SVG size at the cost of geometric precision. `reuseSvg`
 is only used by `mount()` and is disabled by default. When enabled, an
 existing direct child `<svg>` keeps its root DOM node while its attributes and
 children are updated.
+
+### `unsafe.mount(target, source, customize, options?)`
+
+Use this opt-in API when trusted pre-rendered LaTeX or other SVG content must
+be inserted directly into the rendered SVG. The callback receives the live
+`SVGSVGElement` before it is mounted:
+
+```ts
+await asy.unsafe.mount("#output", "draw(unitsquare);", (svg) => {
+  // `latexSvg` must come from a trusted pre-rendering pipeline.
+  svg.insertAdjacentHTML("beforeend", latexSvg);
+});
+```
+
+This API intentionally permits raw DOM insertion. Never pass user-controlled
+or untrusted HTML/SVG to the callback. It supports SVG output only.
 
 ### `renderToBlob(source, options?)`
 

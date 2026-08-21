@@ -23,6 +23,7 @@ import {
   type CreateOptions,
   type RenderOptions,
   type RenderResult,
+  type UnsafeSvgCustomizer,
 } from "./types.js";
 
 export type { EpsToSvgOptions, EpsToSvgResult } from "./eps-to-svg.js";
@@ -33,6 +34,7 @@ export type {
   OutputFormat,
   RenderOptions,
   RenderResult,
+  UnsafeSvgCustomizer,
 } from "./types.js";
 
 /**
@@ -78,6 +80,21 @@ function updateSvgElement(target: Element, svgText: string): boolean {
     ...Array.from(next.childNodes).map((node) => document.importNode(node, true))
   );
   return true;
+}
+
+function mountUnsafeSvg(
+  target: Element,
+  svgText: string,
+  customize: UnsafeSvgCustomizer
+): void {
+  const container = document.createElement("div");
+  container.innerHTML = svgText;
+  const svg = container.firstElementChild;
+  if (!svg || svg.tagName.toLowerCase() !== "svg") {
+    throw new Error("asymptote-web: unsafe.mount produced invalid SVG output");
+  }
+  customize(svg as SVGSVGElement);
+  target.replaceChildren(svg);
 }
 
 function outputMimeType(format: RenderResult["format"]): string {
@@ -184,6 +201,28 @@ export async function createAsymptote(
         el.innerHTML = result.svg;
       }
       return result;
+    },
+
+    unsafe: {
+      async mount(
+        target: string | Element,
+        source: string,
+        customize: UnsafeSvgCustomizer,
+        renderOptions: RenderOptions = {}
+      ): Promise<RenderResult> {
+        const result = await runAsymptote(source, renderOptions, resolvedOptions);
+        if (result.format !== "svg") {
+          throw new Error("asymptote-web: unsafe.mount only supports SVG output");
+        }
+        const el = typeof target === "string"
+          ? document.querySelector(target)
+          : target;
+        if (!el) {
+          throw new Error(`asymptote-web: unsafe.mount target not found: ${target}`);
+        }
+        mountUnsafeSvg(el, result.svg, customize);
+        return result;
+      },
     },
 
     async mountWebGL(

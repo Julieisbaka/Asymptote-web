@@ -27,6 +27,7 @@ added in version **0.0.2**.
 interface RenderOptions {
   format?: OutputFormat;
   flags?: string[];
+  files?: Record<string, string | Uint8Array>;
   offline?: boolean;
   position?: [number, number];
   devicePixelRatio?: number;
@@ -42,6 +43,9 @@ interface RenderOptions {
   A format can also be selected with `flags: ["-f", "eps"]` (or `ps`).
   When both `format` and a format flag are supplied, the format flag takes
   precedence.
+- `files` contains relative virtual paths and text or binary contents mounted
+  for that render. Host filesystem paths and URLs are not accessed directly.
+  Render files are isolated and cleaned up after completion.
 - `offline` applies only to WebGL output. When `true`, Asymptote embeds the
   AsyGL viewer in the generated HTML, making it suitable for offline or
   self-contained deployments. When omitted or `false`, the viewer is loaded
@@ -58,6 +62,10 @@ interface RenderOptions {
   through 12. The default remains 3.
 - `reuseSvg` is opt-in and applies to `mount()`. It preserves an existing
   direct child SVG root while updating its generated content.
+
+`AsymptoteEngine.unsafe.mount()` accepts a trusted callback for direct SVG DOM
+manipulation, such as inserting pre-rendered LaTeX. The callback may insert
+raw markup and must never receive untrusted content.
 
 ## `RenderResult`
 
