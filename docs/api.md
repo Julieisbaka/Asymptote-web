@@ -271,6 +271,8 @@ interface RenderResult {
 ## `AsymptoteError`
 
 Rendering throws `AsymptoteError` when Asymptote exits unsuccessfully.
+Its message is prefixed with `ASYMPTOTE ERROR` so compiler/source failures
+can be distinguished from package or browser integration errors.
 
 ```ts
 import { AsymptoteError } from "asymptote-web";

@@ -255,7 +255,7 @@ async function runAsymptoteUnsafe(
     if (exitCode !== 0) {
       const stderr = stderrLines.join("\n");
       throw new AsymptoteError(
-        `Asymptote exited with code ${exitCode}:\n${stderr}`,
+        `ASYMPTOTE ERROR: Asymptote exited with code ${exitCode}:\n${stderr}`,
         exitCode,
         stderr
       );

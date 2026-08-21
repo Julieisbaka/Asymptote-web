@@ -12,6 +12,7 @@
 - Removed the unused `vite-plugin-dts` development dependency.
 - Added queued render cancellation through `AbortSignal`.
 - Added bounded 8-bit grayscale PostScript `image` conversion to SVG.
+- Prefixed Asymptote compiler failures with `ASYMPTOTE ERROR` for clearer diagnostics.
 
 # 0.0.9
 

@@ -259,7 +259,10 @@ draw(shift(2,0,0)*unitcube, red);
         output.innerHTML = "";
         const errSpan = document.createElement("span");
         errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
-        errSpan.textContent = err instanceof AsymptoteError ? err.stderr : err.message;
+        const isAsymptoteError = err instanceof AsymptoteError;
+        errSpan.textContent = isAsymptoteError
+          ? `ASYMPTOTE ERROR:\n${err.stderr}`
+          : `PACKAGE ERROR:\n${err instanceof Error ? err.message : String(err)}`;
         output.appendChild(errSpan);
         status.textContent = "Render failed.";
         status.className = "status error";
@@ -286,7 +289,10 @@ draw(shift(2,0,0)*unitcube, red);
         output3d.innerHTML = "";
         const errSpan = document.createElement("span");
         errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
-        errSpan.textContent = err instanceof AsymptoteError ? err.stderr : err.message;
+        const isAsymptoteError = err instanceof AsymptoteError;
+        errSpan.textContent = isAsymptoteError
+          ? `ASYMPTOTE ERROR:\n${err.stderr}`
+          : `PACKAGE ERROR:\n${err instanceof Error ? err.message : String(err)}`;
         output3d.appendChild(errSpan);
         status3d.textContent = "Render failed.";
         status3d.className = "status error";
