@@ -5,11 +5,11 @@
   "type": "module",
   "main": "./dist/asymptote-web.js",
   "module": "./dist/asymptote-web.js",
-  "types": "./dist/asymptote-web.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/asymptote-web.js",
-      "types": "./dist/asymptote-web.d.ts"
+      "types": "./dist/index.d.ts"
     },
     "./asymptote.js": "./dist/asymptote.js",
     "./asymptote.wasm": "./dist/asymptote.wasm",
@@ -25,7 +25,8 @@
     "test": "npm run build && node --test test/*.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src test",
-    "prepack": "npm run build && bash ./wasm/build.sh"
+    "verify:package": "node scripts/verify-package.mjs",
+    "prepack": "npm run build && bash ./wasm/build.sh && npm run verify:package"
   },
   "keywords": [
     "asymptote",

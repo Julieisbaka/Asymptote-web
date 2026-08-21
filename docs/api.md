@@ -41,10 +41,11 @@ The package also exports the runtime assets as `asymptote-web/asymptote.js`,
 `asymptote-web/asymptote.wasm`, `asymptote-web/asy.data`, and
 `asymptote-web/asygl.js` for bundler-specific asset URL handling.
 
-The WASM module requires the generated runtime assets to be served correctly.
-For a standard npm installation, keep `asymptote.js`, `asymptote.wasm`,
-`asy.data`, and `asygl.js` together unless you provide custom URLs where the
-API supports them.
+The WASM module requires all four generated runtime assets to be served:
+`asymptote.js`, `asymptote.wasm`, `asy.data`, and `asygl.js`. A standard npm
+installation includes them in `node_modules/asymptote-web/dist/`; bundlers
+that do not copy package assets automatically should copy that complete set
+to the application's public assets directory.
 
 Release builds minify the TypeScript wrapper and omit its source map to reduce
 the published package. Set `ASY_DEBUG=1` when running the build if you need an

@@ -1,5 +1,7 @@
 # 0.1.0
 
+- Fixed package metadata and release verification so runtime assets and TypeScript declarations are checked before publishing.
+- Added documentation for serving the complete runtime asset set with npm and Vite.
 - Added `glueUrl` and runtime asset exports for bundlers that relocate the wrapper during dependency optimization, including Vite.
 - Split EPS/PS interpreter types, operand helpers, and gradient helpers into focused modules.
 - Fixed EPS/PS paths not resetting after painting and successive clipping paths not intersecting.

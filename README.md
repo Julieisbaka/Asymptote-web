@@ -26,8 +26,10 @@ npm install asymptote-web
 ```
 
 The runtime assets are `asymptote.js`, `asymptote.wasm`, `asy.data`, and
-`asygl.js`; keep them together when serving the package. Most bundlers can
-copy these assets automatically. If Vite prebundles the wrapper into
+`asygl.js`; keep all four together when serving the package. The published
+npm package includes them under `dist/`. If your bundler does not copy package
+assets automatically, copy the complete `node_modules/asymptote-web/dist/`
+runtime set to your application's public assets. If Vite prebundles the wrapper into
 `node_modules/.vite/deps`, pass the actual glue URL explicitly:
 
 ```ts

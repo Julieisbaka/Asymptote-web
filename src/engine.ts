@@ -44,7 +44,9 @@ let _modulePromise: Promise<EmscriptenModule> | null = null;
  * runtime asset next to the wrapper and is not part of the Vite bundle.
  */
 function getGlueUrl(options: CreateOptions = {}): string {
-  return options.glueUrl ?? new URL(["./asymptote", ".js"].join(""), import.meta.url).href;
+  return options.glueUrl
+    ? new URL(options.glueUrl, import.meta.url).href
+    : new URL(["./asymptote", ".js"].join(""), import.meta.url).href;
 }
 
 /**
