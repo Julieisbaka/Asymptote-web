@@ -56,32 +56,32 @@ RUN mkdir -p backports/glm-headers && cp -r /usr/include/glm backports/glm-heade
 # ---------------------------------------------------------------------------
 COPY patches/ /patches/
 RUN set -eux; \
-        for p in /patches/*.patch; do \
-            [ -e "$p" ] || continue; \
-            patch --batch --forward -p1 < "$p"; \
+    for p in /patches/*.patch; do \
+    [ -e "$p" ] || continue; \
+    patch --batch --forward -p1 < "$p"; \
     done
 # Python-based patches: targeted source replacements too awkward to express
 # as clean unified diffs (e.g. swapping out a whole function body).
 RUN set -eux; \
-        for p in /patches/*.py; do \
-            [ -e "$p" ] || continue; \
-            python3 "$p"; \
+    for p in /patches/*.py; do \
+    [ -e "$p" ] || continue; \
+    python3 "$p"; \
     done
 # Candidate-only source changes are never applied to the baseline. Consuming
 # WASM_PRUNE here prevents Docker from reusing a baseline configuration/build
 # layer for a candidate artifact.
 RUN set -eux; \
-        test "$WASM_PRUNE" = baseline || test "$WASM_PRUNE" = candidate; \
-        if [ "$WASM_PRUNE" = candidate ]; then \
-            for p in /patches/candidate/*.patch; do \
-                [ -e "$p" ] || continue; \
-                patch --batch --forward -p1 < "$p"; \
-            done; \
-            for p in /patches/candidate/*.py; do \
-                [ -e "$p" ] || continue; \
-                python3 "$p"; \
-            done; \
-        fi
+    test "$WASM_PRUNE" = baseline || test "$WASM_PRUNE" = candidate; \
+    if [ "$WASM_PRUNE" = candidate ]; then \
+    for p in /patches/candidate/*.patch; do \
+    [ -e "$p" ] || continue; \
+    patch --batch --forward -p1 < "$p"; \
+    done; \
+    for p in /patches/candidate/*.py; do \
+    [ -e "$p" ] || continue; \
+    python3 "$p"; \
+    done; \
+    fi
 
 # ---------------------------------------------------------------------------
 # Configure & build Asymptote with Emscripten
@@ -99,6 +99,6 @@ RUN emconfigure ./configure \
     CXXFLAGS="-O2 -flto -DNO_PARALLEL -DBLOCKING_SLEEP -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -Ibackports/glm-headers" \
     LDFLAGS="-flto -sUSE_ZLIB=1 -fexceptions -sDISABLE_EXCEPTION_CATCHING=0" \
     && emmake make asy -j$(nproc) \
-        LFLAGS="-flto -sUSE_ZLIB=1 -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createAsymptoteModule -sENVIRONMENT=web,worker -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=134217728 -sMAXIMUM_MEMORY=2147483648 -sSTACK_SIZE=16777216 -sDISABLE_EXCEPTION_CATCHING=0 -fexceptions -sASSERTIONS=0 -sFILESYSTEM=1 -sINVOKE_RUN=0 -sEXIT_RUNTIME=0 -sEXPORTED_RUNTIME_METHODS=['FS','callMain','print','printErr'] -sEXPORTED_FUNCTIONS=['_main'] --preload-file base@/usr/local/share/asymptote"
+    LFLAGS="-flto -sUSE_ZLIB=1 -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createAsymptoteModule -sENVIRONMENT=web,worker -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=134217728 -sMAXIMUM_MEMORY=2147483648 -sSTACK_SIZE=16777216 -sDISABLE_EXCEPTION_CATCHING=0 -fexceptions -sASSERTIONS=0 -sFILESYSTEM=1 -sINVOKE_RUN=0 -sEXIT_RUNTIME=0 -sEXPORTED_RUNTIME_METHODS=['FS','callMain','print','printErr'] -sEXPORTED_FUNCTIONS=['_main'] --preload-file base@/usr/local/share/asymptote"
 
 CMD ["sh", "-c", "cp asy /out/asymptote.js && cp asy.wasm /out/asymptote.wasm && cp asy.data /out/asy.data && cp base/webgl/asygl.js /out/asygl.js && echo 'Build complete. Output in /out/'"]

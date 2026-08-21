@@ -10,7 +10,8 @@ process-management implementation into the WASM binary.
 from pathlib import Path
 
 path = Path("/src/asymptote/pipestream.cc")
-path.write_text(r'''/* Browser-WASM replacement for the POSIX pipestream implementation. */
+path.write_text(
+    r"""/* Browser-WASM replacement for the POSIX pipestream implementation. */
 #if !defined(_WIN32)
 
 #include <cstring>
@@ -80,4 +81,5 @@ void iopipestream::Write(const string &)
 }
 
 #endif
-''')
+"""
+)

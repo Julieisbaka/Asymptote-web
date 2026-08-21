@@ -5,6 +5,7 @@ The browser cannot synchronously launch ImageMagick or an external animation
 viewer. Keep the generated runtime ABI intact, but return a failure status so
 Asymptote programs can inspect it without entering POSIX process code.
 """
+
 import sys
 
 PATH = "/src/asymptote/runsystem.in"
@@ -35,7 +36,7 @@ def main():
     with open(PATH, "r", encoding="utf-8") as stream:
         content = stream.read()
 
-    convert = '''Int convert(string args=emptystring, string file=emptystring,
+    convert = """Int convert(string args=emptystring, string file=emptystring,
             string format=emptystring)
 {
   (void) args;
@@ -44,8 +45,8 @@ def main():
   Warn("convert() is unavailable in browser WebAssembly: ImageMagick is not bundled");
   return -1;
 }
-'''
-    animate = '''Int animate(string args=emptystring, string file=emptystring,
+"""
+    animate = """Int animate(string args=emptystring, string file=emptystring,
             string format=emptystring)
 {
   (void) args;
@@ -54,7 +55,7 @@ def main():
   Warn("animate() is unavailable in browser WebAssembly: external viewers are not bundled");
   return -1;
 }
-'''
+"""
 
     content = replace_function(content, "Int convert", convert)
     content = replace_function(content, "Int animate", animate)

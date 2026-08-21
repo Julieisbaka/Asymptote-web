@@ -6,6 +6,7 @@ texsize() and _texpath() from invoking TeX, dvips, or Ghostscript when source
 code calls them explicitly. Metrics are approximate and _texpath() returns an
 empty path array because TeX glyph shaping is not available in browser WASM.
 """
+
 import sys
 
 PATH = "/src/asymptote/runlabel.in"
@@ -36,7 +37,7 @@ def main():
     with open(PATH, "r", encoding="utf-8") as stream:
         content = stream.read()
 
-    texsize = '''realarray *texsize(string *s, pen p=CURRENTPEN)
+    texsize = """realarray *texsize(string *s, pen p=CURRENTPEN)
 {
   // Browser fallback: native vector labels use approximate em metrics.
   realarray *t=new array(3);
@@ -47,15 +48,15 @@ def main():
   (*t)[2]=0.0;
   return t;
 }
-'''
-    texpath = '''patharray2 *_texpath(stringarray *s, penarray *p)
+"""
+    texpath = """patharray2 *_texpath(stringarray *s, penarray *p)
 {
   (void) s;
   (void) p;
   Warn("texpath() is unavailable in browser WebAssembly: TeX shaping is not bundled");
   return new array(0);
 }
-'''
+"""
 
     content = replace_function(content, "realarray *texsize", texsize)
     content = replace_function(content, "patharray2 *_texpath", texpath)

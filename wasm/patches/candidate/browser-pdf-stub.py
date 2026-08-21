@@ -6,6 +6,7 @@ launches Ghostscript. Browser WASM cannot launch that external process, so
 fail at the PDF boundary with a precise diagnostic instead of attempting an
 unavailable conversion.
 """
+
 import sys
 
 PATH = "/src/asymptote/picture.cc"
@@ -37,14 +38,14 @@ def main():
     with open(PATH, "r", encoding="utf-8") as stream:
         content = stream.read()
 
-    replacement = '''int picture::epstopdf(const string& epsname, const string& pdfname)
+    replacement = """int picture::epstopdf(const string& epsname, const string& pdfname)
 {
   (void) epsname;
   (void) pdfname;
   reportError("PDF output is unavailable in browser WebAssembly: Ghostscript is not bundled");
   return -1;
 }
-'''
+"""
     content = replace_function(content, MARKER, replacement)
 
     with open(PATH, "w", encoding="utf-8") as stream:
