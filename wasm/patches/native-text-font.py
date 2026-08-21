@@ -96,9 +96,11 @@ def build_replacement():
         patharray *P=new array(0);
         double x=0.0;
         for(size_t ci=0; ci < str.size(); ++ci) {{
+                        unsigned char character=static_cast<unsigned char>(str[ci]);
+                        if(character >= 'a' && character <= 'z') character -= 'a'-'A';
             size_t glyph=0;
             for(size_t gi=0; gi < sizeof(glyphChars)-1; ++gi)
-                if(glyphChars[gi] == str[ci]) {{ glyph=gi; break; }}
+                                if(glyphChars[gi] == character) {{ glyph=gi; break; }}
             for(size_t si=glyphOffsets[glyph]; si < glyphOffsets[glyph+1]; si += 4) {{
                 double x0=x+glyphData[si]*em/10.0, y0=glyphData[si+1]*em/10.0;
                 double x1=x+glyphData[si+2]*em/10.0, y1=glyphData[si+3]*em/10.0;

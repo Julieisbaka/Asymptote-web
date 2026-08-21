@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { epsToSvg, epsToSvgWithWarnings, psToSvg } from "../dist/asymptote-web.js";
 
@@ -197,4 +198,11 @@ test("rejects invalid precision", () => {
 
 test("keeps psToSvg as the public alias", () => {
   assert.equal(psToSvg, epsToSvg);
+});
+
+test("native text patch normalizes lowercase glyph lookup", async () => {
+  const patch = await readFile(new URL("../wasm/patches/native-text-font.py", import.meta.url), "utf8");
+
+  assert.match(patch, /character >= 'a' && character <= 'z'/);
+  assert.match(patch, /glyphChars\[gi\] == character/);
 });
