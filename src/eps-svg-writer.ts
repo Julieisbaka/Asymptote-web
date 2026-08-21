@@ -16,6 +16,17 @@ function escapeXml(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
+function encodeBase64(value: string): string {
+  if (typeof btoa !== "function" || typeof TextEncoder === "undefined") return "";
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let start = 0; start < bytes.length; start += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(start, start + chunkSize));
+  }
+  return btoa(binary);
+}
+
 interface CssFont {
   family: string;
   weight?: string;
@@ -212,9 +223,7 @@ export class SvgWriter {
       }
     }
     const content = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">${rects.join("")}</svg>`;
-    const encoded = typeof btoa === "function"
-      ? btoa(unescape(encodeURIComponent(content)))
-      : "";
+    const encoded = encodeBase64(content);
     if (!encoded) return false;
     const { a, b, c, d, e, f } = state.ctm;
     const x = a * 0 + c * 0 + e - this.llx;

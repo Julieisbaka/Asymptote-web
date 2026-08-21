@@ -53,7 +53,7 @@ function getGlueUrl(): string {
 async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
   if (_modulePromise) return _modulePromise;
 
-  _modulePromise = (async (): Promise<EmscriptenModule> => {
+  const modulePromise = (async (): Promise<EmscriptenModule> => {
     const glueUrl = getGlueUrl();
     const { default: factory }: { default: ModuleFactory } = await import(
       /* @vite-ignore */ glueUrl
@@ -75,7 +75,18 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
     return mod;
   })();
 
-  return _modulePromise;
+  _modulePromise = modulePromise;
+  void modulePromise.catch(() => {
+    // Allow a later call to retry after a transient load or initialization
+    // failure, without clearing a newer successful initialization.
+    if (_modulePromise === modulePromise) _modulePromise = null;
+  });
+  return modulePromise;
+}
+
+/** Preload the shared WASM module during engine creation. */
+export async function preloadModule(options: CreateOptions): Promise<void> {
+  await loadModule(options);
 }
 
 // ---------------------------------------------------------------------------

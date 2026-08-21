@@ -1,5 +1,8 @@
 # 0.1.0
 
+- Made WASM initialization retryable after a failed load instead of caching a rejected promise permanently.
+- Made `createAsymptote()` eagerly initialize the WASM module as documented.
+- Replaced deprecated `unescape`-based image encoding with UTF-8 `TextEncoder` encoding.
 - Fixed EPS/PS parsing for scientific-notation coordinates emitted by Asymptote.
 - Fixed relative EPS/PS path operators after transforms such as `scale` and `rotate`.
 - Fixed `closepath` so subsequent relative path commands use the subpath start as `currentpoint`.

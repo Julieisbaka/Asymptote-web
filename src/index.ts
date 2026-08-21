@@ -16,7 +16,7 @@
  * ```
  */
 
-import { getAsymptoteVersion, runAsymptote } from "./engine.js";
+import { getAsymptoteVersion, preloadModule, runAsymptote } from "./engine.js";
 import { epsToSvg } from "./eps-to-svg.js";
 import {
   type AsymptoteEngine,
@@ -198,9 +198,8 @@ function addWebGLLabels(doc: Document, labels: readonly WebGLLabel[]): void {
 export async function createAsymptote(
   options: CreateOptions = {}
 ): Promise<AsymptoteEngine> {
-  // Eagerly kick off the WASM load so it is already in-flight by the time
-  // the caller first calls render().
   const resolvedOptions: CreateOptions = { ...options };
+  await preloadModule(resolvedOptions);
 
   const engine: AsymptoteEngine = {
     async version(): Promise<string> {
