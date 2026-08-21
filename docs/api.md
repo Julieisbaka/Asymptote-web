@@ -12,7 +12,7 @@ the page, so multiple calls can share the same runtime.
 ### Options
 
 | Option | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `glueUrl` | `string` | automatic | URL of `asymptote.js`. Set this when a bundler relocates the wrapper during dependency optimization, such as Vite. |
 | `wasmUrl` | `string` | automatic | URL of `asymptote.wasm`. Use this when hosting the binary on a CDN or another path. |
 | `asyglUrl` | `string` | automatic | URL of `asygl.js` for normal WebGL output. Not needed when using `offline: true`. |
@@ -80,7 +80,7 @@ console.log(version); // e.g. "Asymptote version 3.13"
 #### Render options
 
 | Option | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `format` | `"svg" \| "eps" \| "ps" \| "webgl"` | `"svg"` | Output format. WebGL returns HTML for the interactive viewer. |
 | `flags` | `string[]` | `[]` | Additional command-line arguments forwarded to Asymptote. |
 | `signal` | `AbortSignal` | automatic | Cancels a render while it is queued; running WASM execution is not forcibly interrupted. |
