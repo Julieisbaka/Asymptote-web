@@ -83,11 +83,10 @@ export class PostScriptTokenizer {
       suffix += 4;
       while (suffix < this.source.length && /\s/.test(this.source[suffix])) suffix += 1;
     }
-    if (this.source.startsWith("def", suffix)) {
-      this.index = suffix + 3;
-    } else {
-      this.index = bodyEnd;
+    if (!this.source.startsWith("def", suffix) || /\S/.test(this.source[suffix + 3] ?? "")) {
+      return false;
     }
+    this.index = suffix + 3;
     return true;
   }
 

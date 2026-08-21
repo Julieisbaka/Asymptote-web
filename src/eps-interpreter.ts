@@ -63,6 +63,7 @@ export class PostScriptInterpreter {
   private readonly stateStack: GraphicsState[] = [];
   private readonly stack: Operand[] = [];
   private readonly warnings: string[] = [];
+  private colorComponentCount: number | null = null;
 
   constructor(
     private readonly tokens: PostScriptTokenizer,
@@ -213,24 +214,34 @@ export class PostScriptInterpreter {
       case "setgray":
         this.state.fill = this.state.stroke = toColor(this.popN(1));
         this.state.gradient = null;
+        this.colorComponentCount = 1;
         break;
       case "setrgbcolor":
         this.state.fill = this.state.stroke = toColor(this.popN(3));
         this.state.gradient = null;
+        this.colorComponentCount = 3;
         break;
       case "setcmykcolor":
         this.state.fill = this.state.stroke = toColor(this.popN(4));
         this.state.gradient = null;
+        this.colorComponentCount = 4;
         break;
       case "sethsbcolor": {
         const [h, s, b] = this.popN(3);
         this.state.fill = this.state.stroke = hsbToColor(h, s, b);
         this.state.gradient = null;
+        this.colorComponentCount = 3;
         break;
       }
-      case "setcolorspace":
+      case "setcolorspace": {
+        const colorspace = this.stack.pop();
+        this.colorComponentCount = colorComponentCount(colorspace);
+        this.warn(`ignored unsupported color space/operator '${tok}'`);
+        break;
+      }
       case "setcolor":
-        this.stack.pop();
+        if (this.colorComponentCount === null) this.stack.length = 0;
+        else this.popN(this.colorComponentCount);
         this.warn(`ignored unsupported color space/operator '${tok}'`);
         break;
       case "setlineargradient":
@@ -354,7 +365,7 @@ export class PostScriptInterpreter {
         const bits = this.stack.pop();
         const height = this.stack.pop();
         const width = this.stack.pop();
-        if (typeof data === "string" && bits === 8 && typeof width === "number" && typeof height === "number" && isMatrixArray(matrix) && this.writer.image(this.state, width, height, data)) break;
+        if (typeof data === "string" && bits === 8 && typeof width === "number" && typeof height === "number" && isMatrixArray(matrix) && this.writer.image(this.state, width, height, data, matrixFromOperand(matrix)!)) break;
         this.warn("ignored raster image: only 8-bit grayscale string data is supported");
         break;
       }
@@ -487,6 +498,20 @@ function isMatrix(value: Matrix | null): value is Matrix {
 
 function isMatrixArray(value: Operand | undefined): value is Operand[] {
   return Array.isArray(value) && value.length === 6 && value.every((item) => typeof item === "number");
+}
+
+function colorComponentCount(value: Operand | undefined): number | null {
+  const name = typeof value === "string"
+    ? value
+    : Array.isArray(value) && typeof value[0] === "string"
+      ? value[0]
+      : undefined;
+  switch (name) {
+    case "DeviceGray": return 1;
+    case "DeviceRGB": return 3;
+    case "DeviceCMYK": return 4;
+    default: return null;
+  }
 }
 
 function parseStops(value: Operand | undefined, c1?: Operand, c2?: Operand): ParsedStop[] | null {

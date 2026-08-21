@@ -3,6 +3,9 @@
 - Made WASM initialization retryable after a failed load instead of caching a rejected promise permanently.
 - Made `createAsymptote()` eagerly initialize the WASM module as documented.
 - Replaced deprecated `unescape`-based image encoding with UTF-8 `TextEncoder` encoding.
+- Fixed unsupported `setcolor` operations leaving stale operands on the PostScript stack.
+- Applied PostScript image transformation matrices when converting raster images to SVG.
+- Preserved procedure-valued names that are not followed by `def` during EPS/PS tokenization.
 - Fixed EPS/PS parsing for scientific-notation coordinates emitted by Asymptote.
 - Fixed relative EPS/PS path operators after transforms such as `scale` and `rotate`.
 - Fixed `closepath` so subsequent relative path commands use the subpath start as `currentpoint`.
