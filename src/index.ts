@@ -23,7 +23,9 @@ import {
   type CreateOptions,
   type RenderOptions,
   type RenderResult,
+  type WebGLLabel,
   type UnsafeSvgCustomizer,
+  type UnsafeWebGLCustomizer,
 } from "./types.js";
 
 export type { EpsToSvgOptions, EpsToSvgResult } from "./eps-to-svg.js";
@@ -34,7 +36,9 @@ export type {
   OutputFormat,
   RenderOptions,
   RenderResult,
+  WebGLLabel,
   UnsafeSvgCustomizer,
+  UnsafeWebGLCustomizer,
 } from "./types.js";
 
 /**
@@ -111,6 +115,37 @@ function outputMimeType(format: RenderResult["format"]): string {
 
 function defaultFilename(format: RenderResult["format"]): string {
   return `asymptote.${format === "webgl" ? "html" : format}`;
+}
+
+function waitForIframeDocument(iframe: HTMLIFrameElement): Promise<Document> {
+  return new Promise((resolve) => {
+    const resolveDocument = () => resolve(iframe.contentDocument ?? document);
+    iframe.addEventListener("load", resolveDocument, { once: true });
+  });
+}
+
+function addWebGLLabels(doc: Document, labels: readonly WebGLLabel[]): void {
+  if (labels.length === 0) return;
+  const body = doc.body;
+  if (!body) return;
+  body.style.position = body.style.position || "relative";
+  const container = doc.createElement("div");
+  container.setAttribute("aria-label", "Asymptote WebGL labels");
+  container.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;";
+  for (const label of labels) {
+    const element = doc.createElement("div");
+    element.textContent = label.text;
+    if (label.className) element.className = label.className;
+    element.style.position = "absolute";
+    element.style.left = `${label.x}px`;
+    element.style.top = `${label.y}px`;
+    element.style.color = label.color ?? "currentColor";
+    element.style.fontSize = `${label.fontSize ?? 14}px`;
+    element.style.transform = "translate(-50%, -50%)";
+    element.style.whiteSpace = "nowrap";
+    container.appendChild(element);
+  }
+  body.appendChild(container);
 }
 
 /**
@@ -227,6 +262,33 @@ export async function createAsymptote(
         mountUnsafeSvg(el, result.svg, customize);
         return result;
       },
+      async mountWebGL(
+        target: string | Element,
+        source: string,
+        customize: UnsafeWebGLCustomizer,
+        renderOptions: Omit<RenderOptions, "format"> = {}
+      ): Promise<RenderResult> {
+        const result = await runAsymptote(
+          source,
+          { ...renderOptions, format: "webgl" },
+          resolvedOptions
+        );
+        const el = typeof target === "string"
+          ? document.querySelector(target)
+          : target;
+        if (!el) {
+          throw new Error(`asymptote-web: unsafe.mountWebGL target not found: ${target}`);
+        }
+        const iframe = document.createElement("iframe");
+        iframe.srcdoc = result.output;
+        iframe.style.border = "none";
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        const loaded = waitForIframeDocument(iframe);
+        el.replaceChildren(iframe);
+        await customize(iframe, await loaded);
+        return result;
+      },
     },
 
     async mountWebGL(
@@ -257,7 +319,11 @@ export async function createAsymptote(
       iframe.style.border = "none";
       iframe.style.width = "100%";
       iframe.style.height = "100%";
+      const loaded = renderOptions.webglLabels?.length
+        ? waitForIframeDocument(iframe)
+        : null;
       el.replaceChildren(iframe);
+      if (loaded) addWebGLLabels(await loaded, renderOptions.webglLabels ?? []);
 
       return result;
     },

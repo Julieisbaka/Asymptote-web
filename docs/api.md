@@ -65,6 +65,7 @@ console.log(version); // e.g. "Asymptote version 3.13"
 | `position` | `[number, number]` | automatic | Initial WebGL camera position. |
 | `devicePixelRatio` | `number` | automatic | WebGL viewer device-pixel ratio. |
 | `autobillboard` | `boolean` | automatic | Make 3D labels face the viewer by default. |
+| `webglLabels` | `WebGLLabel[]` | `[]` | Camera-facing screen-space labels in the WebGL iframe. |
 | `raw` | `boolean` | `false` | For the default SVG mode, return the native EPS instead of converting it to SVG. |
 | `svgPrecision` | `number` | `3` | Opt-in number of decimal places for generated SVG coordinates. Valid range: 0–12. |
 | `reuseSvg` | `boolean` | `false` | For `mount()`, reuse an existing direct child SVG instead of replacing it. |
@@ -227,6 +228,21 @@ await asy.mountWebGL("#output", source, { offline: true });
 The viewer supports rotate, zoom, and pan controls. WebGL convenience options
 such as `position`, `devicePixelRatio`, and `autobillboard` apply only to this
 output mode.
+
+`webglLabels` adds basic camera-facing labels using CSS pixel coordinates from
+the viewer's top-left corner. These are screen-space overlays, not labels
+anchored to 3D world coordinates. For custom viewer integration, the unsafe
+API exposes the iframe document:
+
+```ts
+await asy.unsafe.mountWebGL("#output", source, async (iframe, viewerDocument) => {
+  // Trusted DOM-only customization.
+  viewerDocument.body.dataset.customized = "true";
+});
+```
+
+**Warning:** `unsafe.mountWebGL()` exposes the live iframe document and must
+only be used with trusted callbacks and content.
 
 ## `RenderResult`
 

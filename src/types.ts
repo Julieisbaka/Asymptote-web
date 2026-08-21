@@ -57,6 +57,13 @@ export interface RenderOptions {
   autobillboard?: boolean;
 
   /**
+   * Screen-space labels added to the WebGL viewer iframe. Coordinates are
+   * CSS pixels from the viewer's top-left corner; labels are camera-facing
+   * overlays, not world-coordinate geometry.
+   */
+  webglLabels?: readonly WebGLLabel[];
+
+  /**
    * When `format` is `"svg"`, Asymptote itself has no native SVG writer, so
    * `render()` asks Asymptote for EPS and converts it to SVG in-process (see
    * {@link epsToSvg}). Set this to `true` to skip that automatic conversion
@@ -82,6 +89,15 @@ export interface RenderOptions {
    * existing DOM behavior and event semantics.
    */
   reuseSvg?: boolean;
+}
+
+export interface WebGLLabel {
+  text: string;
+  x: number;
+  y: number;
+  color?: string;
+  fontSize?: number;
+  className?: string;
 }
 
 /** Options accepted by {@link createAsymptote}. */
@@ -126,6 +142,12 @@ export interface RenderResult {
  * controlled by the application; never pass untrusted or user-supplied data.
  */
 export type UnsafeSvgCustomizer = (svg: SVGSVGElement) => void;
+
+/** **WARNING: unsafe API.** Direct access to the generated WebGL iframe. */
+export type UnsafeWebGLCustomizer = (
+  iframe: HTMLIFrameElement,
+  document: Document
+) => void | Promise<void>;
 
 /**
  * An initialised Asymptote rendering engine.
@@ -208,6 +230,12 @@ export interface AsymptoteEngine {
       source: string,
       customize: UnsafeSvgCustomizer,
       options?: RenderOptions
+    ): Promise<RenderResult>;
+    mountWebGL(
+      target: string | Element,
+      source: string,
+      customize: UnsafeWebGLCustomizer,
+      options?: Omit<RenderOptions, "format">
     ): Promise<RenderResult>;
   };
 

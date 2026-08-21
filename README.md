@@ -155,6 +155,7 @@ Without these headers, single-threaded mode is used automatically, which is fine
 - Browser-provided imports and assets can be mounted with the `render()` `files` option; host filesystem paths are not accessible.
 - Explicit `texsize()` calls use approximate native metrics, while `texpath()` reports unavailable because TeX shaping is not bundled.
 - Trusted pre-rendered LaTeX SVG can be inserted with the opt-in `asy.unsafe.mount()` DOM hook.
+- WebGL supports basic camera-facing screen-space labels through `webglLabels`; world-coordinate labels require `asy.unsafe.mountWebGL()` customization.
 
 ---
 

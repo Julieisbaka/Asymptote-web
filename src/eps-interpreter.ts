@@ -6,6 +6,7 @@ import {
   toColor,
   type Gradient,
   type GraphicsState,
+  type Matrix,
 } from "./eps-graphics.js";
 import { SvgWriter } from "./eps-svg-writer.js";
 import { PostScriptTokenizer } from "./eps-tokenizer.js";
@@ -145,6 +146,31 @@ export class PostScriptInterpreter {
         this.writer.appendCurve(this.state, x1, y1, x2, y2, x3, y3);
         break;
       }
+      case "rcurveto": {
+        const [dx1, dy1, dx2, dy2, dx3, dy3] = this.popN(6);
+        const point = this.writer.userPoint(this.state);
+        this.writer.appendCurve(
+          this.state,
+          point.x + dx1,
+          point.y + dy1,
+          point.x + dx1 + dx2,
+          point.y + dy1 + dy2,
+          point.x + dx1 + dx2 + dx3,
+          point.y + dy1 + dy2 + dy3
+        );
+        break;
+      }
+      case "arc":
+      case "arcn": {
+        const [cx, cy, radius, start, end] = this.popN(5);
+        this.writer.appendArc(this.state, cx, cy, radius, start, end, tok === "arc");
+        break;
+      }
+      case "arct": {
+        const [x1, y1, x2, y2, radius] = this.popN(5);
+        this.appendTangentArc(x1, y1, x2, y2, radius);
+        break;
+      }
       case "closepath":
         this.writer.closePath();
         break;
@@ -170,6 +196,18 @@ export class PostScriptInterpreter {
         this.state.ctm = compose(this.state.ctm, {
           a: Math.cos(r), b: Math.sin(r), c: -Math.sin(r), d: Math.cos(r), e: 0, f: 0,
         });
+        break;
+      }
+      case "concat": {
+        const matrix = matrixFromOperand(this.stack.pop());
+        if (isMatrix(matrix)) this.state.ctm = compose(this.state.ctm, matrix);
+        else this.warn("ignored malformed concat matrix");
+        break;
+      }
+      case "setmatrix": {
+        const matrix = matrixFromOperand(this.stack.pop());
+        if (isMatrix(matrix)) this.state.ctm = matrix;
+        else this.warn("ignored malformed setmatrix matrix");
         break;
       }
       case "setgray":
@@ -375,6 +413,41 @@ export class PostScriptInterpreter {
       ? { kind, x1: values[0], y1: values[1], x2: values[2], y2: values[3], stops }
       : { kind, x1: values[0], y1: values[1], r1: values[2], x2: values[3], y2: values[4], r2: values[5], stops };
   }
+
+  private appendTangentArc(x1: number, y1: number, x2: number, y2: number, radius: number): void {
+    const current = this.writer.userPoint(this.state);
+    if (radius <= 0 || !Number.isFinite(radius)) {
+      this.writer.appendPoint(this.state, "L", x1, y1);
+      return;
+    }
+    const incoming = { x: current.x - x1, y: current.y - y1 };
+    const outgoing = { x: x2 - x1, y: y2 - y1 };
+    const incomingLength = Math.hypot(incoming.x, incoming.y);
+    const outgoingLength = Math.hypot(outgoing.x, outgoing.y);
+    if (incomingLength === 0 || outgoingLength === 0) {
+      this.writer.appendPoint(this.state, "L", x1, y1);
+      return;
+    }
+    const u = { x: incoming.x / incomingLength, y: incoming.y / incomingLength };
+    const v = { x: outgoing.x / outgoingLength, y: outgoing.y / outgoingLength };
+    const dot = Math.max(-1, Math.min(1, u.x * v.x + u.y * v.y));
+    const halfAngle = Math.acos(dot) / 2;
+    const bisectorLength = Math.hypot(u.x + v.x, u.y + v.y);
+    if (halfAngle < 1e-7 || bisectorLength < 1e-7 || Math.abs(Math.sin(halfAngle)) < 1e-7) {
+      this.writer.appendPoint(this.state, "L", x1, y1);
+      return;
+    }
+    const tangentDistance = radius / Math.tan(halfAngle);
+    const tangentStart = { x: x1 + u.x * tangentDistance, y: y1 + u.y * tangentDistance };
+    const tangentEnd = { x: x1 + v.x * tangentDistance, y: y1 + v.y * tangentDistance };
+    const bisector = { x: (u.x + v.x) / bisectorLength, y: (u.y + v.y) / bisectorLength };
+    const centerDistance = radius / Math.sin(halfAngle);
+    const center = { x: x1 + bisector.x * centerDistance, y: y1 + bisector.y * centerDistance };
+    const startAngle = (Math.atan2(tangentStart.y - center.y, tangentStart.x - center.x) * 180) / Math.PI;
+    const endAngle = (Math.atan2(tangentEnd.y - center.y, tangentEnd.x - center.x) * 180) / Math.PI;
+    this.writer.appendPoint(this.state, "L", tangentStart.x, tangentStart.y);
+    this.writer.appendArc(this.state, center.x, center.y, radius, startAngle, endAngle, u.x * v.y - u.y * v.x > 0);
+  }
 }
 
 function isDictionary(value: Operand | undefined): value is Dictionary {
@@ -385,6 +458,17 @@ function numbers(value: Operand | undefined): number[] | null {
   return Array.isArray(value) && value.every((item) => typeof item === "number")
     ? value as number[]
     : null;
+}
+
+function matrixFromOperand(value: Operand | undefined): Matrix | null {
+  if (!Array.isArray(value) || value.length !== 6 || !value.every((item) => typeof item === "number")) {
+    return null;
+  }
+  return { a: value[0], b: value[1], c: value[2], d: value[3], e: value[4], f: value[5] };
+}
+
+function isMatrix(value: Matrix | null): value is Matrix {
+  return value !== null;
 }
 
 function parseStops(value: Operand | undefined, c1?: Operand, c2?: Operand): ParsedStop[] | null {

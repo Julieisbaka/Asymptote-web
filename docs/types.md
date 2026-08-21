@@ -32,9 +32,19 @@ interface RenderOptions {
   position?: [number, number];
   devicePixelRatio?: number;
   autobillboard?: boolean;
+  webglLabels?: readonly WebGLLabel[];
   raw?: boolean;
   svgPrecision?: number;
   reuseSvg?: boolean;
+}
+
+interface WebGLLabel {
+  text: string;
+  x: number;
+  y: number;
+  color?: string;
+  fontSize?: number;
+  className?: string;
 }
 
 interface AsymptoteEngine {
@@ -68,6 +78,10 @@ interface AsymptoteEngine {
   direct child SVG root while updating its generated content.
 
 `version()` returns the version string reported by the compiled Asymptote CLI.
+
+`webglLabels` creates screen-space, camera-facing labels in the WebGL iframe;
+it does not provide 3D world-coordinate anchoring. `unsafe.mountWebGL()` gives
+trusted callers direct access to the iframe and its document.
 
 `AsymptoteEngine.unsafe.mount()` accepts a trusted callback for direct SVG DOM
 manipulation, such as inserting pre-rendered LaTeX. The callback may insert

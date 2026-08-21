@@ -80,6 +80,7 @@ export class SvgWriter {
   private pathParts: string[] = [];
   private pathD = "";
   private pathDirty = true;
+  private pathStarted = false;
   private currentX = 0;
   private currentY = 0;
 
@@ -99,6 +100,18 @@ export class SvgWriter {
     this.pathParts = [];
     this.pathD = "";
     this.pathDirty = false;
+    this.pathStarted = false;
+  }
+
+  userPoint(state: GraphicsState): { x: number; y: number } {
+    const determinant = state.ctm.a * state.ctm.d - state.ctm.b * state.ctm.c;
+    if (determinant === 0) return { x: 0, y: 0 };
+    const x = this.currentX - state.ctm.e;
+    const y = this.currentY - state.ctm.f;
+    return {
+      x: (state.ctm.d * x - state.ctm.c * y) / determinant,
+      y: (-state.ctm.b * x + state.ctm.a * y) / determinant,
+    };
   }
 
   appendPoint(state: GraphicsState, op: "M" | "L", x: number, y: number): void {
@@ -109,6 +122,7 @@ export class SvgWriter {
       `${op}${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`
     );
     this.pathDirty = true;
+    this.pathStarted = true;
   }
 
   appendCurve(state: GraphicsState, x1: number, y1: number, x2: number, y2: number, x: number, y: number): void {
@@ -125,6 +139,46 @@ export class SvgWriter {
       `${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`
     );
     this.pathDirty = true;
+    this.pathStarted = true;
+  }
+
+  appendArc(
+    state: GraphicsState,
+    cx: number,
+    cy: number,
+    radius: number,
+    startDegrees: number,
+    endDegrees: number,
+    counterClockwise: boolean
+  ): void {
+    if (radius < 0 || !Number.isFinite(radius)) return;
+    const direction = counterClockwise ? 1 : -1;
+    let sweep = (endDegrees - startDegrees) * direction;
+    if (Math.abs(sweep) < 1e-9) sweep = direction * 360;
+    while (sweep > 360) sweep -= 360;
+    while (sweep < -360) sweep += 360;
+    const segments = Math.max(1, Math.ceil(Math.abs(sweep) / 90));
+    const delta = sweep / segments;
+    const start = (startDegrees * Math.PI) / 180;
+    const startPoint = { x: cx + radius * Math.cos(start), y: cy + radius * Math.sin(start) };
+    if (!this.pathStarted) this.appendPoint(state, "M", startPoint.x, startPoint.y);
+    else {
+      const current = this.userPoint(state);
+      if (Math.hypot(current.x - startPoint.x, current.y - startPoint.y) > 1e-7) {
+        this.appendPoint(state, "L", startPoint.x, startPoint.y);
+      }
+    }
+    let angle = start;
+    for (let index = 0; index < segments; index += 1) {
+      const nextAngle = angle + (delta * Math.PI) / 180;
+      const factor = (4 / 3) * Math.tan((nextAngle - angle) / 4);
+      const p0 = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+      const p3 = { x: cx + radius * Math.cos(nextAngle), y: cy + radius * Math.sin(nextAngle) };
+      const p1 = { x: p0.x - factor * radius * Math.sin(angle), y: p0.y + factor * radius * Math.cos(angle) };
+      const p2 = { x: p3.x + factor * radius * Math.sin(nextAngle), y: p3.y - factor * radius * Math.cos(nextAngle) };
+      this.appendCurve(state, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+      angle = nextAngle;
+    }
   }
 
   closePath(): void {

@@ -15,6 +15,36 @@ test("converts a filled path with compact coordinates", () => {
   assert.doesNotMatch(svg, /10\.500|20\.000/);
 });
 
+test("converts arc and arcn into cubic SVG curves", () => {
+  const svg = convert(
+    "newpath 50 50 25 0 90 arc stroke " +
+    "newpath 50 50 25 0 90 arcn stroke"
+  );
+
+  assert.equal((svg.match(/<path /g) ?? []).length, 2);
+  assert.match(svg, /C/);
+});
+
+test("supports relative curves and tangent arcs", () => {
+  const svg = convert(
+    "newpath 10 10 moveto 5 0 5 5 0 5 rcurveto stroke " +
+    "newpath 10 50 moveto 20 50 20 70 5 arct stroke"
+  );
+
+  assert.equal((svg.match(/<path /g) ?? []).length, 2);
+  assert.match(svg, /C/);
+});
+
+test("supports concat and setmatrix", () => {
+  const svg = convert(
+    "[1 0 0 1 10 20] concat newpath 0 0 moveto 10 0 lineto stroke " +
+    "[1 0 0 1 30 40] setmatrix newpath 0 0 moveto 10 0 lineto stroke"
+  );
+
+  assert.match(svg, /M10,80 L20,80/);
+  assert.match(svg, /M30,60 L40,60/);
+});
+
 test("preserves text escaping and standard font mapping", () => {
   const svg = convert("/Helvetica findfont 12 scalefont setfont 10 20 moveto (A & <) show");
 
