@@ -63,9 +63,9 @@ export function epsToSvgWithWarnings(
   if (!Number.isInteger(precision) || precision < 0 || precision > 12) {
     throw new RangeError("epsToSvg: precision must be an integer from 0 to 12");
   }
+  const threshold = 0.5 * 10 ** -precision;
   const formatNumber = (value: number): string => {
     if (!Number.isFinite(value)) return "0";
-    const threshold = 0.5 * 10 ** -precision;
     if (Math.abs(value) < threshold) return "0";
     return value.toFixed(precision).replace(/(?:\.0+|(?:(\.\d*?)0+))$/, "$1");
   };
