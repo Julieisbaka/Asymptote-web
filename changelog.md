@@ -1,6 +1,7 @@
 # 0.1.0
 
 - Fixed EPS/PS parsing for scientific-notation coordinates emitted by Asymptote.
+- Fixed WebGL zoom requiring an initial click by priming the embedded viewer's wheel handler.
 
 # 0.0.9
 - Replaced the 5×7 glyph table with a compact vector font while preserving the existing `textpath()` patch interface. 

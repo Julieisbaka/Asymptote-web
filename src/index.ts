@@ -117,6 +117,15 @@ function defaultFilename(format: RenderResult["format"]): string {
   return `asymptote.${format === "webgl" ? "html" : format}`;
 }
 
+function containWebGLScroll(html: string): string {
+  const guard = `<script>(function(){function stop(event){event.preventDefault()}document.addEventListener("wheel",stop,{capture:true,passive:false});document.addEventListener("touchmove",stop,{capture:true,passive:false})})()</script>`;
+  const prime = `<script>(function(){function prime(){var canvas=document.getElementById("Asymptote");if(!canvas||!canvas.onmousedown){setTimeout(prime,0);return}canvas.dispatchEvent(new MouseEvent("mousedown",{bubbles:true,clientX:0,clientY:0}));canvas.dispatchEvent(new MouseEvent("mouseup",{bubbles:true}))}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",prime,{once:true});else prime()})()</script>`;
+  const head = html.indexOf("</head>");
+  const withGuard = head >= 0 ? `${html.slice(0, head)}${guard}${html.slice(head)}` : `${guard}${html}`;
+  const body = withGuard.indexOf("</body>");
+  return body >= 0 ? `${withGuard.slice(0, body)}${prime}${withGuard.slice(body)}` : `${withGuard}${prime}`;
+}
+
 function waitForIframeDocument(iframe: HTMLIFrameElement): Promise<Document> {
   return new Promise((resolve) => {
     const resolveDocument = () => resolve(iframe.contentDocument ?? document);
@@ -280,7 +289,7 @@ export async function createAsymptote(
           throw new Error(`asymptote-web: unsafe.mountWebGL target not found: ${target}`);
         }
         const iframe = document.createElement("iframe");
-        iframe.srcdoc = result.output;
+        iframe.srcdoc = containWebGLScroll(result.output);
         iframe.style.border = "none";
         iframe.style.width = "100%";
         iframe.style.height = "100%";
@@ -315,7 +324,7 @@ export async function createAsymptote(
       // styles, and viewer <script>) — embed it in an iframe rather than
       // splicing it into the host page's DOM.
       const iframe = document.createElement("iframe");
-      iframe.srcdoc = result.output;
+      iframe.srcdoc = containWebGLScroll(result.output);
       iframe.style.border = "none";
       iframe.style.width = "100%";
       iframe.style.height = "100%";
