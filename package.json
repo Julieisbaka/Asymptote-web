@@ -1,6 +1,6 @@
 {
   "name": "asymptote-web",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "Run the Asymptote vector graphics language entirely in the browser via WebAssembly.",
   "type": "module",
   "main": "./dist/asymptote-web.js",
