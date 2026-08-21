@@ -61,6 +61,7 @@ export class PostScriptInterpreter {
   };
   private readonly stateStack: GraphicsState[] = [];
   private readonly stack: Operand[] = [];
+  private readonly warnings: string[] = [];
 
   constructor(
     private readonly tokens: PostScriptTokenizer,
@@ -92,6 +93,24 @@ export class PostScriptInterpreter {
 
       this.dispatch(tok);
     }
+  }
+
+  getWarnings(): string[] {
+    return [...this.warnings];
+  }
+
+  private warn(message: string): void {
+    this.warnings.push(`EPS/PS: ${message}`);
+  }
+
+  private warnUnsupportedShading(value: Operand | undefined): void {
+    if (!isDictionary(value)) return;
+    const type = value.ShadingType;
+    this.warn(type === 1
+      ? "ignored function-based shading (ShadingType 1)"
+      : type === 4 || type === 5 || type === 6 || type === 7
+        ? `ignored mesh shading (ShadingType ${String(type)})`
+        : "ignored unsupported or malformed shading dictionary");
   }
 
   private dispatch(tok: string): void {
@@ -171,6 +190,11 @@ export class PostScriptInterpreter {
         this.state.gradient = null;
         break;
       }
+      case "setcolorspace":
+      case "setcolor":
+        this.stack.pop();
+        this.warn(`ignored unsupported color space/operator '${tok}'`);
+        break;
       case "setlineargradient":
         this.state.gradient = this.makeExplicitGradient("linear");
         break;
@@ -266,18 +290,26 @@ export class PostScriptInterpreter {
         break;
       }
       case "setpattern": {
-        const gradient = gradientFromValue(this.stack.pop());
+        const pattern = this.stack.pop();
+        const gradient = gradientFromValue(pattern);
         if (gradient) this.state.gradient = gradient;
+        else this.warnUnsupportedShading(pattern);
         break;
       }
       case "shfill": {
-        const gradient = gradientFromValue(this.stack.pop());
+        const shading = this.stack.pop();
+        const gradient = gradientFromValue(shading);
         if (gradient) {
           this.state.gradient = gradient;
           this.writer.paint(this.state, "fill");
-        }
+        } else this.warnUnsupportedShading(shading);
         break;
       }
+      case "image":
+      case "colorimage":
+      case "imagemask":
+        this.warn(`ignored raster image operator '${tok}'`);
+        break;
       case "clip":
         this.writer.clip(this.state, false);
         break;
@@ -288,7 +320,7 @@ export class PostScriptInterpreter {
       case "grestoreall":
         break;
       default:
-        // Unsupported/unknown operator: ignore silently for graceful degradation.
+        this.warn(`ignored unsupported operator '${tok}'`);
         break;
     }
   }

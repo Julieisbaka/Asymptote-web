@@ -229,7 +229,7 @@ Asymptote emits as glyph outlines is preserved as vector paths; standard
 PostScript text sequences are emitted as SVG `<text>` elements.
 
 ```ts
-import { epsToSvg, psToSvg } from "asymptote-web";
+import { epsToSvg, epsToSvgWithWarnings, psToSvg } from "asymptote-web";
 
 const eps = await (await fetch("drawing.eps")).text();
 const svg = epsToSvg(eps);
@@ -239,6 +239,20 @@ Pass `{ precision: 1 }` to opt into shorter coordinate formatting. Omitting
 the option preserves the default three-decimal output.
 
 `psToSvg` is an alias of `epsToSvg`.
+
+`epsToSvg()` remains a convenience helper that returns only the SVG string.
+Use `epsToSvgWithWarnings()` when you need diagnostics for content that was
+skipped while conversion continued:
+
+```ts
+const { svg, warnings } = epsToSvgWithWarnings(eps);
+for (const warning of warnings) console.warn(warning);
+```
+
+Warnings are non-fatal and currently identify ignored operators, raster image
+operators, mesh or function-based shadings, unsupported color spaces, and
+malformed shading dictionaries. Engine renders include these messages in
+`RenderResult.warnings` automatically.
 
 The converter supports Asymptote opacity commands such as
 `setopacityalpha`. Opacity is preserved on generated SVG paths using the
@@ -272,5 +286,5 @@ types 2 and 3 when they provide `/Coords` and either `/C0` plus `/C1` or a
 `makepattern`/`setpattern` forms are accepted when the pattern contains such a
 shading dictionary. Transforms are applied to gradient geometry, and existing
 path clipping and opacity are retained. Mesh, function-based, unsupported
-color spaces, malformed dictionaries, and incomplete stop arrays are ignored
-gracefully; they do not make `epsToSvg()` throw.
+color spaces, malformed dictionaries, and incomplete stop arrays are skipped
+with warnings; they do not make `epsToSvg()` throw.

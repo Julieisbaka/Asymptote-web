@@ -8,7 +8,7 @@
  */
 
 import { AsymptoteError, type CreateOptions, type RenderOptions, type RenderResult } from "./types.js";
-import { epsToSvg } from "./eps-to-svg.js";
+import { epsToSvgWithWarnings } from "./eps-to-svg.js";
 
 // ---------------------------------------------------------------------------
 // Emscripten module shape (minimal subset we rely on)
@@ -193,9 +193,10 @@ export async function runAsymptote(
 
     const rawOutput = mod.FS.readFile(outputFile, { encoding: "utf8" });
     const skipConversion = format === "svg" && renderOptions.raw === true;
-    const output = format === "svg" && !skipConversion
-      ? epsToSvg(rawOutput, { precision: renderOptions.svgPrecision })
-      : rawOutput;
+    const conversion = format === "svg" && !skipConversion
+      ? epsToSvgWithWarnings(rawOutput, { precision: renderOptions.svgPrecision })
+      : { svg: rawOutput, warnings: [] };
+    const output = conversion.svg;
 
     return {
       output,
@@ -205,7 +206,10 @@ export async function runAsymptote(
       // Keep svg populated for backwards compatibility; use output for all
       // formats because EPS, PS, and webgl (HTML) are not SVG.
       svg: output,
-      warnings: stderrLines.filter((l) => l.startsWith("Warning")),
+      warnings: [
+        ...stderrLines.filter((l) => l.startsWith("Warning")),
+        ...conversion.warnings,
+      ],
     };
   } finally {
     mod.print = origPrint;

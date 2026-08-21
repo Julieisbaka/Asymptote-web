@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { epsToSvg, psToSvg } from "../dist/asymptote-web.js";
+import { epsToSvg, epsToSvgWithWarnings, psToSvg } from "../dist/asymptote-web.js";
 
 const header = `%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 100 100\n`;
 
@@ -80,6 +80,24 @@ test("emits per-character spacing adjustments", () => {
   assert.match(svg, /<tspan dx="1" dy="0">B<\/tspan>/);
   assert.match(svg, /<tspan dx="2" dy="0">B<\/tspan>/);
   assert.match(svg, /<tspan dx="3" dy="0">B<\/tspan>/);
+});
+
+test("reports unsupported content without stopping conversion", () => {
+  const result = epsToSvgWithWarnings(
+    header +
+    "/DeviceN setcolorspace " +
+    "image " +
+    "<< /ShadingType 4 /Coords [] >> shfill " +
+    "futureoperator " +
+    "newpath 0 0 moveto 10 0 lineto stroke"
+  );
+
+  assert.match(result.svg, /<path d="M0,100 L10,100/);
+  assert.equal(result.warnings.length, 4);
+  assert.match(result.warnings[0], /unsupported color space/);
+  assert.match(result.warnings[1], /raster image/);
+  assert.match(result.warnings[2], /mesh shading/);
+  assert.match(result.warnings[3], /unsupported operator/);
 });
 
 test("rejects invalid precision", () => {

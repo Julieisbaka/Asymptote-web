@@ -25,7 +25,7 @@ import {
   type RenderResult,
 } from "./types.js";
 
-export type { EpsToSvgOptions } from "./eps-to-svg.js";
+export type { EpsToSvgOptions, EpsToSvgResult } from "./eps-to-svg.js";
 export { AsymptoteError } from "./types.js";
 export type {
   AsymptoteEngine,
@@ -52,6 +52,7 @@ export type {
  * ```
  */
 export { epsToSvg };
+export { epsToSvgWithWarnings } from "./eps-to-svg.js";
 
 /**
  * Alias of {@link epsToSvg} — Asymptote's PS output uses the same operator
