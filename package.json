@@ -22,6 +22,7 @@
   "scripts": {
     "build": "vite build && tsc --emitDeclarationOnly --declaration --project tsconfig.build.json",
     "dev": "vite",
+    "predev": "npm run verify:package",
     "test": "npm run build && node --test test/*.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src test",

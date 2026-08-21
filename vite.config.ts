@@ -28,7 +28,9 @@ function serveEmscriptenGlueRaw(): Plugin {
         }
         const filePath = resolve(root, `dist/${match[1]}.js`);
         if (!existsSync(filePath)) {
-          next();
+          res.statusCode = 503;
+          res.setHeader("Content-Type", "text/plain; charset=utf-8");
+          res.end(`Missing dist/${match[1]}.js. Run the WASM build before starting the dev server.\n`);
           return;
         }
         res.setHeader("Content-Type", "text/javascript");
