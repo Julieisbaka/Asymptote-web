@@ -10,7 +10,11 @@
     ".": {
       "import": "./dist/asymptote-web.js",
       "types": "./dist/asymptote-web.d.ts"
-    }
+    },
+    "./asymptote.js": "./dist/asymptote.js",
+    "./asymptote.wasm": "./dist/asymptote.wasm",
+    "./asy.data": "./dist/asy.data",
+    "./asygl.js": "./dist/asygl.js"
   },
   "files": [
     "dist"

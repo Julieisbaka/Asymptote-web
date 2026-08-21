@@ -43,8 +43,8 @@ let _modulePromise: Promise<EmscriptenModule> | null = null;
  * published dist/. Kept dynamic: asymptote.js is a separately published
  * runtime asset next to the wrapper and is not part of the Vite bundle.
  */
-function getGlueUrl(): string {
-  return new URL(["./asymptote", ".js"].join(""), import.meta.url).href;
+function getGlueUrl(options: CreateOptions = {}): string {
+  return options.glueUrl ?? new URL(["./asymptote", ".js"].join(""), import.meta.url).href;
 }
 
 /**
@@ -54,7 +54,7 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
   if (_modulePromise) return _modulePromise;
 
   const modulePromise = (async (): Promise<EmscriptenModule> => {
-    const glueUrl = getGlueUrl();
+    const glueUrl = getGlueUrl(options);
     const { default: factory }: { default: ModuleFactory } = await import(
       /* @vite-ignore */ glueUrl
     );
@@ -244,7 +244,7 @@ async function runAsymptoteUnsafe(
     // needed, but it does need the bundled asygl.js resolved as -asygl=<url>.
     const asyFormat = format === "svg" ? "eps" : format === "webgl" ? "html" : format;
     const outputFile = `${outputPrefix}.${asyFormat}`;
-    const asyglUrl = createOptions.asyglUrl ?? new URL("asygl.js", getGlueUrl()).href;
+    const asyglUrl = createOptions.asyglUrl ?? new URL("asygl.js", getGlueUrl(createOptions)).href;
 
     const args = [
       "-f", asyFormat,

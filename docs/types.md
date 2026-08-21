@@ -71,10 +71,15 @@ converter.
 
 ```ts
 interface CreateOptions {
+  glueUrl?: string;
   wasmUrl?: string;
   asyglUrl?: string;
 }
 ```
+
+`glueUrl` can be set to the Emscripten `asymptote.js` URL when a bundler
+relocates the wrapper module during dependency optimization. This is commonly
+needed with Vite unless `asymptote-web` is excluded from `optimizeDeps`.
 
 ## `Unsafe callbacks`
 

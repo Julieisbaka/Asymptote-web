@@ -109,6 +109,14 @@ export interface WebGLLabel {
 /** Options accepted by {@link createAsymptote}. */
 export interface CreateOptions {
   /**
+   * URL of the Emscripten-generated `asymptote.js` glue module.
+   *
+   * Set this when a bundler relocates the wrapper module during dependency
+   * optimization, such as Vite's `node_modules/.vite/deps` directory.
+   */
+  glueUrl?: string;
+
+  /**
    * URL of the `asymptote.wasm` file.
    * Defaults to the path relative to `asymptote.js` in the same directory.
    *

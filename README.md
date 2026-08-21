@@ -25,7 +25,16 @@
 npm install asymptote-web
 ```
 
-Then copy `node_modules/asymptote-web/dist/asymptote.wasm` next to wherever you serve `asymptote-web.js` (bundlers usually handle this automatically).
+The runtime assets are `asymptote.js`, `asymptote.wasm`, `asy.data`, and
+`asygl.js`; keep them together when serving the package. Most bundlers can
+copy these assets automatically. If Vite prebundles the wrapper into
+`node_modules/.vite/deps`, pass the actual glue URL explicitly:
+
+```ts
+const asy = await createAsymptote({
+  glueUrl: "/node_modules/asymptote-web/dist/asymptote.js",
+});
+```
 
 ### CDN (no build step)
 

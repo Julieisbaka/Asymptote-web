@@ -13,15 +13,33 @@ the page, so multiple calls can share the same runtime.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| `glueUrl` | `string` | automatic | URL of `asymptote.js`. Set this when a bundler relocates the wrapper during dependency optimization, such as Vite. |
 | `wasmUrl` | `string` | automatic | URL of `asymptote.wasm`. Use this when hosting the binary on a CDN or another path. |
 | `asyglUrl` | `string` | automatic | URL of `asygl.js` for normal WebGL output. Not needed when using `offline: true`. |
 
 ```ts
 const asy = await createAsymptote({
+  glueUrl: "/assets/asymptote.js",
   wasmUrl: "/assets/asymptote.wasm",
   asyglUrl: "/assets/asygl.js",
 });
 ```
+
+Vite may prebundle dependencies into `node_modules/.vite/deps`, which can
+make automatic glue discovery point at the wrong directory. In that case,
+either exclude the package from dependency optimization or provide an explicit
+`glueUrl` (and matching `wasmUrl`/`asyglUrl` when those assets are hosted
+elsewhere):
+
+```ts
+const asy = await createAsymptote({
+  glueUrl: "/node_modules/asymptote-web/dist/asymptote.js",
+});
+```
+
+The package also exports the runtime assets as `asymptote-web/asymptote.js`,
+`asymptote-web/asymptote.wasm`, `asymptote-web/asy.data`, and
+`asymptote-web/asygl.js` for bundler-specific asset URL handling.
 
 The WASM module requires the generated runtime assets to be served correctly.
 For a standard npm installation, keep `asymptote.js`, `asymptote.wasm`,

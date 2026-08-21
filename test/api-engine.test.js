@@ -3,6 +3,7 @@ import { unlink, writeFile } from "node:fs/promises";
 import test, { after, beforeEach } from "node:test";
 
 const gluePath = new URL("../dist/asymptote.js", import.meta.url);
+const customGluePath = new URL("../dist/asymptote-custom.js", import.meta.url);
 const glueSource = `
 const state = globalThis.__asymptoteWebTestState ??= {
   calls: [],
@@ -90,6 +91,7 @@ export default async function factory(options = {}) {
 `;
 
 await writeFile(gluePath, glueSource, "utf8");
+await writeFile(customGluePath, glueSource, "utf8");
 globalThis.__asymptoteWebTestState = {
     calls: [],
     factoryCalls: 0,
@@ -104,6 +106,7 @@ const state = globalThis.__asymptoteWebTestState;
 
 after(async () => {
     await unlink(gluePath).catch(() => { });
+    await unlink(customGluePath).catch(() => { });
     delete globalThis.__asymptoteWebTestState;
 });
 
@@ -116,7 +119,7 @@ beforeEach(() => {
 
 test("retries module initialization after a failed factory", async () => {
     await assert.rejects(() => createAsymptote(), /fake module load failure/);
-    const asy = await createAsymptote();
+  const asy = await createAsymptote({ glueUrl: customGluePath.href });
     assert.equal(await asy.version(), "Asymptote test version");
     assert.equal(state.factoryCalls, 2);
 });

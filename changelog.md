@@ -1,5 +1,6 @@
 # 0.1.0
 
+- Added `glueUrl` and runtime asset exports for bundlers that relocate the wrapper during dependency optimization, including Vite.
 - Split EPS/PS interpreter types, operand helpers, and gradient helpers into focused modules.
 - Fixed EPS/PS paths not resetting after painting and successive clipping paths not intersecting.
 - Preserved radial gradient inner radii and added grayscale/CMYK shading stop support.
