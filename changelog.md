@@ -1,5 +1,6 @@
 # 0.1.0
 
+- Split EPS/PS interpreter types, operand helpers, and gradient helpers into focused modules.
 - Made WASM initialization retryable after a failed load instead of caching a rejected promise permanently.
 - Made `createAsymptote()` eagerly initialize the WASM module as documented.
 - Replaced deprecated `unescape`-based image encoding with UTF-8 `TextEncoder` encoding.
