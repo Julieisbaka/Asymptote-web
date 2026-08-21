@@ -52,6 +52,14 @@ test("keeps relative paths in user space under transforms", () => {
   assert.match(svg, /<path d="M20,80 L30,80 L30,70/);
 });
 
+test("restores currentpoint to the subpath start after closepath", () => {
+  const svg = convert(
+    "newpath 10 10 moveto 20 10 lineto 20 20 lineto closepath 5 0 rlineto stroke"
+  );
+
+  assert.match(svg, /M10,90 L20,90 L20,80 Z L15,90/);
+});
+
 test("supports concat and setmatrix", () => {
   const svg = convert(
     "[1 0 0 1 10 20] concat newpath 0 0 moveto 10 0 lineto stroke " +

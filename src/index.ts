@@ -119,17 +119,41 @@ function defaultFilename(format: RenderResult["format"]): string {
 
 function containWebGLScroll(html: string): string {
   const guard = `<script>(function(){function stop(event){event.preventDefault()}document.addEventListener("wheel",stop,{capture:true,passive:false});document.addEventListener("touchmove",stop,{capture:true,passive:false})})()</script>`;
-  const prime = `<script>(function(){function prime(){var canvas=document.getElementById("Asymptote");if(!canvas||!canvas.onmousedown){setTimeout(prime,0);return}canvas.dispatchEvent(new MouseEvent("mousedown",{bubbles:true,clientX:0,clientY:0}));canvas.dispatchEvent(new MouseEvent("mouseup",{bubbles:true}))}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",prime,{once:true});else prime()})()</script>`;
+  const prime = `<script>(function(){var attempts=0;function prime(){var canvas=document.getElementById("Asymptote");if(!canvas||!canvas.onmousedown){if(++attempts<120)setTimeout(prime,16);return}canvas.dispatchEvent(new MouseEvent("mousedown",{bubbles:true,clientX:0,clientY:0}));canvas.dispatchEvent(new MouseEvent("mouseup",{bubbles:true}))}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",prime,{once:true});else prime()})()</script>`;
   const head = html.indexOf("</head>");
   const withGuard = head >= 0 ? `${html.slice(0, head)}${guard}${html.slice(head)}` : `${guard}${html}`;
   const body = withGuard.indexOf("</body>");
   return body >= 0 ? `${withGuard.slice(0, body)}${prime}${withGuard.slice(body)}` : `${withGuard}${prime}`;
 }
 
-function waitForIframeDocument(iframe: HTMLIFrameElement): Promise<Document> {
-  return new Promise((resolve) => {
-    const resolveDocument = () => resolve(iframe.contentDocument ?? document);
-    iframe.addEventListener("load", resolveDocument, { once: true });
+function waitForIframeDocument(iframe: HTMLIFrameElement, timeoutMs = 15000): Promise<Document> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const cleanup = () => {
+      iframe.removeEventListener("load", onLoad);
+      iframe.removeEventListener("error", onError);
+      window.clearTimeout(timeout);
+    };
+    const onLoad = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(iframe.contentDocument ?? document);
+    };
+    const onError = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error("asymptote-web: WebGL iframe failed to load"));
+    };
+    const timeout = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error("asymptote-web: timed out waiting for WebGL iframe"));
+    }, timeoutMs);
+    iframe.addEventListener("load", onLoad, { once: true });
+    iframe.addEventListener("error", onError, { once: true });
   });
 }
 

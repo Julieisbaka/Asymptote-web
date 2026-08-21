@@ -81,6 +81,9 @@ export class SvgWriter {
   private pathD = "";
   private pathDirty = true;
   private pathStarted = false;
+  private subpathStarted = false;
+  private subpathStartX = 0;
+  private subpathStartY = 0;
   private currentX = 0;
   private currentY = 0;
 
@@ -101,6 +104,7 @@ export class SvgWriter {
     this.pathD = "";
     this.pathDirty = false;
     this.pathStarted = false;
+    this.subpathStarted = false;
   }
 
   userPoint(state: GraphicsState): { x: number; y: number } {
@@ -123,6 +127,11 @@ export class SvgWriter {
     );
     this.pathDirty = true;
     this.pathStarted = true;
+    if (op === "M") {
+      this.subpathStarted = true;
+      this.subpathStartX = this.currentX;
+      this.subpathStartY = this.currentY;
+    }
   }
 
   appendCurve(state: GraphicsState, x1: number, y1: number, x2: number, y2: number, x: number, y: number): void {
@@ -184,6 +193,10 @@ export class SvgWriter {
   closePath(): void {
     this.pathParts.push("Z");
     this.pathDirty = true;
+    if (this.subpathStarted) {
+      this.currentX = this.subpathStartX;
+      this.currentY = this.subpathStartY;
+    }
   }
 
   clip(state: GraphicsState, evenodd: boolean): void {

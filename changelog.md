@@ -2,7 +2,9 @@
 
 - Fixed EPS/PS parsing for scientific-notation coordinates emitted by Asymptote.
 - Fixed relative EPS/PS path operators after transforms such as `scale` and `rotate`.
+- Fixed `closepath` so subsequent relative path commands use the subpath start as `currentpoint`.
 - Fixed WebGL zoom requiring an initial click by priming the embedded viewer's wheel handler.
+- Bounded WebGL wheel-listener priming and added iframe load failure/timeout handling.
 
 # 0.0.9
 - Replaced the 5×7 glyph table with a compact vector font while preserving the existing `textpath()` patch interface. 
