@@ -11,7 +11,7 @@ import {
 import { SvgWriter } from "./eps-svg-writer.js";
 import { PostScriptTokenizer } from "./eps-tokenizer.js";
 
-const NUMBER_RE = /^[+-]?(\d+\.?\d*|\.\d+)$/;
+const NUMBER_RE = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
 
 interface Dictionary {
   [key: string]: Operand;

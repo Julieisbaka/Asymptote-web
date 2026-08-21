@@ -15,6 +15,15 @@ test("converts a filled path with compact coordinates", () => {
   assert.doesNotMatch(svg, /10\.500|20\.000/);
 });
 
+test("accepts scientific-notation coordinates emitted by Asymptote", () => {
+  const result = epsToSvgWithWarnings(
+    header + "newpath 10 20 moveto 4.78047431e-15 30 lineto stroke"
+  );
+
+  assert.match(result.svg, /<path d="M10,80 L0,70/);
+  assert.doesNotMatch(result.warnings.join("\n"), /4\.78047431e-15/);
+});
+
 test("converts arc and arcn into cubic SVG curves", () => {
   const svg = convert(
     "newpath 50 50 25 0 90 arc stroke " +
