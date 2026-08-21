@@ -1,5 +1,6 @@
 # 0.1.0
 
+- Captured lowercase and prefixed Asymptote compiler warnings such as `[unbounded]` in `result.warnings`.
 - Fixed package metadata and release verification so runtime assets and TypeScript declarations are checked before publishing.
 - Added documentation for serving the complete runtime asset set with npm and Vite.
 - Added `glueUrl` and runtime asset exports for bundlers that relocate the wrapper during dependency optimization, including Vite.

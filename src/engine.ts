@@ -290,7 +290,7 @@ async function runAsymptoteUnsafe(
       // formats because EPS, PS, and webgl (HTML) are not SVG.
       svg: output,
       warnings: [
-        ...stderrLines.filter((l) => l.startsWith("Warning")),
+        ...stderrLines.filter((line) => /(?:^|\s)warning(?:\s|$)/i.test(line)),
         ...conversion.warnings,
       ],
     };

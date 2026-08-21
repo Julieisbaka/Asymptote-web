@@ -119,19 +119,22 @@ beforeEach(() => {
 
 test("retries module initialization after a failed factory", async () => {
     await assert.rejects(() => createAsymptote(), /fake module load failure/);
-  const asy = await createAsymptote({ glueUrl: customGluePath.href });
+    const asy = await createAsymptote({ glueUrl: customGluePath.href });
     assert.equal(await asy.version(), "Asymptote test version");
     assert.equal(state.factoryCalls, 2);
 });
 
 test("renders SVG and reports compiler/converter warnings", async () => {
     const asy = await createAsymptote();
-    state.stderr.push("Warning: compiler warning", "informational output");
+    state.stderr.push("Warning: compiler warning", ": warning [unbounded]: x scaling in picture unbounded", "informational output");
     const result = await asy.render("draw((0,0)--(1,1));");
 
     assert.equal(result.format, "svg");
     assert.match(result.output, /^<svg/);
-    assert.deepEqual(result.warnings, ["Warning: compiler warning"]);
+    assert.deepEqual(result.warnings, [
+        "Warning: compiler warning",
+        ": warning [unbounded]: x scaling in picture unbounded",
+    ]);
     assert.deepEqual(state.calls.at(-1).source, "draw((0,0)--(1,1));");
 });
 
