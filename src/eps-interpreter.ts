@@ -218,8 +218,11 @@ export class PostScriptInterpreter {
         break;
       }
       case "setcolor":
-        if (this.colorComponentCount === null) this.stack.length = 0;
-        else this.popN(this.colorComponentCount);
+        if (this.colorComponentCount === null) {
+          while (typeof this.stack[this.stack.length - 1] === "number") this.stack.pop();
+        } else {
+          this.popN(this.colorComponentCount);
+        }
         this.warn(`ignored unsupported color space/operator '${tok}'`);
         break;
       case "setlineargradient":

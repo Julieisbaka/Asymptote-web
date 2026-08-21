@@ -1,6 +1,9 @@
 # 0.1.0
 
 - Split EPS/PS interpreter types, operand helpers, and gradient helpers into focused modules.
+- Fixed EPS/PS paths not resetting after painting and successive clipping paths not intersecting.
+- Preserved radial gradient inner radii and added grayscale/CMYK shading stop support.
+- Prevented unsupported color operations from clearing unrelated PostScript operands.
 - Made WASM initialization retryable after a failed load instead of caching a rejected promise permanently.
 - Made `createAsymptote()` eagerly initialize the WASM module as documented.
 - Replaced deprecated `unescape`-based image encoding with UTF-8 `TextEncoder` encoding.

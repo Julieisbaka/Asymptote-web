@@ -240,15 +240,24 @@ export class SvgWriter {
 
   clip(state: GraphicsState, evenodd: boolean): void {
     const id = `asy-clip-${this.clipCounter += 1}`;
+    const d = this.pathToD();
+    const path = `<path d="${d}"${evenodd ? ' clip-rule="evenodd"' : ""}/>`;
+    const content = state.clipId
+      ? `<g clip-path="url(#${state.clipId})">${path}</g>`
+      : path;
     this.defs.push(
-      `<clipPath id="${id}"><path d="${this.pathToD()}"${evenodd ? ' clip-rule="evenodd"' : ""}/></clipPath>`
+      `<clipPath id="${id}">${content}</clipPath>`
     );
     state.clipId = id;
+    this.newPath();
   }
 
   paint(state: GraphicsState, mode: "fill" | "eofill" | "stroke"): void {
     const d = this.pathToD();
-    if (d.length === 0) return;
+    if (d.length === 0) {
+      this.newPath();
+      return;
+    }
     const clipAttr = state.clipId ? ` clip-path="url(#${state.clipId})"` : "";
     const opacityAttr = state.opacity < 1 ? ` opacity="${formatOpacity(state.opacity)}"` : "";
     if (mode === "stroke") {
@@ -265,6 +274,7 @@ export class SvgWriter {
       const fill = state.gradient ? this.gradientFill(state.gradient, state) : state.fill;
       this.elements.push(`<path d="${d}" fill="${fill}"${rule}${opacityAttr}${clipAttr}/>`);
     }
+    this.newPath();
   }
 
   show(state: GraphicsState, text: string, adjustments: Array<[number, number]> = []): void {
@@ -345,7 +355,7 @@ export class SvgWriter {
       definition = `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" gradientTransform="matrix(${matrix})" x1="${this.formatNumber(gradient.x1)}" y1="${this.formatNumber(gradient.y1)}" x2="${this.formatNumber(gradient.x2)}" y2="${this.formatNumber(gradient.y2)}">${stops}</linearGradient>`;
     } else {
       const matrix = transform.map((value) => this.formatNumber(value)).join(" ");
-      definition = `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" gradientTransform="matrix(${matrix})" cx="${this.formatNumber(gradient.x2)}" cy="${this.formatNumber(gradient.y2)}" r="${this.formatNumber(gradient.r2)}" fx="${this.formatNumber(gradient.x1)}" fy="${this.formatNumber(gradient.y1)}">${stops}</radialGradient>`;
+      definition = `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" gradientTransform="matrix(${matrix})" cx="${this.formatNumber(gradient.x2)}" cy="${this.formatNumber(gradient.y2)}" r="${this.formatNumber(gradient.r2)}" fx="${this.formatNumber(gradient.x1)}" fy="${this.formatNumber(gradient.y1)}" fr="${this.formatNumber(gradient.r1)}">${stops}</radialGradient>`;
     }
     this.defs.push(definition);
     return `url(#${id})`;

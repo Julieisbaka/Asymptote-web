@@ -80,6 +80,27 @@ test("restores currentpoint to the subpath start after closepath", () => {
   assert.match(svg, /M10,90 L20,90 L20,80 Z L15,90/);
 });
 
+test("clears the current path after painting", () => {
+  const svg = convert(
+    "newpath 0 0 moveto 10 0 lineto stroke 20 20 moveto 30 20 lineto stroke"
+  );
+
+  const paths = svg.match(/<path d="([^"]+)" fill="none"/g) ?? [];
+  assert.equal(paths.length, 2);
+  assert.match(paths[1], /d="M20,80 L30,80"/);
+});
+
+test("intersects successive clipping paths", () => {
+  const svg = convert(
+    "newpath 0 0 moveto 50 0 lineto 50 100 lineto 0 100 lineto closepath clip " +
+    "newpath 0 50 moveto 100 50 lineto 100 100 lineto 0 100 lineto closepath clip " +
+    "newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath fill"
+  );
+
+  assert.match(svg, /<clipPath id="asy-clip-2"><g clip-path="url\(#asy-clip-1\)">/);
+  assert.match(svg, /clip-path="url\(#asy-clip-2\)"/);
+});
+
 test("supports concat and setmatrix", () => {
   const svg = convert(
     "[1 0 0 1 10 20] concat newpath 0 0 moveto 10 0 lineto stroke " +
@@ -126,7 +147,30 @@ test("preserves radial gradients and opacity", () => {
   );
 
   assert.match(svg, /<radialGradient/);
+  assert.match(svg, /fr="0"/);
   assert.match(svg, /opacity="0\.5"/);
+});
+
+test("converts grayscale and CMYK shading stops", () => {
+  const grayscale = convert(
+    "newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath " +
+    "<< /ShadingType 2 /Coords [0 0 100 0] /ColorSpace /DeviceGray /C0 [0] /C1 [1] >> shfill"
+  );
+  const cmyk = convert(
+    "newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath " +
+    "<< /ShadingType 2 /Coords [0 0 100 0] /ColorSpace /DeviceCMYK /C0 [0 1 1 0] /C1 [1 0 1 0] >> shfill"
+  );
+
+  assert.match(grayscale, /stop-color="rgb\(0,0,0\)"/);
+  assert.match(grayscale, /stop-color="rgb\(255,255,255\)"/);
+  assert.match(cmyk, /stop-color="rgb\(255,0,0\)"/);
+  assert.match(cmyk, /stop-color="rgb\(0,255,0\)"/);
+});
+
+test("does not erase unrelated operands for unknown setcolor", () => {
+  const svg = convert("(keep) /DeviceN setcolorspace 1 setcolor 0 0 moveto (keep) show");
+
+  assert.match(svg, />keep<\/text>/);
 });
 
 test("converts HSB colors to RGB", () => {
