@@ -95,6 +95,10 @@ const { output, format } = await asy.render("draw(unitcircle);", {
 // output contains the EPS text
 ```
 
+PDF output is not available in the browser build. The candidate WASM build
+stubs the Ghostscript-backed PDF conversion and reports an explicit error;
+this does not affect SVG, EPS, PS, or WebGL output.
+
 Raw flags remain available for Asymptote features that do not have typed
 options:
 

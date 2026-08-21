@@ -14,6 +14,7 @@
 - Added bounded 8-bit grayscale PostScript `image` conversion to SVG.
 - Prefixed Asymptote compiler failures with `ASYMPTOTE ERROR` for clearer diagnostics.
 - Fixed lowercase characters in native fallback text labels by normalizing glyph lookup.
+- Stubbed browser PDF generation with a clear Ghostscript-unavailable error.
 
 # 0.0.9
 

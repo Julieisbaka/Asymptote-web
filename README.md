@@ -140,7 +140,7 @@ Without these headers, single-threaded mode is used automatically, which is fine
 
 ## How it works
 
-1. **Asymptote** is compiled from C++ to WebAssembly using [Emscripten](https://emscripten.org/).
+1. **Asymptote** is compiled from C++ to WebAssembly using [Emscripten](https://emscripten.org/) and a set of patches that remove unsupported features and add browser-friendly fallbacks.
 2. An in-memory virtual filesystem (Emscripten's MEMFS) is used to pass the `.asy` source file to the compiler and read back the `.svg` output — no real filesystem access needed.
 3. Asymptote's `base/` standard library is bundled into the WASM binary at build time via Emscripten's `--preload-file` flag.
 4. The TypeScript wrapper provides a clean Promise-based API on top of the low-level Emscripten module.
@@ -150,10 +150,10 @@ Without these headers, single-threaded mode is used automatically, which is fine
 ## Known limitations
 
 - 3D scenes render via WebGL (`format: "webgl"` / `mountWebGL()`), but text labels within 3D scenes are unsupported (same `-tex none` limitation as 2D), and the binary v3d/PRC export format is not supported.
-- Generated PDF may have bugs because diffrent browsers use diffrent PDF renderers (PDFs not yet supported)
 - Browser builds report `convert()` and `animate()` as unavailable instead of attempting to launch ImageMagick or an external viewer.
 - Browser-provided imports and assets can be mounted with the `render()` `files` option; host filesystem paths are not accessible.
 - Explicit `texsize()` calls use approximate native metrics, while `texpath()` reports unavailable because TeX shaping is not bundled.
+- PDF output is deliberately stubbed in browser WebAssembly and reports a clear error because Ghostscript is not bundled; use SVG, EPS, PS, or WebGL instead.
 - Trusted pre-rendered LaTeX SVG can be inserted with the opt-in `asy.unsafe.mount()` DOM hook.
 - WebGL supports basic camera-facing screen-space labels through `webglLabels`; world-coordinate labels require `asy.unsafe.mountWebGL()` customization.
 
