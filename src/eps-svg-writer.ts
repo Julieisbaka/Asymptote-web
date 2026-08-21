@@ -199,6 +199,30 @@ export class SvgWriter {
     }
   }
 
+  image(state: GraphicsState, width: number, height: number, pixels: string): boolean {
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) return false;
+    if (width * height > 262144 || pixels.length < width * height) return false;
+    const rects: string[] = [];
+    for (let row = 0; row < height; row += 1) {
+      for (let column = 0; column < width; column += 1) {
+        const value = pixels.charCodeAt(row * width + column);
+        const gray = Math.max(0, Math.min(255, Number.isFinite(value) ? value : 0));
+        if (gray === 255) continue;
+        rects.push(`<rect x="${column}" y="${row}" width="1" height="1" fill="rgb(${gray},${gray},${gray})"/>`);
+      }
+    }
+    const content = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">${rects.join("")}</svg>`;
+    const encoded = typeof btoa === "function"
+      ? btoa(unescape(encodeURIComponent(content)))
+      : "";
+    if (!encoded) return false;
+    const { a, b, c, d, e, f } = state.ctm;
+    const x = a * 0 + c * 0 + e - this.llx;
+    const y = this.height - (b * 0 + d * height + f - this.lly);
+    this.elements.push(`<image x="${this.formatNumber(x)}" y="${this.formatNumber(y)}" width="${this.formatNumber(Math.hypot(a, b) * width)}" height="${this.formatNumber(Math.hypot(c, d) * height)}" href="data:image/svg+xml;base64,${encoded}" opacity="${formatOpacity(state.opacity)}"/>`);
+    return true;
+  }
+
   clip(state: GraphicsState, evenodd: boolean): void {
     const id = `asy-clip-${this.clipCounter += 1}`;
     this.defs.push(

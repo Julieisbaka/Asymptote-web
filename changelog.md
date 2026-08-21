@@ -10,6 +10,8 @@
 - Normalized negative zero coordinates and clamped EPS/PS colors and opacity.
 - Cleaned up failed WebGL mounts and synchronized the public type reference.
 - Removed the unused `vite-plugin-dts` development dependency.
+- Added queued render cancellation through `AbortSignal`.
+- Added bounded 8-bit grayscale PostScript `image` conversion to SVG.
 
 # 0.0.9
 

@@ -64,6 +64,7 @@ console.log(version); // e.g. "Asymptote version 3.13"
 |---|---|---|---|
 | `format` | `"svg" \| "eps" \| "ps" \| "webgl"` | `"svg"` | Output format. WebGL returns HTML for the interactive viewer. |
 | `flags` | `string[]` | `[]` | Additional command-line arguments forwarded to Asymptote. |
+| `signal` | `AbortSignal` | automatic | Cancels a render while it is queued; running WASM execution is not forcibly interrupted. |
 | `files` | `Record<string, string \| Uint8Array>` | `{}` | Files mounted into the isolated browser filesystem for imports and assets. |
 | `offline` | `boolean` | `false` | For WebGL, embed the AsyGL viewer into the generated HTML. |
 | `position` | `[number, number]` | automatic | Initial WebGL camera position. |
@@ -321,6 +322,11 @@ Warnings are non-fatal and currently identify ignored operators, raster image
 operators, mesh or function-based shadings, unsupported color spaces, and
 malformed shading dictionaries. Engine renders include these messages in
 `RenderResult.warnings` automatically.
+
+The converter supports a bounded `image` form with 8-bit grayscale string data
+and emits an SVG data-backed image. `colorimage`, `imagemask`, binary image
+filters, and procedure-backed image sources remain unsupported and produce a
+warning.
 
 The converter supports Asymptote opacity commands such as
 `setopacityalpha`. Opacity is preserved on generated SVG paths using the

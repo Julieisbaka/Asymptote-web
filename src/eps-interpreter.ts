@@ -348,7 +348,16 @@ export class PostScriptInterpreter {
         } else this.warnUnsupportedShading(shading);
         break;
       }
-      case "image":
+      case "image": {
+        const data = this.stack.pop();
+        const matrix = this.stack.pop();
+        const bits = this.stack.pop();
+        const height = this.stack.pop();
+        const width = this.stack.pop();
+        if (typeof data === "string" && bits === 8 && typeof width === "number" && typeof height === "number" && isMatrixArray(matrix) && this.writer.image(this.state, width, height, data)) break;
+        this.warn("ignored raster image: only 8-bit grayscale string data is supported");
+        break;
+      }
       case "colorimage":
       case "imagemask":
         this.warn(`ignored raster image operator '${tok}'`);
@@ -474,6 +483,10 @@ function matrixFromOperand(value: Operand | undefined): Matrix | null {
 
 function isMatrix(value: Matrix | null): value is Matrix {
   return value !== null;
+}
+
+function isMatrixArray(value: Operand | undefined): value is Operand[] {
+  return Array.isArray(value) && value.length === 6 && value.every((item) => typeof item === "number");
 }
 
 function parseStops(value: Operand | undefined, c1?: Operand, c2?: Operand): ParsedStop[] | null {

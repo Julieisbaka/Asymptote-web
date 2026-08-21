@@ -15,6 +15,7 @@ type OutputFormat = "svg" | "eps" | "ps" | "webgl";
 interface RenderOptions {
   format?: OutputFormat;
   flags?: string[];
+  signal?: AbortSignal;
   files?: Record<string, string | Uint8Array>;
   offline?: boolean;
   position?: [number, number];
@@ -39,6 +40,8 @@ interface WebGLLabel {
 - `format` defaults to `"svg"`.
 - `flags` are additional arguments passed to Asymptote. They are intentionally
   an escape hatch for advanced or unsafe configuration.
+- `signal` cancels a render while it waits in the shared queue. A render that
+  has entered synchronous WASM execution cannot be forcibly stopped.
 - `files` contains relative virtual paths and text or binary contents mounted
   for that render. Host filesystem paths and URLs are not accessed directly.
 - `offline`, `position`, `devicePixelRatio`, and `autobillboard` apply to

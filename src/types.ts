@@ -20,6 +20,12 @@ export interface RenderOptions {
   flags?: string[];
 
   /**
+   * Cancels this render while it is waiting in the shared WASM queue.
+   * A render already inside synchronous WASM execution cannot be interrupted.
+   */
+  signal?: AbortSignal;
+
+  /**
    * Files to place in the render's isolated virtual filesystem. Keys are
    * relative paths, such as `lib/helpers.asy` or `data/image.dat`.
    * Values may be text or binary data. Host filesystem paths and URLs are not

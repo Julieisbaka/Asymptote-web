@@ -92,6 +92,10 @@ function enqueueRender<T>(task: () => Promise<T>): Promise<T> {
   return result;
 }
 
+function abortError(): DOMException {
+  return new DOMException("The render was aborted", "AbortError");
+}
+
 function ensureDirectory(mod: EmscriptenModule, path: string): void {
   const parts = path.split("/").filter(Boolean);
   let current = "";
@@ -177,7 +181,10 @@ export function runAsymptote(
   renderOptions: RenderOptions,
   createOptions: CreateOptions
 ): Promise<RenderResult> {
-  return enqueueRender(() => runAsymptoteUnsafe(source, renderOptions, createOptions));
+  return enqueueRender(async () => {
+    if (renderOptions.signal?.aborted) throw abortError();
+    return runAsymptoteUnsafe(source, renderOptions, createOptions);
+  });
 }
 
 async function runAsymptoteUnsafe(

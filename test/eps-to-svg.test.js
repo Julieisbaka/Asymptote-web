@@ -144,6 +144,13 @@ test("clamps colors and opacity to valid SVG values", () => {
   assert.match(svg, /opacity="0"/);
 });
 
+test("converts bounded 8-bit grayscale image data", () => {
+  const svg = convert("2 1 8 [2 0 0 -1 0 1] (\x00\xff) image");
+
+  assert.match(svg, /<image /);
+  assert.match(svg, /data:image\/svg\+xml;base64,/);
+});
+
 test("maps styled and symbolic PostScript fonts", () => {
   const svg = convert(
     "/Helvetica-BoldOblique findfont 12 scalefont setfont 10 20 moveto (A) show " +
