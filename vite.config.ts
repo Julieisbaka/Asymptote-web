@@ -1,4 +1,4 @@
-import { createReadStream, existsSync } from "node:fs";
+import { createReadStream, existsSync, unlinkSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
@@ -38,8 +38,22 @@ function serveEmscriptenGlueRaw(): Plugin {
   };
 }
 
+function cleanReleaseSourceMap(debugBuild: boolean): Plugin {
+  return {
+    name: "clean-release-source-map",
+    closeBundle() {
+      if (!debugBuild) {
+        const mapPath = resolve(fileURLToPath(new URL(".", import.meta.url)), "dist/asymptote-web.js.map");
+        if (existsSync(mapPath)) unlinkSync(mapPath);
+      }
+    },
+  };
+}
+
+const debugBuild = process.env.ASY_DEBUG === "1";
+
 export default defineConfig({
-  plugins: [serveEmscriptenGlueRaw()],
+  plugins: [serveEmscriptenGlueRaw(), cleanReleaseSourceMap(debugBuild)],
   build: {
     lib: {
       entry: "src/index.ts",
@@ -55,10 +69,10 @@ export default defineConfig({
         assetFileNames: "[name][extname]",
       },
     },
-    // Keep source maps for easier debugging
-    sourcemap: true,
-    // Don't minify — the WASM binary is already optimised; let bundlers decide.
-    minify: false,
+    // Release builds prioritize package and transfer size. Set ASY_DEBUG=1
+    // when a readable wrapper and source map are needed for debugging.
+    sourcemap: debugBuild,
+    minify: !debugBuild,
     // The WASM build writes asymptote.js, asymptote.wasm, asy.data, and
     // asygl.js into dist separately. Preserve those files when rebuilding the
     // TypeScript wrapper.

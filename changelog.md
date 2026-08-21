@@ -5,8 +5,14 @@
 - Fixed `closepath` so subsequent relative path commands use the subpath start as `currentpoint`.
 - Fixed WebGL zoom requiring an initial click by priming the embedded viewer's wheel handler.
 - Bounded WebGL wheel-listener priming and added iframe load failure/timeout handling.
+- Optimized release output by minifying the wrapper and omitting production source maps.
+- Added scientific-notation bounding-box parsing and safe fallback dimensions.
+- Normalized negative zero coordinates and clamped EPS/PS colors and opacity.
+- Cleaned up failed WebGL mounts and synchronized the public type reference.
+- Removed the unused `vite-plugin-dts` development dependency.
 
 # 0.0.9
+
 - Replaced the 5×7 glyph table with a compact vector font while preserving the existing `textpath()` patch interface. 
 - Added HSB colors, basic text spacing operators, and broader font mappings.
 - Report ignored operators, images, mesh shadings, and unsupported color spaces instead of silently dropping them.

@@ -67,19 +67,20 @@ export function cloneState(s: GraphicsState): GraphicsState {
 }
 
 export function toColor(nums: number[]): string {
+  const clamp = (value: number): number => Math.max(0, Math.min(255, Number.isFinite(value) ? value : 0));
   if (nums.length === 1) {
-    const v = Math.round(nums[0] * 255);
+    const v = Math.round(clamp(nums[0] * 255));
     return `rgb(${v},${v},${v})`;
   }
   if (nums.length === 3) {
-    const [r, g, b] = nums.map((n) => Math.round(n * 255));
+    const [r, g, b] = nums.map((n) => Math.round(clamp(n * 255)));
     return `rgb(${r},${g},${b})`;
   }
   if (nums.length === 4) {
     const [c, m, y, k] = nums;
-    const r = Math.round(255 * (1 - c) * (1 - k));
-    const g = Math.round(255 * (1 - m) * (1 - k));
-    const b = Math.round(255 * (1 - y) * (1 - k));
+    const r = Math.round(clamp(255 * (1 - c) * (1 - k)));
+    const g = Math.round(clamp(255 * (1 - m) * (1 - k)));
+    const b = Math.round(clamp(255 * (1 - y) * (1 - k)));
     return `rgb(${r},${g},${b})`;
   }
   return "black";

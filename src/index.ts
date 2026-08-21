@@ -319,7 +319,12 @@ export async function createAsymptote(
         iframe.style.height = "100%";
         const loaded = waitForIframeDocument(iframe);
         el.replaceChildren(iframe);
-        await customize(iframe, await loaded);
+        try {
+          await customize(iframe, await loaded);
+        } catch (error) {
+          if (iframe.parentElement === el) el.removeChild(iframe);
+          throw error;
+        }
         return result;
       },
     },

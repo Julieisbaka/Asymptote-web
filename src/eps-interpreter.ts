@@ -256,7 +256,12 @@ export class PostScriptInterpreter {
       case "setopacityalpha":
       case "setalpha":
       case "setopacity":
-        this.state.opacity = this.popN(1)[0];
+        {
+          const opacity = this.popN(1)[0];
+          this.state.opacity = Number.isFinite(opacity)
+            ? Math.max(0, Math.min(1, opacity))
+            : 0;
+        }
         break;
       case "show": {
         const text = this.stack.pop();

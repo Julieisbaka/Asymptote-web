@@ -64,18 +64,21 @@ export function epsToSvgWithWarnings(
     throw new RangeError("epsToSvg: precision must be an integer from 0 to 12");
   }
   const formatNumber = (value: number): string => {
-    if (value === 0) return "0";
+    if (!Number.isFinite(value)) return "0";
+    const threshold = 0.5 * 10 ** -precision;
+    if (Math.abs(value) < threshold) return "0";
     return value.toFixed(precision).replace(/(?:\.0+|(?:(\.\d*?)0+))$/, "$1");
   };
-  const bboxMatch = /%%HiResBoundingBox:\s*([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)/.exec(eps)
-    ?? /%%BoundingBox:\s*([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)\s+([\d.+-]+)/.exec(eps);
+  const bboxNumber = "[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?";
+  const bboxMatch = new RegExp(`%%HiResBoundingBox:\\s*(${bboxNumber})\\s+(${bboxNumber})\\s+(${bboxNumber})\\s+(${bboxNumber})`).exec(eps)
+    ?? new RegExp(`%%BoundingBox:\\s*(${bboxNumber})\\s+(${bboxNumber})\\s+(${bboxNumber})\\s+(${bboxNumber})`).exec(eps);
 
   const llx = bboxMatch ? parseFloat(bboxMatch[1]) : 0;
   const lly = bboxMatch ? parseFloat(bboxMatch[2]) : 0;
   const urx = bboxMatch ? parseFloat(bboxMatch[3]) : 100;
   const ury = bboxMatch ? parseFloat(bboxMatch[4]) : 100;
-  const width = urx - llx;
-  const height = ury - lly;
+  const width = Number.isFinite(urx - llx) && urx > llx ? urx - llx : 100;
+  const height = Number.isFinite(ury - lly) && ury > lly ? ury - lly : 100;
 
   const writer = new SvgWriter(llx, lly, width, height, formatNumber);
   const interpreter = new PostScriptInterpreter(new PostScriptTokenizer(eps), writer);

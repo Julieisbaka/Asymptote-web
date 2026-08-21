@@ -24,6 +24,25 @@ test("accepts scientific-notation coordinates emitted by Asymptote", () => {
   assert.doesNotMatch(result.warnings.join("\n"), /4\.78047431e-15/);
 });
 
+test("accepts scientific-notation bounding boxes", () => {
+  const svg = epsToSvg(
+    "%!PS-Adobe-3.0 EPSF-3.0\n%%HiResBoundingBox: -1e1 -2e1 1e2 2e2\n"
+  );
+
+  assert.match(svg, /width="110" height="220"/);
+});
+
+test("normalizes invalid dimensions and tiny negative coordinates", () => {
+  const svg = epsToSvg(
+    "%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 10 20 0 0\n" +
+    "newpath -4e-15 0 moveto 1 1 lineto stroke"
+  );
+
+  assert.match(svg, /width="100" height="100"/);
+  assert.match(svg, /<path d="M-10,120/);
+  assert.doesNotMatch(svg, /-0/);
+});
+
 test("converts arc and arcn into cubic SVG curves", () => {
   const svg = convert(
     "newpath 50 50 25 0 90 arc stroke " +
@@ -113,6 +132,16 @@ test("converts HSB colors to RGB", () => {
   const svg = convert("0 1 1 sethsbcolor newpath 0 0 moveto 10 0 lineto stroke");
 
   assert.match(svg, /stroke="rgb\(255,0,0\)"/);
+});
+
+test("clamps colors and opacity to valid SVG values", () => {
+  const svg = convert(
+    "2 setgray -1 0 3 setrgbcolor -1 setopacityalpha " +
+    "newpath 0 0 moveto 10 0 lineto stroke"
+  );
+
+  assert.match(svg, /stroke="rgb\(0,0,255\)"/);
+  assert.match(svg, /opacity="0"/);
 });
 
 test("maps styled and symbolic PostScript fonts", () => {

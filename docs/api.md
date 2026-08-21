@@ -28,6 +28,10 @@ For a standard npm installation, keep `asymptote.js`, `asymptote.wasm`,
 `asy.data`, and `asygl.js` together unless you provide custom URLs where the
 API supports them.
 
+Release builds minify the TypeScript wrapper and omit its source map to reduce
+the published package. Set `ASY_DEBUG=1` when running the build if you need an
+unminified wrapper and source map for debugging.
+
 ## `AsymptoteEngine`
 
 ### `render(source, options?)`
