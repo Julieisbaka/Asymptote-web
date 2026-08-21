@@ -16,7 +16,7 @@
  * ```
  */
 
-import { runAsymptote } from "./engine.js";
+import { getAsymptoteVersion, runAsymptote } from "./engine.js";
 import { epsToSvg } from "./eps-to-svg.js";
 import {
   type AsymptoteEngine,
@@ -135,6 +135,10 @@ export async function createAsymptote(
   const resolvedOptions: CreateOptions = { ...options };
 
   const engine: AsymptoteEngine = {
+    async version(): Promise<string> {
+      return getAsymptoteVersion(resolvedOptions);
+    },
+
     async render(
       source: string,
       renderOptions: RenderOptions = {}

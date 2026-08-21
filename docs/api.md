@@ -44,6 +44,16 @@ const result = await asy.render(`
 document.querySelector("#output").innerHTML = result.output;
 ```
 
+### `version()`
+
+Returns a promise containing the version string reported by the compiled
+Asymptote CLI:
+
+```ts
+const version = await asy.version();
+console.log(version); // e.g. "Asymptote version 3.13"
+```
+
 #### Render options
 
 | Option | Type | Default | Description |

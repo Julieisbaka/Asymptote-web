@@ -133,6 +133,11 @@ export type UnsafeSvgCustomizer = (svg: SVGSVGElement) => void;
  */
 export interface AsymptoteEngine {
   /**
+   * Return the version string reported by the compiled Asymptote CLI.
+   */
+  version(): Promise<string>;
+
+  /**
    * Render Asymptote source code and return the generated output.
    *
    * @param source - Asymptote source code.

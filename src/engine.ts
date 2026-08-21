@@ -280,3 +280,30 @@ async function runAsymptoteUnsafe(
     if (mod.FS.analyzePath(renderDir).exists) removeTree(mod, renderDir);
   }
 }
+
+/** @internal */
+export function getAsymptoteVersion(createOptions: CreateOptions): Promise<string> {
+  return enqueueRender(async () => {
+    const mod = await loadModule(createOptions);
+    const output: string[] = [];
+    const errors: string[] = [];
+    const origPrint = mod.print;
+    const origPrintErr = mod.printErr;
+    mod.print = (text: string) => output.push(text);
+    mod.printErr = (text: string) => errors.push(text);
+    try {
+      const exitCode = mod.callMain(["--version"]);
+      if (exitCode !== 0) {
+        throw new AsymptoteError(
+          `Unable to read Asymptote version (exit code ${exitCode})`,
+          exitCode,
+          errors.join("\n")
+        );
+      }
+      return [...output, ...errors].join("\n").trim();
+    } finally {
+      mod.print = origPrint;
+      mod.printErr = origPrintErr;
+    }
+  });
+}

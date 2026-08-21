@@ -6,6 +6,7 @@
 - Added browser-safe `convert()` and `animate()` runtime patching with non-fatal capability warnings.
 - Added approximate browser-native `texsize()` metrics and a safe `texpath()` fallback.
 - Added trusted `asy.unsafe.mount()` DOM customization for pre-rendered LaTeX SVG.
+- Added `asy.version()` to report the compiled Asymptote CLI version.
 
 # 0.0.8
 

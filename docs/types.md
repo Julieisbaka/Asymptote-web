@@ -36,6 +36,10 @@ interface RenderOptions {
   svgPrecision?: number;
   reuseSvg?: boolean;
 }
+
+interface AsymptoteEngine {
+  version(): Promise<string>;
+}
 ```
 
 - `format` defaults to `"svg"`.
@@ -62,6 +66,8 @@ interface RenderOptions {
   through 12. The default remains 3.
 - `reuseSvg` is opt-in and applies to `mount()`. It preserves an existing
   direct child SVG root while updating its generated content.
+
+`version()` returns the version string reported by the compiled Asymptote CLI.
 
 `AsymptoteEngine.unsafe.mount()` accepts a trusted callback for direct SVG DOM
 manipulation, such as inserting pre-rendered LaTeX. The callback may insert
