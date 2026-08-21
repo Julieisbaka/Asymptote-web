@@ -4,7 +4,7 @@
 export class PostScriptTokenizer {
   private index = 0;
 
-  constructor(private readonly source: string) {}
+  constructor(private readonly source: string) { }
 
   next(): string | null {
     while (this.index < this.source.length) {

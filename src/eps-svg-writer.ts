@@ -104,7 +104,7 @@ export class SvgWriter {
     private readonly width: number,
     private readonly height: number,
     private readonly formatNumber: (value: number) => string
-  ) {}
+  ) { }
 
   get currentPoint(): { x: number; y: number } {
     return { x: this.currentX, y: this.currentY };

@@ -51,7 +51,7 @@ export class PostScriptInterpreter {
   constructor(
     private readonly tokens: PostScriptTokenizer,
     private readonly writer: SvgWriter
-  ) {}
+  ) { }
 
   run(): void {
     for (let tok = this.tokens.next(); tok !== null; tok = this.tokens.next()) {
