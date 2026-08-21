@@ -1,6 +1,7 @@
 # 0.1.0
 
 - Fixed EPS/PS parsing for scientific-notation coordinates emitted by Asymptote.
+- Fixed relative EPS/PS path operators after transforms such as `scale` and `rotate`.
 - Fixed WebGL zoom requiring an initial click by priming the embedded viewer's wheel handler.
 
 # 0.0.9

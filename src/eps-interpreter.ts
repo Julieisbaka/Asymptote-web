@@ -131,13 +131,13 @@ export class PostScriptInterpreter {
       }
       case "rmoveto": {
         const [dx, dy] = this.popN(2);
-        const point = this.writer.currentPoint;
+        const point = this.writer.userPoint(this.state);
         this.writer.appendPoint(this.state, "M", point.x + dx, point.y + dy);
         break;
       }
       case "rlineto": {
         const [dx, dy] = this.popN(2);
-        const point = this.writer.currentPoint;
+        const point = this.writer.userPoint(this.state);
         this.writer.appendPoint(this.state, "L", point.x + dx, point.y + dy);
         break;
       }

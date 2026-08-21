@@ -44,6 +44,14 @@ test("supports relative curves and tangent arcs", () => {
   assert.match(svg, /C/);
 });
 
+test("keeps relative paths in user space under transforms", () => {
+  const svg = convert(
+    "2 2 scale newpath 10 10 moveto 5 0 rlineto 0 5 rlineto stroke"
+  );
+
+  assert.match(svg, /<path d="M20,80 L30,80 L30,70/);
+});
+
 test("supports concat and setmatrix", () => {
   const svg = convert(
     "[1 0 0 1 10 20] concat newpath 0 0 moveto 10 0 lineto stroke " +
