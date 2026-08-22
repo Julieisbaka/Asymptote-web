@@ -89,7 +89,6 @@ RUN set -eux; \
 RUN emconfigure ./configure \
     --disable-gl \
     --disable-vulkan \
-    --disable-offscreen \
     --disable-gc \
     --disable-lsp \
     --without-readline \
