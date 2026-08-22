@@ -71,11 +71,30 @@ export class PostScriptTokenizer {
 
     let depth = 0;
     let bodyEnd = bodyStart;
-    do {
-      if (this.source[bodyEnd] === "{") depth += 1;
-      else if (this.source[bodyEnd] === "}") depth -= 1;
+    let stringDepth = 0;
+    let escaped = false;
+    let inComment = false;
+    while ((bodyEnd < this.source.length && depth > 0) || bodyEnd === bodyStart) {
+      const char = this.source[bodyEnd];
+      if (inComment) {
+        if (char === "\n") inComment = false;
+      } else if (stringDepth > 0) {
+        if (escaped) escaped = false;
+        else if (char === "\\") escaped = true;
+        else if (char === "(") stringDepth += 1;
+        else if (char === ")") stringDepth -= 1;
+      } else if (char === "%") {
+        inComment = true;
+      } else if (char === "(") {
+        stringDepth = 1;
+      } else if (char === "{") {
+        depth += 1;
+      } else if (char === "}") {
+        depth -= 1;
+      }
       bodyEnd += 1;
-    } while (bodyEnd < this.source.length && depth > 0);
+    }
+    if (depth !== 0 || stringDepth !== 0) return false;
 
     let suffix = bodyEnd;
     while (suffix < this.source.length && /\s/.test(this.source[suffix])) suffix += 1;

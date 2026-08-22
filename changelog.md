@@ -2,6 +2,10 @@
 
 ## 0.1.1
 
+- Fixed supported DeviceGray, DeviceRGB, and DeviceCMYK `setcolorspace`/`setcolor` operations not updating SVG fill and stroke colors.
+- Added PostScript octal string escapes and continued-line escape handling.
+- Fixed EPS/PS procedure-definition parsing for nested strings and comments containing braces.
+
 ## 0.1.0
 
 - Captured lowercase and prefixed Asymptote compiler warnings such as `[unbounded]` in `result.warnings`.

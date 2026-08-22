@@ -5,16 +5,37 @@ export const NUMBER_RE = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
 
 export function unescapePostScriptString(token: string): string {
     const body = token.slice(1, -1);
-    return body.replace(/\\([\\()nrtbf])/g, (_, escaped: string) => {
-        switch (escaped) {
-            case "n": return "\n";
-            case "r": return "\r";
-            case "t": return "\t";
-            case "b": return "\b";
-            case "f": return "\f";
-            default: return escaped;
+    let result = "";
+    for (let index = 0; index < body.length; index += 1) {
+        if (body[index] !== "\\") {
+            result += body[index];
+            continue;
         }
-    });
+        if (index + 1 >= body.length) break;
+        const escaped = body[++index];
+        if (escaped === "\r") {
+            if (body[index + 1] === "\n") index += 1;
+            continue;
+        }
+        if (escaped === "\n") continue;
+        if (/[0-7]/.test(escaped)) {
+            let octal = escaped;
+            while (octal.length < 3 && /[0-7]/.test(body[index + 1] ?? "")) {
+                octal += body[++index];
+            }
+            result += String.fromCharCode(parseInt(octal, 8));
+            continue;
+        }
+        switch (escaped) {
+            case "n": result += "\n"; break;
+            case "r": result += "\r"; break;
+            case "t": result += "\t"; break;
+            case "b": result += "\b"; break;
+            case "f": result += "\f"; break;
+            default: result += escaped; break;
+        }
+    }
+    return result;
 }
 
 export function textChars(text: string): number[] {

@@ -214,16 +214,20 @@ export class PostScriptInterpreter {
       case "setcolorspace": {
         const colorspace = this.stack.pop();
         this.colorComponentCount = colorComponentCount(colorspace);
-        this.warn(`ignored unsupported color space/operator '${tok}'`);
+        if (this.colorComponentCount === null) {
+          this.warn(`ignored unsupported color space/operator '${tok}'`);
+        }
         break;
       }
       case "setcolor":
         if (this.colorComponentCount === null) {
           while (typeof this.stack[this.stack.length - 1] === "number") this.stack.pop();
+          this.warn(`ignored unsupported color space/operator '${tok}'`);
         } else {
-          this.popN(this.colorComponentCount);
+          const color = this.popN(this.colorComponentCount);
+          this.state.fill = this.state.stroke = toColor(color);
+          this.state.gradient = null;
         }
-        this.warn(`ignored unsupported color space/operator '${tok}'`);
         break;
       case "setlineargradient":
         this.state.gradient = this.makeExplicitGradient("linear");

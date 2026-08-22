@@ -173,6 +173,16 @@ test("does not erase unrelated operands for unknown setcolor", () => {
   assert.match(svg, />keep<\/text>/);
 });
 
+test("ignores braces inside procedure strings and comments", () => {
+  const svg = convert(
+    "/foo { (text containing } (nested) brace) % comment with } brace\n } bind def " +
+    "newpath 0 0 moveto 10 0 lineto stroke"
+  );
+
+  assert.match(svg, /<path d="M0,100 L10,100/);
+  assert.doesNotMatch(svg, /unsupported operator.*brace/);
+});
+
 test("converts HSB colors to RGB", () => {
   const svg = convert("0 1 1 sethsbcolor newpath 0 0 moveto 10 0 lineto stroke");
 

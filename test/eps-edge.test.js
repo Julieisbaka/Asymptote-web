@@ -12,6 +12,18 @@ test("handles escaped and nested PostScript strings", () => {
     assert.match(svg, />outer \(inner\) text<\/text>/);
 });
 
+test("decodes octal and continued-line string escapes", () => {
+    const svg = convert("10 20 moveto (A\\101 B\\377 line\\\ncontinuation) show");
+
+    assert.match(svg, />AA Bÿ linecontinuation<\/text>/);
+});
+
+test("applies supported setcolorspace and setcolor operators", () => {
+    const svg = convert("/DeviceRGB setcolorspace 1 0 0 setcolor newpath 0 0 moveto 10 0 lineto stroke");
+
+    assert.match(svg, /stroke="rgb\(255,0,0\)"/);
+});
+
 test("supports opacity aliases and even-odd clipping", () => {
     const svg = convert(
         "0.25 setalpha newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath eoclip " +
