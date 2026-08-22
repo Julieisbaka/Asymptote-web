@@ -140,7 +140,7 @@ open examples/index.html   # or serve the project root with any static server
 The WASM runtime uses Emscripten's `PTHREAD` feature. Your server must send
 these headers so browsers expose `SharedArrayBuffer`:
 
-```
+```text
 Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```

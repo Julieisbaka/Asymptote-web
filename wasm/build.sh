@@ -42,8 +42,18 @@ docker_cmd() {
   DOCKER_CONFIG="${DOCKER_CONFIG_DIR}" docker "$@"
 }
 
+docker_build() {
+  if docker_cmd buildx version >/dev/null 2>&1; then
+    docker_cmd buildx build --load "$@"
+  else
+    echo "WARNING: Docker Buildx is unavailable; using the legacy builder." >&2
+    echo "Install Docker Buildx to keep using the modern BuildKit builder." >&2
+    DOCKER_BUILDKIT=0 docker_cmd build "$@"
+  fi
+}
+
 echo "==> Building ${WASM_PRUNE} Asymptote WASM build image…"
-docker_cmd build \
+docker_build \
   --build-arg "WASM_PRUNE=${WASM_PRUNE}" \
   -t "asymptote-wasm-builder:${WASM_PRUNE}" \
   "${SCRIPT_DIR}"
