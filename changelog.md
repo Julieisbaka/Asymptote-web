@@ -1,4 +1,8 @@
-# 0.1.0
+# Changelog
+
+## 0.1.1
+
+## 0.1.0
 
 - Captured lowercase and prefixed Asymptote compiler warnings such as `[unbounded]` in `result.warnings`.
 - Fixed package metadata and release verification so runtime assets and TypeScript declarations are checked before publishing.
@@ -30,7 +34,7 @@
 - Fixed lowercase characters in native fallback text labels by normalizing glyph lookup.
 - Stubbed browser PDF generation with a clear Ghostscript-unavailable error (Slightly reduces package size as a bonus).
 
-# 0.0.9
+## 0.0.9
 
 - Replaced the 5×7 glyph table with a compact vector font while preserving the existing `textpath()` patch interface.
 - Added HSB colors, basic text spacing operators, and broader font mappings.
@@ -42,7 +46,7 @@
 - Added `asy.version()` to report the compiled Asymptote CLI version.
 - Added PostScript arcs/matrices and WebGL screen-space label overlays.
 
-# 0.0.8
+## 0.0.8
 
 - Improve SVG gradients
 - Skip unnecessary parsing
@@ -50,7 +54,7 @@
 - Decreased package size by patching asymptote source code that cannot be used in the browser
 - Updated emscripten to 6.0.7
 
-# 0.0.7
+## 0.0.7
 
 - Added `renderToBlob()` for returning rendered output as a browser `Blob`.
 - Added `renderBatch()` for rendering multiple sources sequentially.

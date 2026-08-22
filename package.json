@@ -1,6 +1,6 @@
 {
   "name": "asymptote-web",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Run the Asymptote vector graphics language entirely in the browser via WebAssembly.",
   "type": "module",
   "main": "./dist/asymptote-web.js",
@@ -40,9 +40,9 @@
   "license": "LGPL-3.0",
   "devDependencies": {
     "@types/node": "^26.2.0",
-    "eslint": "^10.8.1",
+    "eslint": "^10.9.0",
     "typescript": "^5.4.5",
-    "typescript-eslint": "^8.0.0",
-    "vite": "^8.2.1"
+    "typescript-eslint": "^8.67.0",
+    "vite": "^8.2.2"
   }
 }
