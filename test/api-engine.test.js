@@ -93,121 +93,121 @@ export default async function factory(options = {}) {
 await writeFile(gluePath, glueSource, "utf8");
 await writeFile(customGluePath, glueSource, "utf8");
 globalThis.__asymptoteWebTestState = {
-    calls: [],
-    factoryCalls: 0,
-    rejectFactoryCount: 1,
-    exitCode: 0,
-    versionExitCode: 0,
-    stderr: [],
+  calls: [],
+  factoryCalls: 0,
+  rejectFactoryCount: 1,
+  exitCode: 0,
+  versionExitCode: 0,
+  stderr: [],
 };
 
 const { AsymptoteError, createAsymptote } = await import("../dist/asymptote-web.js");
 const state = globalThis.__asymptoteWebTestState;
 
 after(async () => {
-    await unlink(gluePath).catch(() => { });
-    await unlink(customGluePath).catch(() => { });
-    delete globalThis.__asymptoteWebTestState;
+  await unlink(gluePath).catch(() => { });
+  await unlink(customGluePath).catch(() => { });
+  delete globalThis.__asymptoteWebTestState;
 });
 
 beforeEach(() => {
-    state.calls.length = 0;
-    state.stderr.length = 0;
-    state.exitCode = 0;
-    state.versionExitCode = 0;
+  state.calls.length = 0;
+  state.stderr.length = 0;
+  state.exitCode = 0;
+  state.versionExitCode = 0;
 });
 
 test("retries module initialization after a failed factory", async () => {
-    await assert.rejects(() => createAsymptote(), /fake module load failure/);
-    const asy = await createAsymptote({ glueUrl: customGluePath.href });
-    assert.equal(await asy.version(), "Asymptote test version");
-    assert.equal(state.factoryCalls, 2);
+  await assert.rejects(() => createAsymptote(), /fake module load failure/);
+  const asy = await createAsymptote({ glueUrl: customGluePath.href });
+  assert.equal(await asy.version(), "Asymptote test version");
+  assert.equal(state.factoryCalls, 2);
 });
 
 test("renders SVG and reports compiler/converter warnings", async () => {
-    const asy = await createAsymptote();
-    state.stderr.push("Warning: compiler warning", ": warning [unbounded]: x scaling in picture unbounded", "informational output");
-    const result = await asy.render("draw((0,0)--(1,1));");
+  const asy = await createAsymptote();
+  state.stderr.push("Warning: compiler warning", ": warning [unbounded]: x scaling in picture unbounded", "informational output");
+  const result = await asy.render("draw((0,0)--(1,1));");
 
-    assert.equal(result.format, "svg");
-    assert.match(result.output, /^<svg/);
-    assert.deepEqual(result.warnings, [
-        "Warning: compiler warning",
-        ": warning [unbounded]: x scaling in picture unbounded",
-    ]);
-    assert.deepEqual(state.calls.at(-1).source, "draw((0,0)--(1,1));");
+  assert.equal(result.format, "svg");
+  assert.match(result.output, /^<svg/);
+  assert.deepEqual(result.warnings, [
+    "Warning: compiler warning",
+    ": warning [unbounded]: x scaling in picture unbounded",
+  ]);
+  assert.deepEqual(state.calls.at(-1).source, "draw((0,0)--(1,1));");
 });
 
 test("preserves format flag precedence and WebGL options", async () => {
-    const asy = await createAsymptote();
-    await asy.render("one", { format: "svg", flags: ["--format=ps"] });
-    const psCall = state.calls.at(-1).args;
-    assert.equal(psCall.at(-1).includes("input.asy"), true);
-    assert.equal(psCall.includes("ps"), true);
+  const asy = await createAsymptote();
+  await asy.render("one", { format: "svg", flags: ["--format=ps"] });
+  const psCall = state.calls.at(-1).args;
+  assert.equal(psCall.at(-1).includes("input.asy"), true);
+  assert.equal(psCall.includes("ps"), true);
 
-    const webgl = await asy.render("three", {
-        format: "webgl",
-        offline: true,
-        position: [10, 20],
-        devicePixelRatio: 2,
-        autobillboard: false,
-    });
-    const webglCall = state.calls.at(-1).args;
-    assert.equal(webgl.format, "webgl");
-    assert.match(webgl.output, /Asymptote/);
-    assert.deepEqual(webglCall.slice(webglCall.indexOf("-position"), webglCall.indexOf("-position") + 2), ["-position", "10,20"]);
-    assert.equal(webglCall.includes("-devicepixelratio"), true);
-    assert.equal(webglCall.includes("-noautobillboard"), true);
-    assert.equal(webglCall.includes("-offline"), true);
+  const webgl = await asy.render("three", {
+    format: "webgl",
+    offline: true,
+    position: [10, 20],
+    devicePixelRatio: 2,
+    autobillboard: false,
+  });
+  const webglCall = state.calls.at(-1).args;
+  assert.equal(webgl.format, "webgl");
+  assert.match(webgl.output, /Asymptote/);
+  assert.deepEqual(webglCall.slice(webglCall.indexOf("-position"), webglCall.indexOf("-position") + 2), ["-position", "10,20"]);
+  assert.equal(webglCall.includes("-devicepixelratio"), true);
+  assert.equal(webglCall.includes("-noautobillboard"), true);
+  assert.equal(webglCall.includes("-offline"), true);
 });
 
 test("supports raw output, blobs, batches, and isolated files", async () => {
-    const asy = await createAsymptote();
-    const raw = await asy.render("raw", { raw: true });
-    assert.equal(raw.format, "eps");
-    assert.match(raw.output, /^%!PS/);
+  const asy = await createAsymptote();
+  const raw = await asy.render("raw", { raw: true });
+  assert.equal(raw.format, "eps");
+  assert.match(raw.output, /^%!PS/);
 
-    const blob = await asy.renderToBlob("blob", { format: "eps" });
-    assert.equal(blob.type, "application/postscript");
-    assert.match(await blob.text(), /^%!PS/);
+  const blob = await asy.renderToBlob("blob", { format: "eps" });
+  assert.equal(blob.type, "application/postscript");
+  assert.match(await blob.text(), /^%!PS/);
 
-    const batch = await asy.renderBatch(["first", "second"], { files: { "lib/helper.asy": "helper" } });
-    assert.equal(batch.length, 2);
-    assert.deepEqual(state.calls.slice(-2).map((call) => call.source), ["first", "second"]);
+  const batch = await asy.renderBatch(["first", "second"], { files: { "lib/helper.asy": "helper" } });
+  assert.equal(batch.length, 2);
+  assert.deepEqual(state.calls.slice(-2).map((call) => call.source), ["first", "second"]);
 });
 
 test("rejects unsafe virtual file paths and supports abort", async () => {
-    const asy = await createAsymptote();
-    await assert.rejects(
-        () => asy.render("bad", { files: { "../escape.asy": "nope" } }),
-        TypeError
-    );
-    const callsBeforeAbort = state.calls.length;
-    const controller = new AbortController();
-    controller.abort();
-    await assert.rejects(
-        () => asy.render("aborted", { signal: controller.signal }),
-        (error) => error.name === "AbortError"
-    );
-    assert.equal(state.calls.length, callsBeforeAbort);
+  const asy = await createAsymptote();
+  await assert.rejects(
+    () => asy.render("bad", { files: { "../escape.asy": "nope" } }),
+    TypeError
+  );
+  const callsBeforeAbort = state.calls.length;
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(
+    () => asy.render("aborted", { signal: controller.signal }),
+    (error) => error.name === "AbortError"
+  );
+  assert.equal(state.calls.length, callsBeforeAbort);
 });
 
 test("serializes concurrent renders and exposes AsymptoteError", async () => {
-    const asy = await createAsymptote();
-    const results = await Promise.all([asy.render("queued-one"), asy.render("queued-two")]);
-    assert.equal(results.length, 2);
-    assert.deepEqual(state.calls.slice(-2).map((call) => call.source), ["queued-one", "queued-two"]);
+  const asy = await createAsymptote();
+  const results = await Promise.all([asy.render("queued-one"), asy.render("queued-two")]);
+  assert.equal(results.length, 2);
+  assert.deepEqual(state.calls.slice(-2).map((call) => call.source), ["queued-one", "queued-two"]);
 
-    state.exitCode = 7;
-    state.stderr.push("compiler failed");
-    await assert.rejects(
-        () => asy.render("failure"),
-        (error) => {
-            assert.ok(error instanceof AsymptoteError);
-            assert.equal(error.exitCode, 7);
-            assert.equal(error.stderr, "compiler failed");
-            assert.match(error.message, /ASYMPTOTE ERROR/);
-            return true;
-        }
-    );
+  state.exitCode = 7;
+  state.stderr.push("compiler failed");
+  await assert.rejects(
+    () => asy.render("failure"),
+    (error) => {
+      assert.ok(error instanceof AsymptoteError);
+      assert.equal(error.exitCode, 7);
+      assert.equal(error.stderr, "compiler failed");
+      assert.match(error.message, /ASYMPTOTE ERROR/);
+      return true;
+    }
+  );
 });
