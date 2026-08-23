@@ -11,7 +11,7 @@ export default tseslint.config(
       "@stylistic": stylistic,
     },
     rules: {
-      "@stylistic/indent": ["warning", 2],
+      "@stylistic/indent": ["warn", 2],
     },
   }
 );
