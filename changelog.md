@@ -2,6 +2,7 @@
 
 ## 0.1.2
 
+- Added `sourceFile` mapping so structured diagnostics can report friendly source filenames instead of internal virtual filesystem paths.
 - Added structured compiler diagnostics with severity, message, source file, line, column, and optional diagnostic code fields.
 - Added `diagnostics` to render results and `AsymptoteError`, while preserving the existing `warnings` and `stderr` fields for compatibility.
 - Added the exported `parseCompilerDiagnostics()` helper for parsing Asymptote compiler output.

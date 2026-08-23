@@ -22,6 +22,12 @@ export interface CompilerDiagnostic {
 /** Options accepted by {@link AsymptoteEngine.render}. */
 export interface RenderOptions {
   /**
+   * Friendly filename reported for diagnostics that refer to the main source
+   * file. Defaults to the internal virtual filename.
+   */
+  sourceFile?: string;
+
+  /**
    * Output format. Defaults to `"svg"`.
    * EPS and PS are returned as text and are not mountable in the browser.
    */

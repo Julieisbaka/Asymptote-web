@@ -67,7 +67,9 @@ export default async function factory(options = {}) {
         return state.versionExitCode;
       }
       state.calls.push({ args: [...args], source: FS.readFile(args[args.length - 1]) });
-      for (const line of state.stderr) module.printErr(line);
+      for (const line of state.stderr) {
+        module.printErr(line.replace("{{INPUT}}", args[args.length - 1]));
+      }
       if (state.exitCode !== 0) return state.exitCode;
       let format = "eps";
       let outputPrefix = "";
@@ -194,6 +196,14 @@ test("parses source locations and diagnostic severities", () => {
       raw: "note from compiler",
     },
   ]);
+});
+
+test("maps virtual diagnostic paths to friendly source filenames", async () => {
+  const asy = await createAsymptote();
+  state.stderr.push("{{INPUT}}: 3.5: error: bad source");
+  const result = await asy.render("bad", { sourceFile: "diagram.asy" });
+
+  assert.equal(result.diagnostics[0].sourceFile, "diagram.asy");
 });
 
 test("preserves format flag precedence and WebGL options", async () => {

@@ -33,6 +33,7 @@ provide a source location. `raw` preserves the original diagnostic line.
 
 ```ts
 interface RenderOptions {
+  sourceFile?: string;
   format?: OutputFormat;
   flags?: string[];
   signal?: AbortSignal;

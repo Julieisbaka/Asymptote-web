@@ -7,7 +7,13 @@
  *  - Running `asy` with the given arguments and capturing output.
  */
 
-import { AsymptoteError, type CreateOptions, type RenderOptions, type RenderResult } from "./types.js";
+import {
+  AsymptoteError,
+  type CompilerDiagnostic,
+  type CreateOptions,
+  type RenderOptions,
+  type RenderResult,
+} from "./types.js";
 import { parseCompilerDiagnostics } from "./diagnostics.js";
 import { epsToSvgWithWarnings } from "./eps-to-svg.js";
 
@@ -142,6 +148,25 @@ function removeTree(mod: EmscriptenModule, path: string): void {
   }
 }
 
+function remapDiagnosticSources(
+  diagnostics: CompilerDiagnostic[],
+  renderDir: string,
+  inputFile: string,
+  renderOptions: RenderOptions
+): CompilerDiagnostic[] {
+  return diagnostics.map((diagnostic) => {
+    if (!diagnostic.sourceFile) return diagnostic;
+    if (diagnostic.sourceFile === inputFile) {
+      return { ...diagnostic, sourceFile: renderOptions.sourceFile ?? "input.asy" };
+    }
+    const prefix = `${renderDir}/`;
+    if (diagnostic.sourceFile.startsWith(prefix)) {
+      return { ...diagnostic, sourceFile: diagnostic.sourceFile.slice(prefix.length) };
+    }
+    return diagnostic;
+  });
+}
+
 function getWebGLFlags(renderOptions: RenderOptions): string[] {
   const flags: string[] = [];
 
@@ -266,7 +291,12 @@ async function runAsymptoteUnsafe(
 
     const exitCode = mod.callMain(args);
     const stderr = stderrLines.join("\n");
-    const diagnostics = parseCompilerDiagnostics(stderr);
+    const diagnostics = remapDiagnosticSources(
+      parseCompilerDiagnostics(stderr),
+      renderDir,
+      inputFile,
+      renderOptions
+    );
 
     if (exitCode !== 0) {
       throw new AsymptoteError(

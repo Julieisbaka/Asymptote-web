@@ -13,6 +13,7 @@ the page, so multiple calls can share the same runtime.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
+| `sourceFile` | `string` | `"input.asy"` | Friendly filename to report for diagnostics from the main source file. |
 | `glueUrl` | `string` | automatic | URL of `asymptote.js`. Set this when a bundler relocates the wrapper during dependency optimization, such as Vite. |
 | `wasmUrl` | `string` | automatic | URL of `asymptote.wasm`. Use this when hosting the binary on a CDN or another path. |
 | `asyglUrl` | `string` | automatic | URL of `asygl.js` for normal WebGL output. Not needed when using `offline: true`. |
@@ -89,6 +90,10 @@ for (const diagnostic of result.diagnostics) {
   console.log(diagnostic.sourceFile, diagnostic.line, diagnostic.message);
 }
 ```
+
+Use the `sourceFile` render option to replace the internal virtual filename
+reported for the main source file. Diagnostics for files supplied through
+`files` are reported using their relative file keys.
 
 Failed renders expose the same parsed diagnostics as
 `AsymptoteError.diagnostics`. The existing `warnings` and `stderr` fields are
