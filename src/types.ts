@@ -276,6 +276,20 @@ export interface AsymptoteEngine {
     * operations. Never pass untrusted or user-controlled content to it.
    */
   readonly unsafe: {
+    /**
+     * Return the live SVG child currently mounted in the target, or `null`
+     * when the target is missing or does not contain a direct SVG child.
+     * The returned element may be modified freely by the caller.
+     */
+    getSvg(target: string | Element): SVGSVGElement | null;
+
+    /**
+     * Return the live WebGL iframe currently mounted in the target, or `null`
+     * when the target is missing or does not contain a direct iframe child.
+     * The returned iframe and same-origin document may be modified freely.
+     */
+    getWebGLIframe(target: string | Element): HTMLIFrameElement | null;
+
     mount(
       target: string | Element,
       source: string,

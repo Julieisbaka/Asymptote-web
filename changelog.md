@@ -2,6 +2,7 @@
 
 ## 0.1.2
 
+- Added unsafe accessors for directly retrieving and modifying live mounted SVG elements and WebGL iframes.
 - Added optional WebGL iframe timeout, style, scroll-containment, and zoom-priming configuration while preserving existing defaults.
 - Added `sourceFile` mapping so structured diagnostics can report friendly source filenames instead of internal virtual filesystem paths.
 - Added structured compiler diagnostics with severity, message, source file, line, column, and optional diagnostic code fields.

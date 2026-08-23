@@ -105,6 +105,24 @@ function mountUnsafeSvg(
   target.replaceChildren(svg);
 }
 
+function resolveTarget(target: string | Element): Element | null {
+  return typeof target === "string" ? document.querySelector(target) : target;
+}
+
+function getUnsafeSvg(target: string | Element): SVGSVGElement | null {
+  const element = resolveTarget(target)?.firstElementChild;
+  return element?.tagName.toLowerCase() === "svg"
+    ? element as SVGSVGElement
+    : null;
+}
+
+function getUnsafeWebGLIframe(target: string | Element): HTMLIFrameElement | null {
+  const element = resolveTarget(target)?.firstElementChild;
+  return element?.tagName.toLowerCase() === "iframe"
+    ? element as HTMLIFrameElement
+    : null;
+}
+
 function outputMimeType(format: RenderResult["format"]): string {
   switch (format) {
     case "svg":
@@ -316,6 +334,12 @@ export async function createAsymptote(
     },
 
     unsafe: {
+      getSvg(target: string | Element): SVGSVGElement | null {
+        return getUnsafeSvg(target);
+      },
+      getWebGLIframe(target: string | Element): HTMLIFrameElement | null {
+        return getUnsafeWebGLIframe(target);
+      },
       async mount(
         target: string | Element,
         source: string,

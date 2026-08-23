@@ -156,6 +156,8 @@ interface AsymptoteEngine {
     options?: Omit<RenderOptions, "format">,
   ): Promise<RenderResult>;
   readonly unsafe: {
+    getSvg(target: string | Element): SVGSVGElement | null;
+    getWebGLIframe(target: string | Element): HTMLIFrameElement | null;
     mount(
       target: string | Element,
       source: string,

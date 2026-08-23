@@ -232,6 +232,22 @@ test("supports unsafe SVG customization", async () => {
   assert.equal(target.firstElementChild.attributes.some((attribute) => attribute.name === "data-custom"), true);
 });
 
+test("exposes live mounted nodes through unsafe accessors", async () => {
+  const target = document.createElement("div");
+  document.nodes.set("#unsafe-access", target);
+
+  await asy.mount(target, "draw");
+  const svg = asy.unsafe.getSvg("#unsafe-access");
+  assert.equal(svg, target.firstElementChild);
+  svg.setAttribute("data-direct-edit", "yes");
+  assert.equal(target.firstElementChild.getAttribute("data-direct-edit"), "yes");
+
+  await asy.mountWebGL(target, "three");
+  assert.equal(asy.unsafe.getSvg(target), null);
+  assert.equal(asy.unsafe.getWebGLIframe(target), target.firstElementChild);
+  assert.equal(asy.unsafe.getWebGLIframe("#missing"), null);
+});
+
 test("downloads output with a default filename and revokes the object URL", async () => {
   const result = await asy.download("draw", undefined, { format: "eps" });
   assert.equal(result.format, "eps");

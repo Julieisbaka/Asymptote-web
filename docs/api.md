@@ -299,6 +299,12 @@ await asy.unsafe.mountWebGL("#output", source, async (iframe, viewerDocument) =>
 **Warning:** `unsafe.mountWebGL()` exposes the live iframe document and must
 only be used with trusted callbacks and content.
 
+For post-mount customization, `unsafe.getSvg(target)` and
+`unsafe.getWebGLIframe(target)` return the live direct child currently mounted
+in the target. They return `null` when the target or expected child is absent.
+These elements are intentionally unrestricted and may be modified directly;
+only use these APIs with trusted content.
+
 ## `RenderResult`
 
 ```ts
