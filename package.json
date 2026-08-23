@@ -26,6 +26,7 @@
     "test": "npm run build && node --test test/*.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src test",
+    "lint:fix": "eslint src test --fix",
     "verify:package": "node scripts/verify-package.mjs",
     "prepack": "npm run build && bash ./wasm/build.sh && npm run verify:package"
   },
@@ -39,6 +40,7 @@
   ],
   "license": "LGPL-3.0",
   "devDependencies": {
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@types/node": "^26.2.0",
     "eslint": "^10.9.0",
     "typescript": "^5.4.5",
