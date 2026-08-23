@@ -5,6 +5,10 @@ on:
     - cron: "0 9 * * 6"
   workflow_dispatch:
 
+concurrency:
+  group: asymptote-release-check
+  cancel-in-progress: false
+
 jobs:
   check-release:
     runs-on: ubuntu-latest
