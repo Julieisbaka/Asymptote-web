@@ -2,7 +2,12 @@
 
 ## 0.1.3
 
+- Internal patch system rework
+
 ## 0.1.2
+
+- Added an explicit `prepack:experimental` script for packaging with candidate WASM patches without changing the stable default package.
+- Changed the default WASM build used by npm packaging to exclude experimental candidate patches; candidate patches now require explicit `WASM_PRUNE=candidate` opt-in.
 
 - Added unsafe accessors for directly retrieving and modifying live mounted SVG elements and WebGL iframes.
 - Added optional WebGL iframe timeout, style, scroll-containment, and zoom-priming configuration while preserving existing defaults.

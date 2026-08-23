@@ -14,9 +14,12 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DIST_DIR="${REPO_ROOT}/dist"
-# Use the verified browser-optimized build by default. Set WASM_PRUNE=baseline
-# explicitly to reproduce the unpruned artifact for comparison.
-WASM_PRUNE="${WASM_PRUNE:-candidate}"
+# Use the proven browser-optimized build by default. Pass "candidate" as the
+# first argument, or set WASM_PRUNE=candidate, to include experimental patches.
+WASM_PRUNE="${1:-${WASM_PRUNE:-baseline}}"
+# Candidate patch basenames to apply. Use "all" (the default) or a
+# comma-separated list such as "remove-lsp-objects.py".
+WASM_CANDIDATES="${2:-${WASM_CANDIDATES:-all}}"
 
 case "${WASM_PRUNE}" in
   baseline|candidate) ;;
@@ -55,6 +58,7 @@ docker_build() {
 echo "==> Building ${WASM_PRUNE} Asymptote WASM build image…"
 docker_build \
   --build-arg "WASM_PRUNE=${WASM_PRUNE}" \
+  --build-arg "WASM_CANDIDATES=${WASM_CANDIDATES}" \
   -t "asymptote-wasm-builder:${WASM_PRUNE}" \
   "${SCRIPT_DIR}"
 

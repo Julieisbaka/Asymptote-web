@@ -28,7 +28,8 @@
     "lint": "eslint src test",
     "lint:fix": "eslint src test --fix",
     "verify:package": "node scripts/verify-package.mjs",
-    "prepack": "npm run build && bash ./wasm/build.sh && npm run verify:package"
+    "prepack": "npm run build && bash ./wasm/build.sh && npm run verify:package",
+    "prepack:experimental": "npm run build && bash ./wasm/build.sh candidate && npm run verify:package"
   },
   "keywords": [
     "asymptote",

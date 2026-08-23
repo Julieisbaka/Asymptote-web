@@ -42,10 +42,11 @@ RUN wget -q "https://sourceforge.net/projects/asymptote/files/${ASY_VERSION}/asy
 WORKDIR /src/asymptote
 
 # This argument is deliberately consumed by a build step below. It separates
-# Docker cache keys for an unmodified baseline and a source-pruned candidate.
-# Valid values are "baseline" and "candidate". The candidate is the
-# browser-optimized default; baseline remains available for size comparisons.
-ARG WASM_PRUNE=candidate
+# Docker cache keys for the stable build and experimental candidate builds.
+# Valid values are "baseline" and "candidate". The stable baseline is the
+# default; candidate patches require explicit opt-in.
+ARG WASM_PRUNE=baseline
+ARG WASM_CANDIDATES=all
 
 # glm is header-only; vendor just the glm/ subtree (not all of /usr/include,
 # which would shadow emscripten's own libc headers with the host's glibc).
@@ -68,18 +69,21 @@ RUN set -eux; \
     python3 "$p"; \
     done
 # Candidate-only source changes are never applied to the baseline. Consuming
-# WASM_PRUNE here prevents Docker from reusing a baseline configuration/build
-# layer for a candidate artifact.
+# these arguments here prevents Docker from reusing a baseline configuration/
+# build layer for a candidate artifact. Set WASM_CANDIDATES to a comma-separated
+# list of candidate basenames, or "all".
 RUN set -eux; \
     test "$WASM_PRUNE" = baseline || test "$WASM_PRUNE" = candidate; \
     if [ "$WASM_PRUNE" = candidate ]; then \
     for p in /patches/candidate/*.patch; do \
     [ -e "$p" ] || continue; \
-    patch --batch --forward -p1 < "$p"; \
+    name="$(basename "$p")"; \
+    case ",$WASM_CANDIDATES," in *",$name,"*) patch --batch --forward -p1 < "$p";; esac; \
     done; \
     for p in /patches/candidate/*.py; do \
     [ -e "$p" ] || continue; \
-    python3 "$p"; \
+    name="$(basename "$p")"; \
+    case ",$WASM_CANDIDATES," in *",$name,"*) python3 "$p";; esac; \
     done; \
     fi
 

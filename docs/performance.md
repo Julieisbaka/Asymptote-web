@@ -42,6 +42,13 @@ WASM assets.
 
 ## Comparing changes
 
+For WASM-size experiments, build the stable patched configuration with the
+normal `prepack` script, then build an experimental package with
+`npm run prepack:experimental`. Candidate patches in `wasm/patches/candidate/` can be
+selected independently with the comma-separated `WASM_CANDIDATES` setting,
+using `all` to apply every candidate. Compare the resulting
+`dist/asymptote.wasm` byte size and run the full test suite for each candidate.
+
 For a useful before/after comparison:
 
 - Use the same browser and machine.
