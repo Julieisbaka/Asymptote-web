@@ -2,6 +2,7 @@
 
 ## 0.1.2
 
+- Added optional WebGL iframe timeout, style, scroll-containment, and zoom-priming configuration while preserving existing defaults.
 - Added `sourceFile` mapping so structured diagnostics can report friendly source filenames instead of internal virtual filesystem paths.
 - Added structured compiler diagnostics with severity, message, source file, line, column, and optional diagnostic code fields.
 - Added `diagnostics` to render results and `AsymptoteError`, while preserving the existing `warnings` and `stderr` fields for compatibility.

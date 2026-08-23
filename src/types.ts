@@ -19,6 +19,9 @@ export interface CompilerDiagnostic {
   raw: string;
 }
 
+/** CSS properties applied to the WebGL iframe element. */
+export type WebGLIframeStyles = Record<string, string>;
+
 /** Options accepted by {@link AsymptoteEngine.render}. */
 export interface RenderOptions {
   /**
@@ -88,6 +91,18 @@ export interface RenderOptions {
    * overlays, not world-coordinate geometry.
    */
   webglLabels?: readonly WebGLLabel[];
+
+  /** Maximum time to wait for a WebGL iframe to load, in milliseconds. */
+  webglIframeTimeoutMs?: number;
+
+  /** CSS properties applied to the mounted WebGL iframe. */
+  webglIframeStyles?: WebGLIframeStyles;
+
+  /** Prevent wheel and touch scrolling inside the WebGL iframe. Defaults to true. */
+  containWebGLScroll?: boolean;
+
+  /** Prime WebGL zoom with a synthetic interaction. Defaults to true. */
+  primeWebGLZoom?: boolean;
 
   /**
    * When `format` is `"svg"`, Asymptote itself has no native SVG writer, so

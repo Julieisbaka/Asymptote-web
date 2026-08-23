@@ -39,6 +39,7 @@ export type {
   OutputFormat,
   RenderOptions,
   RenderResult,
+  WebGLIframeStyles,
   WebGLLabel,
   UnsafeSvgCustomizer,
   UnsafeWebGLCustomizer,
@@ -120,16 +121,31 @@ function defaultFilename(format: RenderResult["format"]): string {
   return `asymptote.${format === "webgl" ? "html" : format}`;
 }
 
-function containWebGLScroll(html: string): string {
+function containWebGLScroll(
+  html: string,
+  containScroll = true,
+  primeZoom = true
+): string {
   const guard = `<script>(function(){function stop(event){event.preventDefault()}document.addEventListener("wheel",stop,{capture:true,passive:false});document.addEventListener("touchmove",stop,{capture:true,passive:false})})()</script>`;
   const prime = `<script>(function(){var attempts=0;function prime(){var canvas=document.getElementById("Asymptote");if(!canvas||!canvas.onmousedown){if(++attempts<120)setTimeout(prime,16);return}canvas.dispatchEvent(new MouseEvent("mousedown",{bubbles:true,clientX:0,clientY:0}));canvas.dispatchEvent(new MouseEvent("mouseup",{bubbles:true}))}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",prime,{once:true});else prime()})()</script>`;
   const head = html.indexOf("</head>");
-  const withGuard = head >= 0 ? `${html.slice(0, head)}${guard}${html.slice(head)}` : `${guard}${html}`;
+  const withGuard = containScroll && head >= 0
+    ? `${html.slice(0, head)}${guard}${html.slice(head)}`
+    : containScroll
+      ? `${guard}${html}`
+      : html;
   const body = withGuard.indexOf("</body>");
-  return body >= 0 ? `${withGuard.slice(0, body)}${prime}${withGuard.slice(body)}` : `${withGuard}${prime}`;
+  return primeZoom
+    ? body >= 0
+      ? `${withGuard.slice(0, body)}${prime}${withGuard.slice(body)}`
+      : `${withGuard}${prime}`
+    : withGuard;
 }
 
 function waitForIframeDocument(iframe: HTMLIFrameElement, timeoutMs = 15000): Promise<Document> {
+  if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
+    return Promise.reject(new TypeError("asymptote-web: WebGL iframe timeout must be a non-negative finite number"));
+  }
   return new Promise((resolve, reject) => {
     let settled = false;
     const cleanup = () => {
@@ -158,6 +174,28 @@ function waitForIframeDocument(iframe: HTMLIFrameElement, timeoutMs = 15000): Pr
     iframe.addEventListener("load", onLoad, { once: true });
     iframe.addEventListener("error", onError, { once: true });
   });
+}
+
+function createWebGLIframe(
+  html: string,
+  renderOptions: RenderOptions
+): HTMLIFrameElement {
+  const iframe = document.createElement("iframe");
+  iframe.srcdoc = containWebGLScroll(
+    html,
+    renderOptions.containWebGLScroll !== false,
+    renderOptions.primeWebGLZoom !== false
+  );
+  const styles = {
+    border: "none",
+    width: "100%",
+    height: "100%",
+    ...renderOptions.webglIframeStyles,
+  };
+  for (const [property, value] of Object.entries(styles)) {
+    iframe.style.setProperty(property, value);
+  }
+  return iframe;
 }
 
 function addWebGLLabels(doc: Document, labels: readonly WebGLLabel[]): void {
@@ -314,12 +352,8 @@ export async function createAsymptote(
         if (!el) {
           throw new Error(`asymptote-web: unsafe.mountWebGL target not found: ${target}`);
         }
-        const iframe = document.createElement("iframe");
-        iframe.srcdoc = containWebGLScroll(result.output);
-        iframe.style.border = "none";
-        iframe.style.width = "100%";
-        iframe.style.height = "100%";
-        const loaded = waitForIframeDocument(iframe);
+        const iframe = createWebGLIframe(result.output, renderOptions);
+        const loaded = waitForIframeDocument(iframe, renderOptions.webglIframeTimeoutMs);
         el.replaceChildren(iframe);
         try {
           await customize(iframe, await loaded);
@@ -354,13 +388,9 @@ export async function createAsymptote(
       // The generated HTML is a complete standalone document (own <head>,
       // styles, and viewer <script>) — embed it in an iframe rather than
       // splicing it into the host page's DOM.
-      const iframe = document.createElement("iframe");
-      iframe.srcdoc = containWebGLScroll(result.output);
-      iframe.style.border = "none";
-      iframe.style.width = "100%";
-      iframe.style.height = "100%";
+      const iframe = createWebGLIframe(result.output, renderOptions);
       const loaded = renderOptions.webglLabels?.length
-        ? waitForIframeDocument(iframe)
+        ? waitForIframeDocument(iframe, renderOptions.webglIframeTimeoutMs)
         : null;
       el.replaceChildren(iframe);
       if (loaded) addWebGLLabels(await loaded, renderOptions.webglLabels ?? []);

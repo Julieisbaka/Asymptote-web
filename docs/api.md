@@ -113,6 +113,10 @@ helper is also exported for parsing captured Asymptote output.
 | `devicePixelRatio` | `number` | automatic | WebGL viewer device-pixel ratio. |
 | `autobillboard` | `boolean` | automatic | Make 3D labels face the viewer by default. |
 | `webglLabels` | `WebGLLabel[]` | `[]` | Camera-facing screen-space labels in the WebGL iframe. |
+| `webglIframeTimeoutMs` | `number` | `15000` | Maximum time to wait for a WebGL iframe to load when readiness is required. |
+| `webglIframeStyles` | `Record<string, string>` | current defaults | CSS properties applied to the WebGL iframe; supplied properties override the defaults. |
+| `containWebGLScroll` | `boolean` | `true` | Prevent wheel and touch scrolling inside the WebGL viewer iframe. |
+| `primeWebGLZoom` | `boolean` | `true` | Prime the viewer's zoom handling with a synthetic interaction. |
 | `raw` | `boolean` | `false` | For the default SVG mode, return the native EPS instead of converting it to SVG. |
 | `svgPrecision` | `number` | `3` | Opt-in number of decimal places for generated SVG coordinates. Valid range: 0–12. |
 | `reuseSvg` | `boolean` | `false` | For `mount()`, reuse an existing direct child SVG instead of replacing it. |

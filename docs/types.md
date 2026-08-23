@@ -25,6 +25,10 @@ interface CompilerDiagnostic {
 }
 ```
 
+```ts
+type WebGLIframeStyles = Record<string, string>;
+```
+
 `CompilerDiagnostic` is parsed from Asymptote's stderr and is suitable for
 editor integrations. Location fields are omitted when Asymptote does not
 provide a source location. `raw` preserves the original diagnostic line.
@@ -43,6 +47,10 @@ interface RenderOptions {
   devicePixelRatio?: number;
   autobillboard?: boolean;
   webglLabels?: readonly WebGLLabel[];
+  webglIframeTimeoutMs?: number;
+  webglIframeStyles?: WebGLIframeStyles;
+  containWebGLScroll?: boolean;
+  primeWebGLZoom?: boolean;
   raw?: boolean;
   svgPrecision?: number;
   reuseSvg?: boolean;
@@ -69,6 +77,10 @@ interface WebGLLabel {
   WebGL output.
 - `webglLabels` creates camera-facing screen-space labels in CSS pixels. It
   does not anchor labels to 3D world coordinates.
+- `webglIframeTimeoutMs` defaults to 15000 milliseconds.
+- `webglIframeStyles` overrides the default `border: none`, `width: 100%`, and
+  `height: 100%` iframe styles. Arbitrary CSS property names are supported.
+- `containWebGLScroll` and `primeWebGLZoom` both default to `true`.
 - `raw` skips EPS-to-SVG conversion for the default SVG request and returns
   native EPS text.
 - `svgPrecision` controls generated SVG coordinate decimals from 0 through 12.

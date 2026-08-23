@@ -52,7 +52,9 @@ class FakeElement {
     this.children = [];
     this.childNodes = [];
     this.attributes = [];
-    this.style = {};
+    this.style = {
+      setProperty: (name, value) => { this.style[name] = value; },
+    };
     this.className = "";
     this.parentElement = null;
     this._innerHTML = "";
@@ -248,9 +250,42 @@ test("mounts WebGL and adds screen-space labels", async () => {
   assert.equal(result.format, "webgl");
   assert.equal(iframe.tagName, "IFRAME");
   assert.match(iframe.srcdoc, /wheel/);
+  assert.equal(iframe.style.width, "100%");
+  assert.equal(iframe.style.height, "100%");
+  assert.equal(iframe.style.border, "none");
   assert.equal(iframe.contentDocument.body.firstElementChild.getAttribute("aria-label"), "Asymptote WebGL labels");
 
   await assert.rejects(() => asy.mountWebGL("#missing", "three"), /mountWebGL target not found/);
+});
+
+test("configures WebGL iframe styles and injected behavior", async () => {
+  const target = document.createElement("div");
+  await asy.mountWebGL(target, "three", {
+    containWebGLScroll: false,
+    primeWebGLZoom: false,
+    webglIframeStyles: {
+      width: "640px",
+      height: "480px",
+      border: "1px solid red",
+      "background-color": "black",
+    },
+  });
+  const iframe = target.firstElementChild;
+  assert.equal(iframe.style.width, "640px");
+  assert.equal(iframe.style.height, "480px");
+  assert.equal(iframe.style.border, "1px solid red");
+  assert.equal(iframe.style["background-color"], "black");
+  assert.doesNotMatch(iframe.srcdoc, /preventDefault/);
+  assert.doesNotMatch(iframe.srcdoc, /MouseEvent/);
+});
+
+test("rejects invalid WebGL iframe timeouts", async () => {
+  const target = document.createElement("div");
+  await assert.rejects(
+    () => asy.unsafe.mountWebGL(target, "three", () => { }, { webglIframeTimeoutMs: -1 }),
+    /timeout must be a non-negative finite number/
+  );
+  assert.equal(target.children.length, 0);
 });
 
 test("cleans up unsafe WebGL mounts when customization fails", async () => {
