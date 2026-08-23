@@ -1,0 +1,136 @@
+name: Check Asymptote Releases
+
+on:
+  schedule:
+    - cron: "0 9 * * 6"
+  workflow_dispatch:
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read pinned Asymptote version
+        id: current
+        run: |
+          current_version=$(grep -Eo 'ARG ASY_VERSION=[^[:space:]]+' wasm/Dockerfile | head -n1 | cut -d= -f2)
+
+          if [ -z "$current_version" ]; then
+            echo "Unable to find ASY_VERSION in wasm/Dockerfile"
+            exit 1
+          fi
+
+          echo "current_version=$current_version" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch latest Asymptote release from SourceForge
+        id: latest
+        run: |
+          python <<'PY'
+          import os
+          import re
+          import urllib.request
+          import xml.etree.ElementTree as ET
+
+          rss_url = "https://sourceforge.net/projects/asymptote/rss?path=/"
+          with urllib.request.urlopen(rss_url, timeout=30) as response:
+              rss_bytes = response.read()
+
+          root = ET.fromstring(rss_bytes)
+          releases = {}
+
+          for item in root.findall(".//item"):
+              title = item.findtext("title") or ""
+              link = item.findtext("link") or ""
+              summary = f"{title} {link}"
+              match = re.search(r"asymptote-([0-9]+(?:\.[0-9]+)+)\.src\.tgz", summary)
+              if not match:
+                  continue
+
+              version = match.group(1)
+              releases[version] = link or f"https://sourceforge.net/projects/asymptote/files/{version}/"
+
+          if not releases:
+              raise RuntimeError("Could not detect any Asymptote source releases from SourceForge RSS feed")
+
+          def version_key(version: str):
+              return tuple(int(part) for part in version.split("."))
+
+          latest_version = max(releases, key=version_key)
+          latest_url = releases[latest_version]
+
+          output_file = os.environ["GITHUB_OUTPUT"]
+          with open(output_file, "a", encoding="utf-8") as fh:
+              fh.write(f"latest_version={latest_version}\n")
+              fh.write(f"latest_url={latest_url}\n")
+          PY
+
+      - name: Compare versions
+        id: compare
+        env:
+          CURRENT_VERSION: ${{ steps.current.outputs.current_version }}
+          LATEST_VERSION: ${{ steps.latest.outputs.latest_version }}
+        run: |
+          python <<'PY'
+          import os
+
+          def parse(version: str):
+              return tuple(int(part) for part in version.split("."))
+
+          current = os.environ["CURRENT_VERSION"]
+          latest = os.environ["LATEST_VERSION"]
+          update_available = parse(latest) > parse(current)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"update_available={'true' if update_available else 'false'}\n")
+          PY
+
+      - name: Create issue when a newer release exists
+        if: steps.compare.outputs.update_available == 'true'
+        uses: actions/github-script@v7
+        env:
+          CURRENT_VERSION: ${{ steps.current.outputs.current_version }}
+          LATEST_VERSION: ${{ steps.latest.outputs.latest_version }}
+          LATEST_URL: ${{ steps.latest.outputs.latest_url }}
+        with:
+          script: |
+            const title = `Asymptote update available: ${process.env.CURRENT_VERSION} → ${process.env.LATEST_VERSION}`;
+            const { owner, repo } = context.repo;
+
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+
+            const duplicate = openIssues.find(issue => !issue.pull_request && issue.title === title);
+            if (duplicate) {
+              core.info(`Issue already exists: #${duplicate.number}`);
+              return;
+            }
+
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const body = [
+              'A new upstream Asymptote release was detected.',
+              '',
+              `- Current version in this repo: **${process.env.CURRENT_VERSION}**`,
+              `- Latest upstream version: **${process.env.LATEST_VERSION}**`,
+              `- Release source: ${process.env.LATEST_URL}`,
+              `- Detection run: ${runUrl}`,
+              '',
+              'Please review compatibility and update `ARG ASY_VERSION` in `wasm/Dockerfile` if appropriate.'
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title,
+              body,
+              labels: ['dependencies'],
+            });
