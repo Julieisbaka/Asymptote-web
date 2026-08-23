@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- Added structured compiler diagnostics with severity, message, source file, line, column, and optional diagnostic code fields.
+- Added `diagnostics` to render results and `AsymptoteError`, while preserving the existing `warnings` and `stderr` fields for compatibility.
+- Added the exported `parseCompilerDiagnostics()` helper for parsing Asymptote compiler output.
+
 ## 0.1.1
 
 - Fixed supported DeviceGray, DeviceRGB, and DeviceCMYK `setcolorspace`/`setcolor` operations not updating SVG fill and stroke colors.

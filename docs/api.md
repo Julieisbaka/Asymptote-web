@@ -77,6 +77,24 @@ const version = await asy.version();
 console.log(version); // e.g. "Asymptote version 3.13"
 ```
 
+### Structured diagnostics
+
+`RenderResult.diagnostics` contains editor-friendly diagnostics parsed from
+Asymptote's compiler output. Each diagnostic includes `severity`, `message`,
+and `raw`, plus `sourceFile`, `line`, `column`, and `code` when available:
+
+```ts
+const result = await asy.render(source);
+for (const diagnostic of result.diagnostics) {
+  console.log(diagnostic.sourceFile, diagnostic.line, diagnostic.message);
+}
+```
+
+Failed renders expose the same parsed diagnostics as
+`AsymptoteError.diagnostics`. The existing `warnings` and `stderr` fields are
+preserved for backwards compatibility. The standalone `parseCompilerDiagnostics`
+helper is also exported for parsing captured Asymptote output.
+
 #### Render options
 
 | Option | Type | Default | Description |

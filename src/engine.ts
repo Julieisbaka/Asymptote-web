@@ -8,6 +8,7 @@
  */
 
 import { AsymptoteError, type CreateOptions, type RenderOptions, type RenderResult } from "./types.js";
+import { parseCompilerDiagnostics } from "./diagnostics.js";
 import { epsToSvgWithWarnings } from "./eps-to-svg.js";
 
 // ---------------------------------------------------------------------------
@@ -264,13 +265,15 @@ async function runAsymptoteUnsafe(
     ];
 
     const exitCode = mod.callMain(args);
+    const stderr = stderrLines.join("\n");
+    const diagnostics = parseCompilerDiagnostics(stderr);
 
     if (exitCode !== 0) {
-      const stderr = stderrLines.join("\n");
       throw new AsymptoteError(
         `ASYMPTOTE ERROR: Asymptote exited with code ${exitCode}:\n${stderr}`,
         exitCode,
-        stderr
+        stderr,
+        diagnostics
       );
     }
 
@@ -293,6 +296,7 @@ async function runAsymptoteUnsafe(
         ...stderrLines.filter((line) => /(?:^|\s)warning(?:\s|$)/i.test(line)),
         ...conversion.warnings,
       ],
+      diagnostics,
     };
   } finally {
     mod.print = origPrint;
@@ -314,10 +318,12 @@ export function getAsymptoteVersion(createOptions: CreateOptions): Promise<strin
     try {
       const exitCode = mod.callMain(["--version"]);
       if (exitCode !== 0) {
+        const stderr = errors.join("\n");
         throw new AsymptoteError(
           `Unable to read Asymptote version (exit code ${exitCode})`,
           exitCode,
-          errors.join("\n")
+          stderr,
+          parseCompilerDiagnostics(stderr)
         );
       }
       return [...output, ...errors].join("\n").trim();

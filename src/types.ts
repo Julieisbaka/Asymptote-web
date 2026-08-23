@@ -5,6 +5,20 @@
 /** Output formats supported by the Asymptote driver. */
 export type OutputFormat = "svg" | "eps" | "ps" | "webgl";
 
+/** Severity levels reported by the Asymptote compiler. */
+export type DiagnosticSeverity = "info" | "warning" | "error";
+
+/** A structured compiler diagnostic parsed from Asymptote stderr. */
+export interface CompilerDiagnostic {
+  severity: DiagnosticSeverity;
+  message: string;
+  sourceFile?: string;
+  line?: number;
+  column?: number;
+  code?: string;
+  raw: string;
+}
+
 /** Options accepted by {@link AsymptoteEngine.render}. */
 export interface RenderOptions {
   /**
@@ -146,6 +160,8 @@ export interface RenderResult {
   svg: string;
   /** Any warnings or informational messages emitted by Asymptote. */
   warnings: string[];
+  /** Structured compiler diagnostics emitted during the render. */
+  diagnostics: CompilerDiagnostic[];
 }
 
 /**
@@ -281,11 +297,19 @@ export class AsymptoteError extends Error {
   public readonly exitCode: number;
   /** Raw stderr output from Asymptote. */
   public readonly stderr: string;
+  /** Structured compiler diagnostics parsed from {@link stderr}. */
+  public readonly diagnostics: CompilerDiagnostic[];
 
-  constructor(message: string, exitCode: number, stderr: string) {
+  constructor(
+    message: string,
+    exitCode: number,
+    stderr: string,
+    diagnostics: CompilerDiagnostic[] = []
+  ) {
     super(message);
     this.name = "AsymptoteError";
     this.exitCode = exitCode;
     this.stderr = stderr;
+    this.diagnostics = diagnostics;
   }
 }

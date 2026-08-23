@@ -18,6 +18,7 @@
 
 import { getAsymptoteVersion, preloadModule, runAsymptote } from "./engine.js";
 import { epsToSvg } from "./eps-to-svg.js";
+export { parseCompilerDiagnostics } from "./diagnostics.js";
 import {
   type AsymptoteEngine,
   type CreateOptions,
@@ -32,7 +33,9 @@ export type { EpsToSvgOptions, EpsToSvgResult } from "./eps-to-svg.js";
 export { AsymptoteError } from "./types.js";
 export type {
   AsymptoteEngine,
+  CompilerDiagnostic,
   CreateOptions,
+  DiagnosticSeverity,
   OutputFormat,
   RenderOptions,
   RenderResult,

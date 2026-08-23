@@ -9,6 +9,26 @@ This document describes the public TypeScript types exported by
 type OutputFormat = "svg" | "eps" | "ps" | "webgl";
 ```
 
+## `CompilerDiagnostic`
+
+```ts
+type DiagnosticSeverity = "info" | "warning" | "error";
+
+interface CompilerDiagnostic {
+  severity: DiagnosticSeverity;
+  message: string;
+  sourceFile?: string;
+  line?: number;
+  column?: number;
+  code?: string;
+  raw: string;
+}
+```
+
+`CompilerDiagnostic` is parsed from Asymptote's stderr and is suitable for
+editor integrations. Location fields are omitted when Asymptote does not
+provide a source location. `raw` preserves the original diagnostic line.
+
 ## `RenderOptions`
 
 ```ts
@@ -61,11 +81,13 @@ interface RenderResult {
   format: OutputFormat;
   svg: string;
   warnings: string[];
+  diagnostics: CompilerDiagnostic[];
 }
 ```
 
 `warnings` contains non-fatal diagnostics emitted by Asymptote or the EPS/PS
-converter.
+converter. `diagnostics` contains structured diagnostics from Asymptote's
+compiler output; `warnings` remains available for backwards compatibility.
 
 ## `CreateOptions`
 
@@ -147,5 +169,6 @@ customization.
 class AsymptoteError extends Error {
   readonly exitCode: number;
   readonly stderr: string;
+  readonly diagnostics: CompilerDiagnostic[];
 }
 ```

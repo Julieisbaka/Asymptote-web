@@ -101,7 +101,7 @@ globalThis.__asymptoteWebTestState = {
   stderr: [],
 };
 
-const { AsymptoteError, createAsymptote } = await import("../dist/asymptote-web.js");
+const { AsymptoteError, createAsymptote, parseCompilerDiagnostics } = await import("../dist/asymptote-web.js");
 const state = globalThis.__asymptoteWebTestState;
 
 after(async () => {
@@ -135,7 +135,65 @@ test("renders SVG and reports compiler/converter warnings", async () => {
     "Warning: compiler warning",
     ": warning [unbounded]: x scaling in picture unbounded",
   ]);
+  assert.deepEqual(result.diagnostics, [
+    {
+      severity: "warning",
+      message: "compiler warning",
+      raw: "Warning: compiler warning",
+    },
+    {
+      severity: "warning",
+      message: "x scaling in picture unbounded",
+      code: "unbounded",
+      raw: ": warning [unbounded]: x scaling in picture unbounded",
+    },
+    {
+      severity: "info",
+      message: "informational output",
+      raw: "informational output",
+    },
+  ]);
   assert.deepEqual(state.calls.at(-1).source, "draw((0,0)--(1,1));");
+});
+
+test("parses source locations and diagnostic severities", () => {
+  assert.deepEqual(parseCompilerDiagnostics([
+    "/tmp/input.asy: 12.7: error: invalid path",
+    "/tmp/input.asy: 18.3: no matching variable 'bold'",
+    "C:/work/example.asy:4.2: warning [unbounded]: scaling is unbounded",
+    "note from compiler",
+  ].join("\n")), [
+    {
+      severity: "error",
+      message: "invalid path",
+      sourceFile: "/tmp/input.asy",
+      line: 12,
+      column: 7,
+      raw: "/tmp/input.asy: 12.7: error: invalid path",
+    },
+    {
+      severity: "error",
+      message: "no matching variable 'bold'",
+      sourceFile: "/tmp/input.asy",
+      line: 18,
+      column: 3,
+      raw: "/tmp/input.asy: 18.3: no matching variable 'bold'",
+    },
+    {
+      severity: "warning",
+      message: "scaling is unbounded",
+      sourceFile: "C:/work/example.asy",
+      line: 4,
+      column: 2,
+      code: "unbounded",
+      raw: "C:/work/example.asy:4.2: warning [unbounded]: scaling is unbounded",
+    },
+    {
+      severity: "info",
+      message: "note from compiler",
+      raw: "note from compiler",
+    },
+  ]);
 });
 
 test("preserves format flag precedence and WebGL options", async () => {
@@ -206,6 +264,11 @@ test("serializes concurrent renders and exposes AsymptoteError", async () => {
       assert.ok(error instanceof AsymptoteError);
       assert.equal(error.exitCode, 7);
       assert.equal(error.stderr, "compiler failed");
+      assert.deepEqual(error.diagnostics, [{
+        severity: "info",
+        message: "compiler failed",
+        raw: "compiler failed",
+      }]);
       assert.match(error.message, /ASYMPTOTE ERROR/);
       return true;
     }
