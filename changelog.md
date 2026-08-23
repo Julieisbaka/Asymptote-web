@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.1.3
+
 ## 0.1.2
 
 - Added unsafe accessors for directly retrieving and modifying live mounted SVG elements and WebGL iframes.
