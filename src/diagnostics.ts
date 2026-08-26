@@ -1,6 +1,6 @@
 import type { CompilerDiagnostic, DiagnosticSeverity } from "./types.js";
 
-const LOCATION_PATTERN = /^(.*?):\s*(\d+)(?:\.(\d+))?:\s*(.*)$/;
+const LOCATION_PATTERN = /^((?:[A-Za-z]:)?[^:\r\n]+):\s*(\d+)(?:\.(\d+))?:\s*(.*)$/;
 const SEVERITY_PATTERN = /^(warning|error|runtime)\b\s*:?[ \t]*(.*)$/i;
 const INFO_PATTERN = /^(info|note)\s*:\s*(.*)$/i;
 const CODE_PATTERN = /^\[([^\]]+)\]\s*(.*)$/;
