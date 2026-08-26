@@ -2,7 +2,7 @@ import type { CompilerDiagnostic, DiagnosticSeverity } from "./types.js";
 
 const LOCATION_PATTERN = /^(.*?):\s*(\d+)(?:\.(\d+))?:\s*(.*)$/;
 const SEVERITY_PATTERN = /^(warning|error|runtime)\b\s*:?[ \t]*(.*)$/i;
-const INFO_PATTERN = /^(info|note)\s*:\s*(.*)$/i;
+const INFO_PATTERN = /^(info|note)\s*:(.*)$/i;
 const CODE_PATTERN = /^\[([^\]]+)\]\s*(.*)$/;
 
 function severityFor(text: string, hasLocation: boolean): {
