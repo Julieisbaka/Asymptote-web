@@ -1,30 +1,82 @@
 import type { CompilerDiagnostic, DiagnosticSeverity } from "./types.js";
 
 const LOCATION_PATTERN = /^(.*?):\s*(\d+)(?:\.(\d+))?:\s*(.*)$/;
-const SEVERITY_PATTERN = /^(warning|error|runtime)\b\s*:?[ \t]*(.*)$/i;
-const INFO_PATTERN = /^(info|note)\s*:\s*(.*)$/i;
 const CODE_PATTERN = /^\[([^\]]+)\]\s*(.*)$/;
+const SEVERITY_LABELS = ["warning", "error", "runtime"] as const;
+const INFO_LABELS = ["info", "note"] as const;
+
+function parseSeverityPrefix(text: string): { label: string; message: string } | null {
+  const trimmed = text.trim();
+  const lowered = trimmed.toLowerCase();
+
+  for (const label of SEVERITY_LABELS) {
+    if (!lowered.startsWith(label)) {
+      continue;
+    }
+
+    const rest = trimmed.slice(label.length);
+    if (!rest) {
+      return { label, message: "" };
+    }
+
+    const first = rest[0];
+    if (first === ":") {
+      return { label, message: rest.slice(1).trim() };
+    }
+    if (first === " " || first === "\t") {
+      return { label, message: rest.trim() };
+    }
+  }
+
+  return null;
+}
+
+function parseInfoPrefix(text: string): { label: string; message: string } | null {
+  const trimmed = text.trim();
+  const lowered = trimmed.toLowerCase();
+
+  for (const label of INFO_LABELS) {
+    if (!lowered.startsWith(label)) {
+      continue;
+    }
+
+    const rest = trimmed.slice(label.length);
+    let index = 0;
+    while (rest[index] === " " || rest[index] === "\t") {
+      index += 1;
+    }
+
+    if (rest[index] !== ":") {
+      continue;
+    }
+
+    return { label, message: rest.slice(index + 1).trim() };
+  }
+
+  return null;
+}
 
 function severityFor(text: string, hasLocation: boolean): {
   severity: DiagnosticSeverity;
   message: string;
 } {
-  const match = text.match(SEVERITY_PATTERN) ?? text.match(INFO_PATTERN);
-  if (!match) {
+  const severityPrefix = parseSeverityPrefix(text);
+  const infoPrefix = severityPrefix ? null : parseInfoPrefix(text);
+  if (!severityPrefix && !infoPrefix) {
     return {
       severity: hasLocation ? "error" : "info",
       message: text.trim(),
     };
   }
 
-  const label = match[1].toLowerCase();
+  const label = severityPrefix?.label ?? infoPrefix!.label;
   return {
     severity: label === "warning"
       ? "warning"
       : label === "error" || label === "runtime" || (label === "note" && hasLocation)
         ? "error"
         : "info",
-    message: match[2].trim(),
+    message: (severityPrefix?.message ?? infoPrefix!.message).trim(),
   };
 }
 
