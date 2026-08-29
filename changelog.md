@@ -3,6 +3,7 @@
 ## 0.1.3
 
 - Internal patch system rework
+- Hardened compiler diagnostic location parsing against regex backtracking while preserving Windows paths and colon-bearing virtual filenames.
 
 ## 0.1.2
 
