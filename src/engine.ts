@@ -2,7 +2,7 @@
  * engine.ts — Loads and manages the Asymptote WebAssembly module.
  *
  * This module handles:
- *  - Lazy-loading the WASM binary (with optional Cache API caching).
+ *  - Lazy-loading the WASM binary.
  *  - Setting up Emscripten's in-memory virtual filesystem (MEMFS).
  *  - Running `asy` with the given arguments and capturing output.
  */
