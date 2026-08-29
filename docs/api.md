@@ -75,7 +75,7 @@ Asymptote CLI:
 
 ```ts
 const version = await asy.version();
-console.log(version); // e.g. "Asymptote version 3.13"
+console.log(version); // e.g. "Asymptote version 3.14"
 ```
 
 ### Structured diagnostics

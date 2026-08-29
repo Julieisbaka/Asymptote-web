@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ---------------------------------------------------------------------------
 # Download Asymptote source
 # ---------------------------------------------------------------------------
-ARG ASY_VERSION=3.13
+ARG ASY_VERSION=3.14
 RUN wget -q "https://sourceforge.net/projects/asymptote/files/${ASY_VERSION}/asymptote-${ASY_VERSION}.src.tgz" \
     -O /tmp/asymptote.tar.gz \
     && tar -xzf /tmp/asymptote.tar.gz -C /tmp \

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+
+- Bump asymptote to 3.14
+
 ## 0.1.3
 
 - Internal patch system rework

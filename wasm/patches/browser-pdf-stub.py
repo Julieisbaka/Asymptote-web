@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Stub Ghostscript-backed PDF output for browser WebAssembly builds.
 
-Asymptote 3.13 routes PDF conversion through picture::epstopdf(), which
+Asymptote 3.14 routes PDF conversion through picture::epstopdf(), which
 launches Ghostscript. Browser WASM cannot launch that external process, so
 fail at the PDF boundary with a precise diagnostic instead of attempting an
 unavailable conversion.
