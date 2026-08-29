@@ -165,6 +165,9 @@ test("parses source locations and diagnostic severities", () => {
     "C:/work/example.asy:4.2: warning [unbounded]: scaling is unbounded",
     "lib/foo:bar.asy: 9.1: warning: escaped colon filename",
     "note from compiler",
+    "info: informational message",
+    "note   :   spaced colon note",
+    "/tmp/input.asy: 5.1: note: prefixed note with location",
   ].join("\n")), [
     {
       severity: "error",
@@ -203,6 +206,24 @@ test("parses source locations and diagnostic severities", () => {
       severity: "info",
       message: "note from compiler",
       raw: "note from compiler",
+    },
+    {
+      severity: "info",
+      message: "informational message",
+      raw: "info: informational message",
+    },
+    {
+      severity: "info",
+      message: "spaced colon note",
+      raw: "note   :   spaced colon note",
+    },
+    {
+      severity: "error",
+      message: "prefixed note with location",
+      sourceFile: "/tmp/input.asy",
+      line: 5,
+      column: 1,
+      raw: "/tmp/input.asy: 5.1: note: prefixed note with location",
     },
   ]);
 });
