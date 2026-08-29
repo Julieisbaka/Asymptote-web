@@ -163,6 +163,7 @@ test("parses source locations and diagnostic severities", () => {
     "/tmp/input.asy: 12.7: error: invalid path",
     "/tmp/input.asy: 18.3: no matching variable 'bold'",
     "C:/work/example.asy:4.2: warning [unbounded]: scaling is unbounded",
+    "lib/foo:bar.asy: 9.1: warning: escaped colon filename",
     "note from compiler",
   ].join("\n")), [
     {
@@ -189,6 +190,14 @@ test("parses source locations and diagnostic severities", () => {
       column: 2,
       code: "unbounded",
       raw: "C:/work/example.asy:4.2: warning [unbounded]: scaling is unbounded",
+    },
+    {
+      severity: "warning",
+      message: "escaped colon filename",
+      sourceFile: "lib/foo:bar.asy",
+      line: 9,
+      column: 1,
+      raw: "lib/foo:bar.asy: 9.1: warning: escaped colon filename",
     },
     {
       severity: "info",
