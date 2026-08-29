@@ -1,7 +1,7 @@
 import type { CompilerDiagnostic, DiagnosticSeverity } from "./types.js";
 
 const SEVERITY_PATTERN = /^(warning|error|runtime)\b\s*:?[ \t]*(.*)$/i;
-const INFO_PATTERN = /^(info|note)\s*:\s*(.*)$/i;
+const INFO_PATTERN = /^(info|note)\s*:(.*)$/i;
 
 function isDigit(char: string | undefined): boolean {
   return char !== undefined && char >= "0" && char <= "9";
