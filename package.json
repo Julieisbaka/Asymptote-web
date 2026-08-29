@@ -8,19 +8,32 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/asymptote-web.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/asymptote-web.js"
     },
-    "./asymptote.js": "./dist/asymptote.js",
-    "./asymptote.wasm": "./dist/asymptote.wasm",
-    "./asy.data": "./dist/asy.data",
-    "./asygl.js": "./dist/asygl.js"
+    "./asymptote.js": {
+      "types": "./dist/asymptote-js.d.ts",
+      "import": "./dist/asymptote.js",
+      "default": "./dist/asymptote.js"
+    },
+    "./asymptote.wasm": {
+      "types": "./dist/asset-url.d.ts",
+      "default": "./dist/asymptote.wasm"
+    },
+    "./asy.data": {
+      "types": "./dist/asset-url.d.ts",
+      "default": "./dist/asy.data"
+    },
+    "./asygl.js": {
+      "types": "./dist/asset-url.d.ts",
+      "default": "./dist/asygl.js"
+    }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "vite build && tsc --emitDeclarationOnly --declaration --project tsconfig.build.json",
+    "build": "vite build && tsc --emitDeclarationOnly --declaration --project tsconfig.build.json && node scripts/write-package-types.mjs",
     "dev": "vite",
     "predev": "npm run verify:package",
     "test": "npm run build && node --test test/*.test.js",

@@ -6,6 +6,8 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const requiredFiles = [
     "dist/asymptote-web.js",
     "dist/index.d.ts",
+    "dist/asset-url.d.ts",
+    "dist/asymptote-js.d.ts",
     "dist/asymptote.js",
     "dist/asymptote.wasm",
     "dist/asy.data",

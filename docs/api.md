@@ -40,7 +40,10 @@ const asy = await createAsymptote({
 
 The package also exports the runtime assets as `asymptote-web/asymptote.js`,
 `asymptote-web/asymptote.wasm`, `asymptote-web/asy.data`, and
-`asymptote-web/asygl.js` for bundler-specific asset URL handling.
+`asymptote-web/asygl.js` for bundler-specific asset URL handling. These
+subpath exports include TypeScript declarations: `asymptote.js` is typed as
+the generated Emscripten module factory, while the binary/data/viewer assets
+are typed as URL strings for bundler asset pipelines.
 
 The WASM module requires all four generated runtime assets to be served:
 `asymptote.js`, `asymptote.wasm`, `asy.data`, and `asygl.js`. A standard npm

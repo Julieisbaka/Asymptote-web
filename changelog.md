@@ -3,6 +3,7 @@
 ## 0.1.4
 
 - Bump asymptote to 3.14
+- Added TypeScript declarations for runtime asset subpath exports.
 
 ## 0.1.3
 
