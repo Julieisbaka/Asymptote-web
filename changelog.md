@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5
+
+- Moved patches from candidate to stable
+
 ## 0.1.4
 
 - Bump asymptote to 3.14
