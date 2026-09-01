@@ -78,7 +78,9 @@ function toCssFont(font: string): CssFont {
     case "ZapfDingbats":
       return { family: "Zapf Dingbats, sans-serif" };
     default:
-      return { family: font || "sans-serif" };
+      // Preserve the original PostScript font name in the CSS stack in case
+      // the host page happens to have a matching font installed.
+      return { family: font ? `${font}, sans-serif` : "sans-serif" };
   }
 }
 

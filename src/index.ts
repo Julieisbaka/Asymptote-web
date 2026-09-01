@@ -285,8 +285,14 @@ export async function createAsymptote(
       renderOptions: RenderOptions = {}
     ): Promise<RenderResult[]> {
       const results: RenderResult[] = [];
-      for (const source of sources) {
-        results.push(await runAsymptote(source, renderOptions, resolvedOptions));
+      for (let index = 0; index < sources.length; index += 1) {
+        try {
+          results.push(await runAsymptote(sources[index], renderOptions, resolvedOptions));
+        } catch (error) {
+          // Identify which batch item failed; the underlying error is unchanged otherwise.
+          if (error instanceof Error) (error as Error & { batchIndex?: number }).batchIndex = index;
+          throw error;
+        }
       }
       return results;
     },
@@ -303,7 +309,9 @@ export async function createAsymptote(
       link.href = url;
       link.download = filename ?? defaultFilename(result.format);
       link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 0);
+      // Delay revocation so slower browsers have time to start the download
+      // before the blob URL is invalidated.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       return result;
     },
 
@@ -315,7 +323,7 @@ export async function createAsymptote(
       const result = await runAsymptote(source, renderOptions, resolvedOptions);
 
       if (result.format !== "svg") {
-        throw new Error("asymptote-web: mount only supports SVG output");
+        throw new TypeError("asymptote-web: mount only supports SVG output");
       }
 
       const el =
@@ -324,7 +332,7 @@ export async function createAsymptote(
           : target;
 
       if (!el) {
-        throw new Error(`asymptote-web: mount target not found: ${target}`);
+        throw new TypeError(`asymptote-web: mount target not found: ${target}`);
       }
 
       if (!(renderOptions.reuseSvg && updateSvgElement(el, result.svg))) {
@@ -348,13 +356,13 @@ export async function createAsymptote(
       ): Promise<RenderResult> {
         const result = await runAsymptote(source, renderOptions, resolvedOptions);
         if (result.format !== "svg") {
-          throw new Error("asymptote-web: unsafe.mount only supports SVG output");
+          throw new TypeError("asymptote-web: unsafe.mount only supports SVG output");
         }
         const el = typeof target === "string"
           ? document.querySelector(target)
           : target;
         if (!el) {
-          throw new Error(`asymptote-web: unsafe.mount target not found: ${target}`);
+          throw new TypeError(`asymptote-web: unsafe.mount target not found: ${target}`);
         }
         mountUnsafeSvg(el, result.svg, customize);
         return result;
@@ -374,7 +382,7 @@ export async function createAsymptote(
           ? document.querySelector(target)
           : target;
         if (!el) {
-          throw new Error(`asymptote-web: unsafe.mountWebGL target not found: ${target}`);
+          throw new TypeError(`asymptote-web: unsafe.mountWebGL target not found: ${target}`);
         }
         const iframe = createWebGLIframe(result.output, renderOptions);
         const loaded = waitForIframeDocument(iframe, renderOptions.webglIframeTimeoutMs);
@@ -406,7 +414,7 @@ export async function createAsymptote(
           : target;
 
       if (!el) {
-        throw new Error(`asymptote-web: mountWebGL target not found: ${target}`);
+        throw new TypeError(`asymptote-web: mountWebGL target not found: ${target}`);
       }
 
       // The generated HTML is a complete standalone document (own <head>,
