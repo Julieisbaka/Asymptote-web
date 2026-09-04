@@ -2,7 +2,7 @@
 
 ## 0.1.5
 
-- Moved patches from candidate to stable
+- Moved a patch into stable
 - `mount`, `unsafe.mount`, `unsafe.mountWebGL`, and `mountWebGL` now throw `TypeError` for invalid targets/formats instead of a plain `Error`.
 - Delayed `download()`'s blob URL revocation to give slower browsers time to start the download.
 - Unrecognized EPS/PS font names now keep the original name as a fallback in the generated CSS font stack.

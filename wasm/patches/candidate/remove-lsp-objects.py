@@ -33,9 +33,14 @@ missing = [name for name in OBJECTS if not re.search(rf"\b{re.escape(name)}\b", 
 if missing:
     sys.exit("remove-lsp-objects.py: missing expected objects: " + ", ".join(missing))
 
-for name in OBJECTS:
-    corefiles = re.sub(rf"\s+{re.escape(name)}\b", "", corefiles)
+prefix, body = re.match(r"(COREFILES\s*=\s*)(.*)", corefiles, re.DOTALL).groups()
+tokens = body.replace("\\\r\n", " ").replace("\\\n", " ").split()
+filtered = [token for token in tokens if token not in OBJECTS]
 
+# Re-emit a simple, valid Make assignment instead of deleting names in place
+# across continuation lines. This avoids leaving a bare continuation marker,
+# which GNU Make can expand into the literal target `\\.o`.
+corefiles = prefix + " ".join(filtered) + "\n"
 content = content[:match.start()] + corefiles + content[match.end():]
 with open(PATH, "w", encoding="utf-8") as stream:
     stream.write(content)
