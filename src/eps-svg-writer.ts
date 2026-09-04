@@ -217,11 +217,21 @@ export class SvgWriter {
     if (width * height > 262144 || pixels.length < width * height) return false;
     const rects: string[] = [];
     for (let row = 0; row < height; row += 1) {
-      for (let column = 0; column < width; column += 1) {
+      let column = 0;
+      while (column < width) {
         const value = pixels.charCodeAt(row * width + column);
         const gray = Math.max(0, Math.min(255, Number.isFinite(value) ? value : 0));
-        if (gray === 255) continue;
-        rects.push(`<rect x="${column}" y="${row}" width="1" height="1" fill="rgb(${gray},${gray},${gray})"/>`);
+        let end = column + 1;
+        while (end < width) {
+          const next = pixels.charCodeAt(row * width + end);
+          const nextGray = Math.max(0, Math.min(255, Number.isFinite(next) ? next : 0));
+          if (nextGray !== gray) break;
+          end += 1;
+        }
+        if (gray !== 255) {
+          rects.push(`<rect x="${column}" y="${row}" width="${end - column}" height="1" fill="rgb(${gray},${gray},${gray})"/>`);
+        }
+        column = end;
       }
     }
     const content = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">${rects.join("")}</svg>`;
