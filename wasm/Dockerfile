@@ -33,7 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Download Asymptote source
 # ---------------------------------------------------------------------------
 ARG ASY_VERSION=3.14
-ARG ASY_SHA256=2c43b8c1c3d2a7013ec92ed46a3d2cef8751df622ebc6ccabe8a029b3c3cfa83
+ARG ASY_SHA256=491d5e87299d48976b193beaac2621ee76c9b2058a597b332dc455962d82de97
 RUN wget -q "https://sourceforge.net/projects/asymptote/files/${ASY_VERSION}/asymptote-${ASY_VERSION}.src.tgz" \
     -O /tmp/asymptote.tar.gz \
     && echo "${ASY_SHA256}  /tmp/asymptote.tar.gz" | sha256sum -c - \
