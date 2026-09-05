@@ -252,7 +252,7 @@ test("downloads output with a default filename and revokes the object URL", asyn
   const result = await asy.download("draw", undefined, { format: "eps" });
   assert.equal(result.format, "eps");
   assert.equal(TestURL.created.length, 1);
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 1100));
   assert.equal(TestURL.revoked[0], "blob:test");
   assert.equal(document.lastAnchor.download, "asymptote.eps");
 });
