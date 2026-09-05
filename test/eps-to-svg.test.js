@@ -206,6 +206,16 @@ test("converts bounded 8-bit grayscale image data", () => {
   assert.match(svg, /data:image\/svg\+xml;base64,/);
 });
 
+test("merges adjacent same-color image pixels into single runs", () => {
+  const svg = convert("3 1 8 [3 0 0 -1 0 1] (\x00\x00\x80) image");
+  const encoded = svg.match(/base64,([^"]+)/)[1];
+  const embedded = Buffer.from(encoded, "base64").toString("utf8");
+
+  assert.match(embedded, /<rect x="0" y="0" width="2" height="1" fill="rgb\(0,0,0\)"\/>/);
+  assert.match(embedded, /<rect x="2" y="0" width="1" height="1" fill="rgb\(128,128,128\)"\/>/);
+  assert.equal(embedded.match(/<rect /g).length, 2);
+});
+
 test("maps styled and symbolic PostScript fonts", () => {
   const svg = convert(
     "/Helvetica-BoldOblique findfont 12 scalefont setfont 10 20 moveto (A) show " +
