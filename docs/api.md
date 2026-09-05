@@ -6,8 +6,30 @@ exact TypeScript interfaces, see the [type reference](types.md).
 ## `createAsymptote(options?)`
 
 Initializes the Asymptote WebAssembly module and returns an
-`AsymptoteEngine`. The module is loaded lazily and cached for the lifetime of
-the page, so multiple calls can share the same runtime.
+`AsymptoteEngine`. The module is initialized when this function is called and
+cached for the lifetime of the page, so multiple calls can share the same
+runtime.
+
+### `getAssetUrls(baseUrl?)`
+
+Returns matching URLs for the generated `asymptote.js`, `asymptote.wasm`, and
+`asygl.js` runtime assets. Pass the result directly to `createAsymptote()`:
+
+```ts
+import { createAsymptote, getAssetUrls } from "asymptote-web";
+
+const asy = await createAsymptote(getAssetUrls());
+```
+
+Use `baseUrl` when the four runtime assets have been copied to a public
+directory or hosted on a CDN. The directory must also contain `asy.data`,
+which is loaded automatically by the Emscripten runtime:
+
+```ts
+const asy = await createAsymptote(
+  getAssetUrls("https://cdn.example.com/asymptote/")
+);
+```
 
 ### Options
 

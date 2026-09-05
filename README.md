@@ -50,10 +50,13 @@ const asy = await createAsymptote({
 ## Quick start
 
 ```ts
-import { createAsymptote } from "asymptote-web";
+import { createAsymptote, getAssetUrls } from "asymptote-web";
+
+// Use this when your bundler serves the package's dist/ assets unchanged.
+const assetUrls = getAssetUrls();
 
 // Load the WASM module once (subsequent calls reuse the cached module).
-const asy = await createAsymptote();
+const asy = await createAsymptote(assetUrls);
 
 // Render Asymptote source → SVG string
 const { svg } = await asy.render(`
@@ -64,6 +67,20 @@ const { svg } = await asy.render(`
 
 document.querySelector("#output").innerHTML = svg;
 ```
+
+If you copied `asymptote.js`, `asymptote.wasm`, `asy.data`, and `asygl.js` to
+another public directory or CDN, pass that directory to `getAssetUrls()`:
+
+```ts
+import { createAsymptote, getAssetUrls } from "asymptote-web";
+
+const asy = await createAsymptote(
+  getAssetUrls("/assets/asymptote/")
+);
+```
+
+The directory must contain all four runtime assets. `getAssetUrls()` returns
+the matching `glueUrl`, `wasmUrl`, and `asyglUrl` values for `createAsymptote()`.
 
 ### Mount directly to a DOM element
 

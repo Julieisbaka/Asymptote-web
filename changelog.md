@@ -2,7 +2,7 @@
 
 ## 0.1.6
 
-- Added a convenience function for easier asset management
+- Added `getAssetUrls()` to simplify configuring runtime assets for package-relative, public-directory, and CDN deployments.
 
 ## 0.1.5
 
