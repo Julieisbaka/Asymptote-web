@@ -46,7 +46,7 @@
     "build": "vite build && tsc --emitDeclarationOnly --declaration --project tsconfig.build.json && node scripts/write-package-types.mjs",
     "dev": "vite",
     "predev": "npm run verify:package",
-    "test": "npm run build && node --test test/*.test.js",
+    "test": "npm run build && node --test --test-concurrency=1 test/*.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src test",
     "lint:fix": "eslint src test --fix",
