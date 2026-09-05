@@ -2,6 +2,8 @@
 
 ## 0.1.6
 
+- Added a convenience function for easier asset management
+
 ## 0.1.5
 
 - Moved a patch into stable

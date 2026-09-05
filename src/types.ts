@@ -167,6 +167,13 @@ export interface CreateOptions {
   asyglUrl?: string;
 }
 
+/** URLs for the generated Emscripten runtime assets. */
+export interface AssetUrls {
+  glueUrl: string;
+  wasmUrl: string;
+  asyglUrl: string;
+}
+
 /** Result returned by {@link AsymptoteEngine.render}. */
 export interface RenderResult {
   /**

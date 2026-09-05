@@ -103,8 +103,25 @@ globalThis.__asymptoteWebTestState = {
   stderr: [],
 };
 
-const { AsymptoteError, createAsymptote, parseCompilerDiagnostics } = await import("../dist/asymptote-web.js");
+const {
+  AsymptoteError,
+  createAsymptote,
+  getAssetUrls,
+  parseCompilerDiagnostics,
+} = await import("../dist/asymptote-web.js");
 const state = globalThis.__asymptoteWebTestState;
+
+test("resolves runtime asset URLs", () => {
+  const defaults = getAssetUrls();
+  assert.match(defaults.glueUrl, /asymptote\.js$/);
+  assert.match(defaults.wasmUrl, /asymptote\.wasm$/);
+  assert.match(defaults.asyglUrl, /asygl\.js$/);
+
+  const custom = getAssetUrls("https://cdn.example.test/asymptote/");
+  assert.equal(custom.glueUrl, "https://cdn.example.test/asymptote/asymptote.js");
+  assert.equal(custom.wasmUrl, "https://cdn.example.test/asymptote/asymptote.wasm");
+  assert.equal(custom.asyglUrl, "https://cdn.example.test/asymptote/asygl.js");
+});
 
 after(async () => {
   await unlink(gluePath).catch(() => { });

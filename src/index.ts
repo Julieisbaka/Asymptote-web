@@ -21,6 +21,7 @@ import { epsToSvg } from "./eps-to-svg.js";
 export { parseCompilerDiagnostics } from "./diagnostics.js";
 import {
   type AsymptoteEngine,
+  type AssetUrls,
   type CreateOptions,
   type RenderOptions,
   type RenderResult,
@@ -33,6 +34,7 @@ export type { EpsToSvgOptions, EpsToSvgResult } from "./eps-to-svg.js";
 export { AsymptoteError } from "./types.js";
 export type {
   AsymptoteEngine,
+  AssetUrls,
   CompilerDiagnostic,
   CreateOptions,
   DiagnosticSeverity,
@@ -69,6 +71,23 @@ export { epsToSvgWithWarnings } from "./eps-to-svg.js";
  * subset as its EPS output, so both can be converted with the same function.
  */
 export const psToSvg = epsToSvg;
+
+/**
+ * Resolve the generated runtime asset URLs from a shared directory.
+ *
+ * With no argument, URLs are resolved beside this package's wrapper module.
+ * Pass a directory URL or path when copying the runtime assets to a public
+ * directory or hosting them on a CDN. The returned URLs can be passed directly
+ * to {@link createAsymptote}.
+ */
+export function getAssetUrls(baseUrl?: string): AssetUrls {
+  const base = new URL(baseUrl ?? "./", import.meta.url);
+  return {
+    glueUrl: new URL("asymptote.js", base).href,
+    wasmUrl: new URL("asymptote.wasm", base).href,
+    asyglUrl: new URL("asygl.js", base).href,
+  };
+}
 
 function updateSvgElement(target: Element, svgText: string): boolean {
   const current = target.firstElementChild;
