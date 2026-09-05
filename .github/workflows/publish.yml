@@ -33,7 +33,7 @@ jobs:
 
       - name: Read package version
         id: version
-        run: node -p "const p = require('./package.json'); `package-version=${p.version}`" >> "$GITHUB_OUTPUT"
+        run: node -e "console.log('package-version=' + require('./package.json').version)" >> "$GITHUB_OUTPUT"
 
       - name: Verify version is unpublished
         run: |
