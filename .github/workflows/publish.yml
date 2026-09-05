@@ -1,0 +1,101 @@
+name: Publish Package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and test package
+    runs-on: ubuntu-latest
+    outputs:
+      package-version: ${{ steps.version.outputs.package-version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Read package version
+        id: version
+        run: node -p "const p = require('./package.json'); `package-version=${p.version}`" >> "$GITHUB_OUTPUT"
+
+      - name: Verify version is unpublished
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version --fetch-retries=0 --loglevel=error >/dev/null 2>&1; then
+            echo "::error::${PACKAGE_NAME}@${PACKAGE_VERSION} is already published. Commit a new version before publishing."
+            exit 1
+          fi
+
+      - name: Build WASM runtime
+        run: bash ./wasm/build.sh
+
+      - name: Build package
+        run: npm run build
+
+      - name: Verify package assets
+        run: npm run verify:package
+
+      - name: Run tests
+        run: node --test test/*.test.js
+
+      - name: Verify package metadata
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          test "${PACKAGE_NAME}" = "asymptote-web"
+          test "${PACKAGE_VERSION}" = "${{ steps.version.outputs.package-version }}"
+
+      - name: Create tested package tarball
+        run: npm pack --ignore-scripts
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: asymptote-web-package-${{ steps.version.outputs.package-version }}
+          path: asymptote-web-${{ steps.version.outputs.package-version }}.tgz
+          retention-days: 7
+          if-no-files-found: error
+
+  publish:
+    name: Publish to npm
+    needs: build
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Download tested package tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: asymptote-web-package-${{ needs.build.outputs.package-version }}
+          path: .
+
+      - name: Verify package tarball
+        run: npm install --ignore-scripts --dry-run ./asymptote-web-${{ needs.build.outputs.package-version }}.tgz
+
+      - name: Publish package
+        run: npm publish ./asymptote-web-${{ needs.build.outputs.package-version }}.tgz --provenance
