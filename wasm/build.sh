@@ -20,6 +20,12 @@ WASM_PRUNE="${1:-${WASM_PRUNE:-baseline}}"
 # Candidate patch basenames to apply. Use "all" (the default) or a
 # comma-separated list such as "remove-lsp-objects.py".
 WASM_CANDIDATES="${2:-${WASM_CANDIDATES:-all}}"
+# Docker Buildx cache backend to use for the image build (e.g. "gha" for
+# GitHub Actions' cache). Defaults to "gha" when running in GitHub Actions
+# (GITHUB_ACTIONS=true) and to no remote cache otherwise, since the "gha"
+# backend requires credentials only present in Actions runs. Set
+# WASM_CACHE="" to disable explicitly, even in Actions.
+WASM_CACHE="${WASM_CACHE-${GITHUB_ACTIONS:+gha}}"
 
 case "${WASM_PRUNE}" in
   baseline|candidate) ;;
@@ -47,7 +53,16 @@ docker_cmd() {
 
 docker_build() {
   if docker_cmd buildx version >/dev/null 2>&1; then
-    docker_cmd buildx build --load "$@"
+    local cache_args=()
+    if [ -n "${WASM_CACHE}" ]; then
+      # Scope the cache by WASM_PRUNE so baseline and candidate builds don't
+      # evict each other's cached layers.
+      cache_args=(
+        "--cache-from" "type=${WASM_CACHE},scope=wasm-${WASM_PRUNE}"
+        "--cache-to" "type=${WASM_CACHE},mode=max,scope=wasm-${WASM_PRUNE}"
+      )
+    fi
+    docker_cmd buildx build --load "${cache_args[@]}" "$@"
   else
     echo "WARNING: Docker Buildx is unavailable; using the legacy builder." >&2
     echo "Install Docker Buildx to keep using the modern BuildKit builder." >&2
@@ -66,6 +81,7 @@ mkdir -p "${DIST_DIR}"
 
 echo "==> Running build, output → ${DIST_DIR}"
 docker_cmd run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "${DIST_DIR}:/out" \
   "asymptote-wasm-builder:${WASM_PRUNE}"
 
