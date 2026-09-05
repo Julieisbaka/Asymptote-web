@@ -59,6 +59,9 @@ jobs:
       - name: Build WASM runtime
         run: bash ./wasm/build.sh
 
+      - name: Normalize generated asset ownership
+        run: sudo chown -R "$(id -u):$(id -g)" dist
+
       - name: Build package
         run: npm run build
 
