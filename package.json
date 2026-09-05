@@ -3,6 +3,16 @@
   "version": "0.1.5",
   "description": "Run the Asymptote vector graphics language entirely in the browser via WebAssembly.",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Julieisbaka/Asymptote-web.git"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/asymptote-web.js",
   "module": "./dist/asymptote-web.js",
   "types": "./dist/index.d.ts",

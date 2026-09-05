@@ -106,14 +106,14 @@ for the complete type signatures.
 ### Prerequisites
 
 - [Docker](https://www.docker.com/) (for the Emscripten + Asymptote WASM build)
-- [Node.js](https://nodejs.org/) ≥ 18 (for the TypeScript wrapper build)
+- [Node.js](https://nodejs.org/) ≥ 20.19 (for the TypeScript wrapper build)
 
 ### Steps
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/Julieisbaka/asymptote.git
-cd asymptote
+git clone https://github.com/Julieisbaka/Asymptote-web.git
+cd Asymptote-web
 
 # 2. Build the Asymptote WASM binary
 #    This compiles Asymptote's C++ source with Emscripten inside Docker.
