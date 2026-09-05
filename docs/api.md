@@ -13,7 +13,6 @@ the page, so multiple calls can share the same runtime.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `sourceFile` | `string` | `"input.asy"` | Friendly filename to report for diagnostics from the main source file. |
 | `glueUrl` | `string` | automatic | URL of `asymptote.js`. Set this when a bundler relocates the wrapper during dependency optimization, such as Vite. |
 | `wasmUrl` | `string` | automatic | URL of `asymptote.wasm`. Use this when hosting the binary on a CDN or another path. |
 | `asyglUrl` | `string` | automatic | URL of `asygl.js` for normal WebGL output. Not needed when using `offline: true`. |
@@ -107,6 +106,7 @@ helper is also exported for parsing captured Asymptote output.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
+| `sourceFile` | `string` | `"input.asy"` | Friendly filename to report for diagnostics from the main source file. |
 | `format` | `"svg" \| "eps" \| "ps" \| "webgl"` | `"svg"` | Output format. WebGL returns HTML for the interactive viewer. |
 | `flags` | `string[]` | `[]` | Additional command-line arguments forwarded to Asymptote. |
 | `signal` | `AbortSignal` | automatic | Cancels a render while it is queued; running WASM execution is not forcibly interrupted. |
