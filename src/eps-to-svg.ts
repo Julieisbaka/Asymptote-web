@@ -10,6 +10,8 @@ import { SvgWriter } from "./eps-svg-writer.js";
 export interface EpsToSvgOptions {
   /** Number of decimal places used for generated coordinates. Defaults to 3. */
   precision?: number;
+  /** PostScript font names mapped to CSS font-family values. */
+  fonts?: Record<string, string>;
 }
 
 /** SVG output and non-fatal diagnostics from standalone EPS/PS conversion. */
@@ -80,7 +82,7 @@ export function epsToSvgWithWarnings(
   const width = Number.isFinite(urx - llx) && urx > llx ? urx - llx : 100;
   const height = Number.isFinite(ury - lly) && ury > lly ? ury - lly : 100;
 
-  const writer = new SvgWriter(llx, lly, width, height, formatNumber);
+  const writer = new SvgWriter(llx, lly, width, height, formatNumber, options.fonts);
   const interpreter = new PostScriptInterpreter(new PostScriptTokenizer(eps), writer);
   interpreter.run();
   return { svg: writer.serialize(), warnings: interpreter.getWarnings() };

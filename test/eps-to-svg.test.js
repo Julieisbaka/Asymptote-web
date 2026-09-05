@@ -118,6 +118,17 @@ test("preserves text escaping and standard font mapping", () => {
   assert.match(svg, />A &amp; &lt;<\/text>/);
 });
 
+test("allows custom CSS font mappings", () => {
+  const svg = convert(
+    "/Helvetica findfont 12 scalefont setfont 10 20 moveto (custom) show " +
+    "/MyFont findfont 12 scalefont setfont 10 30 moveto (mapped) show",
+    { fonts: { Helvetica: "Inter, sans-serif", MyFont: "My Web Font" } }
+  );
+
+  assert.match(svg, /font-family="Inter, sans-serif"/);
+  assert.match(svg, /font-family="My Web Font"/);
+});
+
 test("deduplicates identical gradient definitions", () => {
   const svg = convert(
     "0 0 100 0 [0 1 0 0 1 0 0 1] setlineargradient " +

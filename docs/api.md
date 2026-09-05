@@ -151,6 +151,22 @@ package converts that EPS to SVG in-process. The browser build forces
 `-tex none` and `-noV`, because LaTeX and external viewer tools are not
 available inside the WASM runtime.
 
+For standalone EPS/PS conversion, custom CSS fonts can be selected by mapping
+PostScript font names to `font-family` values:
+
+```ts
+const svg = epsToSvg(eps, {
+  fonts: {
+    Helvetica: "Inter, sans-serif",
+    MyPostScriptFont: "My Web Font, sans-serif",
+  },
+});
+```
+
+The fonts must already be installed or loaded by the host page, for example
+with `@font-face`. This option affects EPS/PS `<text>` output; normal Asymptote
+browser labels remain vector paths in the current WASM fallback.
+
 Ordinary labels use the bundled native vector fallback. Explicit `texsize()`
 calls return approximate native metrics, while explicit `texpath()` calls
 return an empty path array and emit a warning because TeX shaping is not

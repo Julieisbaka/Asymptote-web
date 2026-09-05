@@ -3,6 +3,7 @@
 ## 0.1.6
 
 - Added `getAssetUrls()` to simplify configuring runtime assets for package-relative, public-directory, and CDN deployments.
+- Added custom EPS/PS font mappings and `fontFamily` support for WebGL screen-space labels.
 
 ## 0.1.5
 

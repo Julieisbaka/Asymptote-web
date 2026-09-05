@@ -33,7 +33,10 @@ interface CssFont {
   style?: string;
 }
 
-function toCssFont(font: string): CssFont {
+function toCssFont(font: string, customFonts: Record<string, string> = {}): CssFont {
+  if (Object.prototype.hasOwnProperty.call(customFonts, font)) {
+    return { family: customFonts[font] };
+  }
   switch (font) {
     case "Times-Roman":
     case "Times":
@@ -105,7 +108,8 @@ export class SvgWriter {
     private readonly lly: number,
     private readonly width: number,
     private readonly height: number,
-    private readonly formatNumber: (value: number) => string
+    private readonly formatNumber: (value: number) => string,
+    private readonly customFonts: Record<string, string> = {}
   ) { }
 
   get currentPoint(): { x: number; y: number } {
@@ -294,7 +298,7 @@ export class SvgWriter {
     const y = this.height - (this.currentY - this.lly);
     const scale = Math.sqrt(state.ctm.a ** 2 + state.ctm.b ** 2);
     const angle = -(Math.atan2(state.ctm.b, state.ctm.a) * 180) / Math.PI;
-    const font = toCssFont(state.fontFamily);
+    const font = toCssFont(state.fontFamily, this.customFonts);
     const transform = angle !== 0
       ? ` transform="rotate(${this.formatNumber(angle)} ${this.formatNumber(x)} ${this.formatNumber(y)})"`
       : "";

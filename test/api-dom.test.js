@@ -260,7 +260,7 @@ test("downloads output with a default filename and revokes the object URL", asyn
 test("mounts WebGL and adds screen-space labels", async () => {
   const target = document.createElement("div");
   const result = await asy.mountWebGL(target, "three", {
-    webglLabels: [{ text: "origin", x: 10, y: 20, className: "point" }],
+    webglLabels: [{ text: "origin", x: 10, y: 20, className: "point", fontFamily: "Inter, sans-serif" }],
   });
   const iframe = target.firstElementChild;
   assert.equal(result.format, "webgl");
@@ -270,6 +270,7 @@ test("mounts WebGL and adds screen-space labels", async () => {
   assert.equal(iframe.style.height, "100%");
   assert.equal(iframe.style.border, "none");
   assert.equal(iframe.contentDocument.body.firstElementChild.getAttribute("aria-label"), "Asymptote WebGL labels");
+  assert.equal(iframe.contentDocument.body.firstElementChild.firstElementChild.style.fontFamily, "Inter, sans-serif");
 
   await assert.rejects(() => asy.mountWebGL("#missing", "three"), /mountWebGL target not found/);
 });

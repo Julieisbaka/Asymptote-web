@@ -62,6 +62,7 @@ interface WebGLLabel {
   y: number;
   color?: string;
   fontSize?: number;
+  fontFamily?: string;
   className?: string;
 }
 ```
@@ -111,6 +112,11 @@ interface CreateOptions {
   asyglUrl?: string;
 }
 ```
+
+`EpsToSvgOptions` also accepts `fonts?: Record<string, string>`, mapping
+PostScript font names to CSS `font-family` values for standalone EPS/PS
+conversion. The host page is responsible for loading or installing those
+fonts.
 
 `glueUrl` can be set to the Emscripten `asymptote.js` URL when a bundler
 relocates the wrapper module during dependency optimization. This is commonly

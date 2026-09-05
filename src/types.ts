@@ -138,6 +138,8 @@ export interface WebGLLabel {
   y: number;
   color?: string;
   fontSize?: number;
+  /** CSS font-family value applied to this screen-space label. */
+  fontFamily?: string;
   className?: string;
 }
 

@@ -252,6 +252,7 @@ function addWebGLLabels(doc: Document, labels: readonly WebGLLabel[]): void {
     element.style.top = `${label.y}px`;
     element.style.color = label.color ?? "currentColor";
     element.style.fontSize = `${label.fontSize ?? 14}px`;
+    if (label.fontFamily) element.style.fontFamily = label.fontFamily;
     element.style.transform = "translate(-50%, -50%)";
     element.style.whiteSpace = "nowrap";
     container.appendChild(element);
