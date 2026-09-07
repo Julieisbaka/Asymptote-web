@@ -6,6 +6,18 @@ const header = "%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 100 100\n";
 const convert = (body) => epsToSvg(header + body);
 const convertWithWarnings = (body) => epsToSvgWithWarnings(header + body);
 
+test("adds opt-in accessible SVG metadata without hiding text labels", () => {
+  const svg = epsToSvg(
+    header + "10 20 moveto (Accessible label) show",
+    { title: "A labelled diagram", description: "A diagram with one label." }
+  );
+
+  assert.match(svg, /<svg[^>]*role="img"/);
+  assert.match(svg, /<title>A labelled diagram<\/title>/);
+  assert.match(svg, /<desc>A diagram with one label\.<\/desc>/);
+  assert.match(svg, />Accessible label<\/text>/);
+});
+
 test("handles escaped and nested PostScript strings", () => {
   const svg = convert("10 20 moveto (outer \\(inner\\) text) show");
 

@@ -109,7 +109,9 @@ export class SvgWriter {
     private readonly width: number,
     private readonly height: number,
     private readonly formatNumber: (value: number) => string,
-    private readonly customFonts: Record<string, string> = {}
+    private readonly customFonts: Record<string, string> = {},
+    private readonly title?: string,
+    private readonly description?: string
   ) { }
 
   get currentPoint(): { x: number; y: number } {
@@ -328,9 +330,14 @@ export class SvgWriter {
   }
 
   serialize(): string {
+    const title = this.title?.trim();
+    const description = this.description?.trim();
+    const accessibility = title ? ' role="img"' : "";
     return (
       `<svg xmlns="http://www.w3.org/2000/svg" width="${this.width}" height="${this.height}" ` +
-      `viewBox="0 0 ${this.width} ${this.height}">` +
+      `viewBox="0 0 ${this.width} ${this.height}"${accessibility}>` +
+      (title ? `<title>${escapeXml(title)}</title>` : "") +
+      (description ? `<desc>${escapeXml(description)}</desc>` : "") +
       (this.defs.length > 0 ? `<defs>${this.defs.join("")}</defs>` : "") +
       this.elements.join("") +
       `</svg>`

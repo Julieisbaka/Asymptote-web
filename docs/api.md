@@ -140,6 +140,9 @@ helper is also exported for parsing captured Asymptote output.
 | `webglLabels` | `WebGLLabel[]` | `[]` | Camera-facing screen-space labels in the WebGL iframe. |
 | `webglIframeTimeoutMs` | `number` | `15000` | Maximum time to wait for a WebGL iframe to load when readiness is required. |
 | `webglIframeStyles` | `Record<string, string>` | current defaults | CSS properties applied to the WebGL iframe; supplied properties override the defaults. |
+| `webglIframeTitle` | `string` | `"Asymptote WebGL viewer"` | Accessible name applied to the WebGL iframe and fallback document title. |
+| `svgTitle` | `string` | unset | Accessible name for generated SVG output; adds an image role. |
+| `svgDescription` | `string` | unset | Additional accessible description for generated SVG output. |
 | `containWebGLScroll` | `boolean` | `true` | Prevent wheel and touch scrolling inside the WebGL viewer iframe. |
 | `primeWebGLZoom` | `boolean` | `true` | Prime the viewer's zoom handling with a synthetic interaction. |
 | `raw` | `boolean` | `false` | For the default SVG mode, return the native EPS instead of converting it to SVG. |
@@ -166,6 +169,11 @@ const svg = epsToSvg(eps, {
 The fonts must already be installed or loaded by the host page, for example
 with `@font-face`. This option affects EPS/PS `<text>` output; normal Asymptote
 browser labels remain vector paths in the current WASM fallback.
+
+Generated SVG `<text>` labels remain real text and can be read by screen
+readers. To give the overall graphic a meaningful accessible name and
+description, pass `svgTitle` and `svgDescription`; this adds `<title>`,
+`<desc>`, and an image role to the root SVG.
 
 Ordinary labels use the bundled native vector fallback. Explicit `texsize()`
 calls return approximate native metrics, while explicit `texpath()` calls
@@ -329,6 +337,10 @@ output mode.
 the viewer's top-left corner. These are screen-space overlays, not labels
 anchored to 3D world coordinates. For custom viewer integration, the unsafe
 API exposes the iframe document:
+
+The iframe receives an accessible `title`, a block display default (avoiding a
+stray inline baseline gap), and viewport/title metadata in its embedded HTML.
+Set `webglIframeTitle` when the scene needs a more descriptive name.
 
 ```ts
 await asy.unsafe.mountWebGL("#output", source, async (iframe, viewerDocument) => {

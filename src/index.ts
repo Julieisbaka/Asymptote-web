@@ -158,25 +158,61 @@ function defaultFilename(format: RenderResult["format"]): string {
   return `asymptote.${format === "webgl" ? "html" : format}`;
 }
 
+function escapeHtmlAttribute(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function addWebGLDocumentMetadata(html: string, title: string): string {
+  const metadata = [
+    /<meta\s+[^>]*name=["']viewport["'][^>]*>/i.test(html)
+      ? ""
+      : '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    /<title\b[^>]*>/i.test(html)
+      ? ""
+      : `<title>${escapeHtmlAttribute(title)}</title>`,
+  ].filter(Boolean).join("");
+  let result = html;
+  if (!/<canvas\b[^>]*\bid=["']?Asymptote\b/i.test(result)) return metadata ? addDocumentMetadata(result, metadata) : result;
+
+  result = result.replace(/<canvas\b([^>]*)>/i, (canvas, attributes: string) => {
+    const hasRole = /\brole\s*=/i.test(attributes);
+    const hasLabel = /\baria-label\s*=/i.test(attributes);
+    return `<canvas${attributes}${hasRole ? "" : ' role="img"'}${hasLabel ? "" : ' aria-label="Interactive 3D Asymptote scene"'}>`;
+  });
+  return metadata ? addDocumentMetadata(result, metadata) : result;
+}
+
+function addDocumentMetadata(html: string, metadata: string): string {
+
+  const closingHead = /<\/head\s*>/i;
+  if (closingHead.test(html)) return html.replace(closingHead, `${metadata}</head>`);
+
+  const openingHead = /<head\b[^>]*>/i;
+  if (openingHead.test(html)) return html.replace(openingHead, (head) => `${head}${metadata}`);
+
+  return html.replace(/<html\b[^>]*>/i, (openingHtml) => `${openingHtml}<head>${metadata}</head>`);
+}
+
 function containWebGLScroll(
   html: string,
   containScroll = true,
   primeZoom = true
 ): string {
   const guard = `<script>(function(){function stop(event){event.preventDefault()}document.addEventListener("wheel",stop,{capture:true,passive:false});document.addEventListener("touchmove",stop,{capture:true,passive:false})})()</script>`;
-  const prime = `<script>(function(){var attempts=0;function prime(){var canvas=document.getElementById("Asymptote");if(!canvas||!canvas.onmousedown){if(++attempts<120)setTimeout(prime,16);return}canvas.dispatchEvent(new MouseEvent("mousedown",{bubbles:true,clientX:0,clientY:0}));canvas.dispatchEvent(new MouseEvent("mouseup",{bubbles:true}))}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",prime,{once:true});else prime()})()</script>`;
-  const head = html.indexOf("</head>");
-  const withGuard = containScroll && head >= 0
-    ? `${html.slice(0, head)}${guard}${html.slice(head)}`
-    : containScroll
-      ? `${guard}${html}`
-      : html;
-  const body = withGuard.indexOf("</body>");
-  return primeZoom
-    ? body >= 0
-      ? `${withGuard.slice(0, body)}${prime}${withGuard.slice(body)}`
-      : `${withGuard}${prime}`
-    : withGuard;
+  const prime = `<script>(function(){var attempts=0;function prime(){var canvas=document.getElementById("Asymptote");if(!canvas||!canvas.dispatchEvent){if(++attempts<120)setTimeout(prime,16);return}canvas.dispatchEvent(new MouseEvent("mousedown",{bubbles:true,clientX:0,clientY:0}));canvas.dispatchEvent(new MouseEvent("mouseup",{bubbles:true}))}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",prime,{once:true});else prime()})()</script>`;
+  const insertBeforeBody = (source: string, script: string): string => {
+    const closingBody = /<\/body\s*>/i;
+    return closingBody.test(source)
+      ? source.replace(closingBody, `${script}</body>`)
+      : `${source}${script}`;
+  };
+  const withGuard = containScroll ? insertBeforeBody(html, guard) : html;
+  return primeZoom ? insertBeforeBody(withGuard, prime) : withGuard;
 }
 
 function waitForIframeDocument(iframe: HTMLIFrameElement, timeoutMs = 15000): Promise<Document> {
@@ -218,13 +254,16 @@ function createWebGLIframe(
   renderOptions: RenderOptions
 ): HTMLIFrameElement {
   const iframe = document.createElement("iframe");
+  const title = renderOptions.webglIframeTitle?.trim() || "Asymptote WebGL viewer";
+  iframe.setAttribute("title", title);
   iframe.srcdoc = containWebGLScroll(
-    html,
+    addWebGLDocumentMetadata(html, title),
     renderOptions.containWebGLScroll !== false,
     renderOptions.primeWebGLZoom !== false
   );
   const styles = {
     border: "none",
+    display: "block",
     width: "100%",
     height: "100%",
     ...renderOptions.webglIframeStyles,
@@ -241,10 +280,12 @@ function addWebGLLabels(doc: Document, labels: readonly WebGLLabel[]): void {
   if (!body) return;
   body.style.position = body.style.position || "relative";
   const container = doc.createElement("div");
+  container.setAttribute("role", "group");
   container.setAttribute("aria-label", "Asymptote WebGL labels");
   container.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;";
   for (const label of labels) {
     const element = doc.createElement("div");
+    element.setAttribute("role", "note");
     element.textContent = label.text;
     if (label.className) element.className = label.className;
     element.style.position = "absolute";
@@ -445,7 +486,12 @@ export async function createAsymptote(
         ? waitForIframeDocument(iframe, renderOptions.webglIframeTimeoutMs)
         : null;
       el.replaceChildren(iframe);
-      if (loaded) addWebGLLabels(await loaded, renderOptions.webglLabels ?? []);
+      try {
+        if (loaded) addWebGLLabels(await loaded, renderOptions.webglLabels ?? []);
+      } catch (error) {
+        if (iframe.parentElement === el) el.removeChild(iframe);
+        throw error;
+      }
 
       return result;
     },

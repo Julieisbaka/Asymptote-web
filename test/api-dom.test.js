@@ -260,16 +260,24 @@ test("downloads output with a default filename and revokes the object URL", asyn
 test("mounts WebGL and adds screen-space labels", async () => {
   const target = document.createElement("div");
   const result = await asy.mountWebGL(target, "three", {
+    webglIframeTitle: "Interactive sphere",
     webglLabels: [{ text: "origin", x: 10, y: 20, className: "point", fontFamily: "Inter, sans-serif" }],
   });
   const iframe = target.firstElementChild;
   assert.equal(result.format, "webgl");
   assert.equal(iframe.tagName, "IFRAME");
+  assert.equal(iframe.getAttribute("title"), "Interactive sphere");
   assert.match(iframe.srcdoc, /wheel/);
+  assert.match(iframe.srcdoc, /<meta name="viewport"/);
+  assert.match(iframe.srcdoc, /<title>Interactive sphere<\/title>/);
+  assert.match(iframe.srcdoc, /role="img" aria-label="Interactive 3D Asymptote scene"/);
   assert.equal(iframe.style.width, "100%");
   assert.equal(iframe.style.height, "100%");
   assert.equal(iframe.style.border, "none");
+  assert.equal(iframe.style.display, "block");
+  assert.equal(iframe.contentDocument.body.firstElementChild.getAttribute("role"), "group");
   assert.equal(iframe.contentDocument.body.firstElementChild.getAttribute("aria-label"), "Asymptote WebGL labels");
+  assert.equal(iframe.contentDocument.body.firstElementChild.firstElementChild.getAttribute("role"), "note");
   assert.equal(iframe.contentDocument.body.firstElementChild.firstElementChild.style.fontFamily, "Inter, sans-serif");
 
   await assert.rejects(() => asy.mountWebGL("#missing", "three"), /mountWebGL target not found/);
@@ -291,6 +299,7 @@ test("configures WebGL iframe styles and injected behavior", async () => {
   assert.equal(iframe.style.width, "640px");
   assert.equal(iframe.style.height, "480px");
   assert.equal(iframe.style.border, "1px solid red");
+  assert.equal(iframe.style.display, "block");
   assert.equal(iframe.style["background-color"], "black");
   assert.doesNotMatch(iframe.srcdoc, /preventDefault/);
   assert.doesNotMatch(iframe.srcdoc, /MouseEvent/);

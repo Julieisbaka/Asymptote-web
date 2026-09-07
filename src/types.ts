@@ -98,6 +98,15 @@ export interface RenderOptions {
   /** CSS properties applied to the mounted WebGL iframe. */
   webglIframeStyles?: WebGLIframeStyles;
 
+  /** Accessible name applied to the mounted WebGL iframe. */
+  webglIframeTitle?: string;
+
+  /** Accessible name for generated SVG output. Adds an SVG image role. */
+  svgTitle?: string;
+
+  /** Additional accessible description for generated SVG output. */
+  svgDescription?: string;
+
   /** Prevent wheel and touch scrolling inside the WebGL iframe. Defaults to true. */
   containWebGLScroll?: boolean;
 

@@ -310,7 +310,11 @@ async function runAsymptoteUnsafe(
     const rawOutput = mod.FS.readFile(outputFile, { encoding: "utf8" });
     const skipConversion = format === "svg" && renderOptions.raw === true;
     const conversion = format === "svg" && !skipConversion
-      ? epsToSvgWithWarnings(rawOutput, { precision: renderOptions.svgPrecision })
+      ? epsToSvgWithWarnings(rawOutput, {
+        precision: renderOptions.svgPrecision,
+        title: renderOptions.svgTitle,
+        description: renderOptions.svgDescription,
+      })
       : { svg: rawOutput, warnings: [] };
     const output = conversion.svg;
 

@@ -49,6 +49,9 @@ interface RenderOptions {
   webglLabels?: readonly WebGLLabel[];
   webglIframeTimeoutMs?: number;
   webglIframeStyles?: WebGLIframeStyles;
+  webglIframeTitle?: string;
+  svgTitle?: string;
+  svgDescription?: string;
   containWebGLScroll?: boolean;
   primeWebGLZoom?: boolean;
   raw?: boolean;
@@ -79,8 +82,14 @@ interface WebGLLabel {
 - `webglLabels` creates camera-facing screen-space labels in CSS pixels. It
   does not anchor labels to 3D world coordinates.
 - `webglIframeTimeoutMs` defaults to 15000 milliseconds.
-- `webglIframeStyles` overrides the default `border: none`, `width: 100%`, and
-  `height: 100%` iframe styles. Arbitrary CSS property names are supported.
+- `webglIframeStyles` overrides the default `border: none`, `display: block`,
+  `width: 100%`, and `height: 100%` iframe styles. Arbitrary CSS property names
+  are supported.
+- `webglIframeTitle` defaults to `"Asymptote WebGL viewer"` and supplies the
+  iframe's accessible name and a fallback title for the embedded document.
+- `svgTitle` and `svgDescription` add accessible metadata to generated SVG.
+  Supplying `svgTitle` gives the SVG an image role; leave both unset when the
+  surrounding page already provides the accessible semantics.
 - `containWebGLScroll` and `primeWebGLZoom` both default to `true`.
 - `raw` skips EPS-to-SVG conversion for the default SVG request and returns
   native EPS text.
@@ -115,8 +124,8 @@ interface CreateOptions {
 
 `EpsToSvgOptions` also accepts `fonts?: Record<string, string>`, mapping
 PostScript font names to CSS `font-family` values for standalone EPS/PS
-conversion. The host page is responsible for loading or installing those
-fonts.
+conversion, plus optional `title` and `description` strings for accessible SVG
+metadata. The host page is responsible for loading or installing those fonts.
 
 `glueUrl` can be set to the Emscripten `asymptote.js` URL when a bundler
 relocates the wrapper module during dependency optimization. This is commonly

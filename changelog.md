@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.7
+
+- Improved default WebGL iframe accessibility with an accessible title, viewport metadata, and a configurable `webglIframeTitle` option.
+- Added semantic WebGL canvas and overlay-label markup for screen readers.
+- Added opt-in `svgTitle` and `svgDescription` options for accessible SVG names and descriptions; generated `<text>` labels remain real readable text.
+- Fixed WebGL zoom priming for viewers that register event listeners with `addEventListener` instead of assigning `canvas.onmousedown`.
+- Fixed failed WebGL iframe loads and label-readiness timeouts leaving broken iframes mounted in their targets.
+- Made WebGL helper injection tolerate uppercase HTML tags and documents without a closing `head` or `body` tag.
+- Added a block display default to prevent an unwanted inline iframe baseline gap.
+
 ## 0.1.6
 
 - Added `getAssetUrls()` to simplify configuring runtime assets for package-relative, public-directory, and CDN deployments.
