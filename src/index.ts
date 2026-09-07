@@ -168,9 +168,8 @@ function escapeHtmlAttribute(value: string): string {
 }
 
 function addWebGLDocumentMetadata(html: string, title: string): string {
-  const hasViewportMeta = html.match(/<meta\b[^>]*>/gi)?.some((tag) =>
-    /\bname\s*=\s*["']viewport["']/i.test(tag)
-  ) ?? false;
+  const hasViewportMeta = Array.from(html.matchAll(/<meta\b[^>]*>/gi))
+    .some(([metaTag]) => /\bname\s*=\s*["']viewport["']/i.test(metaTag));
   const metadata = [
     hasViewportMeta
       ? ""
