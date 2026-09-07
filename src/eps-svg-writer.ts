@@ -332,7 +332,9 @@ export class SvgWriter {
   serialize(): string {
     const title = this.title?.trim();
     const description = this.description?.trim();
-    const accessibility = title ? ' role="img"' : "";
+    const accessibility = title
+      ? ` role="group" aria-label="${escapeXml(title)}"`
+      : "";
     return (
       `<svg xmlns="http://www.w3.org/2000/svg" width="${this.width}" height="${this.height}" ` +
       `viewBox="0 0 ${this.width} ${this.height}"${accessibility}>` +

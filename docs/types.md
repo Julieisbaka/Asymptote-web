@@ -88,8 +88,9 @@ interface WebGLLabel {
 - `webglIframeTitle` defaults to `"Asymptote WebGL viewer"` and supplies the
   iframe's accessible name and a fallback title for the embedded document.
 - `svgTitle` and `svgDescription` add accessible metadata to generated SVG.
-  Supplying `svgTitle` gives the SVG an image role; leave both unset when the
-  surrounding page already provides the accessible semantics.
+  Supplying `svgTitle` gives the SVG a named group role while preserving
+  readable text labels; leave both unset when the surrounding page already
+  provides the accessible semantics.
 - `containWebGLScroll` and `primeWebGLZoom` both default to `true`.
 - `raw` skips EPS-to-SVG conversion for the default SVG request and returns
   native EPS text.

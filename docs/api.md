@@ -141,7 +141,7 @@ helper is also exported for parsing captured Asymptote output.
 | `webglIframeTimeoutMs` | `number` | `15000` | Maximum time to wait for a WebGL iframe to load when readiness is required. |
 | `webglIframeStyles` | `Record<string, string>` | current defaults | CSS properties applied to the WebGL iframe; supplied properties override the defaults. |
 | `webglIframeTitle` | `string` | `"Asymptote WebGL viewer"` | Accessible name applied to the WebGL iframe and fallback document title. |
-| `svgTitle` | `string` | unset | Accessible name for generated SVG output; adds an image role. |
+| `svgTitle` | `string` | unset | Accessible name for generated SVG output; adds a named group role. |
 | `svgDescription` | `string` | unset | Additional accessible description for generated SVG output. |
 | `containWebGLScroll` | `boolean` | `true` | Prevent wheel and touch scrolling inside the WebGL viewer iframe. |
 | `primeWebGLZoom` | `boolean` | `true` | Prime the viewer's zoom handling with a synthetic interaction. |
@@ -173,7 +173,8 @@ browser labels remain vector paths in the current WASM fallback.
 Generated SVG `<text>` labels remain real text and can be read by screen
 readers. To give the overall graphic a meaningful accessible name and
 description, pass `svgTitle` and `svgDescription`; this adds `<title>`,
-`<desc>`, and an image role to the root SVG.
+`<desc>`, and a named group role to the root SVG while preserving the
+accessibility of generated text labels.
 
 Ordinary labels use the bundled native vector fallback. Explicit `texsize()`
 calls return approximate native metrics, while explicit `texpath()` calls

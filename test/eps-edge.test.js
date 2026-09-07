@@ -12,7 +12,8 @@ test("adds opt-in accessible SVG metadata without hiding text labels", () => {
     { title: "A labelled diagram", description: "A diagram with one label." }
   );
 
-  assert.match(svg, /<svg[^>]*role="img"/);
+  assert.match(svg, /<svg[^>]*role="group"[^>]*aria-label="A labelled diagram"/);
+  assert.doesNotMatch(svg, /<svg[^>]*role="img"/);
   assert.match(svg, /<title>A labelled diagram<\/title>/);
   assert.match(svg, /<desc>A diagram with one label\.<\/desc>/);
   assert.match(svg, />Accessible label<\/text>/);
