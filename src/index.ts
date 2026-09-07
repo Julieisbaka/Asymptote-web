@@ -168,8 +168,10 @@ function escapeHtmlAttribute(value: string): string {
 }
 
 function addWebGLDocumentMetadata(html: string, title: string): string {
+  const hasViewportMeta = Array.from(html.matchAll(/<meta\b[^>]*>/gi))
+    .some(([metaTag]) => /\bname\s*=\s*["']viewport["']/i.test(metaTag));
   const metadata = [
-    /<meta\s+[^>]*name=["']viewport["'][^>]*>/i.test(html)
+    hasViewportMeta
       ? ""
       : '<meta name="viewport" content="width=device-width, initial-scale=1">',
     /<title\b[^>]*>/i.test(html)
