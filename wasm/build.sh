@@ -43,11 +43,13 @@ esac
 # Git Bash can resolve Docker Desktop's Windows credential helper as a Linux
 # executable (`/usr/bin/docker-credential-desktop.exe`). The build only pulls
 # public images, so use an isolated config without a credential helper. This
-# also avoids modifying the user's normal Docker configuration. Keep the
-# Buildx metadata in a separate location so the action-created builder is still
-# visible to `docker buildx`.
+# also avoids modifying the user's normal Docker configuration. Keep Buildx
+# metadata pointed at the pre-existing Docker config (for example the
+# docker-container builder created by setup-buildx-action) so the gha cache
+# backend remains available.
+ORIGINAL_DOCKER_CONFIG="${DOCKER_CONFIG:-${HOME}/.docker}"
 DOCKER_CONFIG_DIR="$(mktemp -d)"
-BUILDX_CONFIG="${BUILDX_CONFIG:-${DOCKER_CONFIG_DIR}/buildx}"
+BUILDX_CONFIG="${BUILDX_CONFIG:-${ORIGINAL_DOCKER_CONFIG}/buildx}"
 mkdir -p "${BUILDX_CONFIG}"
 trap 'rm -rf "${DOCKER_CONFIG_DIR}"' EXIT
 cat > "${DOCKER_CONFIG_DIR}/config.json" <<EOF

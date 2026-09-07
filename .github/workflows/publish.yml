@@ -82,6 +82,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Raw `docker buildx` invocations do not receive GHA cache credentials
+      # automatically; expose them so wasm/build.sh can enable type=gha.
+      - name: Expose GitHub Actions runtime
+        uses: crazy-max/ghaction-github-runtime@v4
+
       - name: Build WASM runtime
         run: bash ./wasm/build.sh
 
