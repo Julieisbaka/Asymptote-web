@@ -5,6 +5,7 @@
 import { PostScriptInterpreter } from "./eps-interpreter.js";
 import { PostScriptTokenizer } from "./eps-tokenizer.js";
 import { SvgWriter } from "./eps-svg-writer.js";
+import type { SvgAccessibility } from "./types.js";
 
 /** Options for the in-process EPS/PS-to-SVG converter. */
 export interface EpsToSvgOptions {
@@ -12,6 +13,8 @@ export interface EpsToSvgOptions {
   precision?: number;
   /** PostScript font names mapped to CSS font-family values. */
   fonts?: Record<string, string>;
+  /** Optional accessible metadata added to the generated SVG. */
+  accessibility?: SvgAccessibility;
 }
 
 /** SVG output and non-fatal diagnostics from standalone EPS/PS conversion. */
@@ -82,7 +85,15 @@ export function epsToSvgWithWarnings(
   const width = Number.isFinite(urx - llx) && urx > llx ? urx - llx : 100;
   const height = Number.isFinite(ury - lly) && ury > lly ? ury - lly : 100;
 
-  const writer = new SvgWriter(llx, lly, width, height, formatNumber, options.fonts);
+  const writer = new SvgWriter(
+    llx,
+    lly,
+    width,
+    height,
+    formatNumber,
+    options.fonts,
+    options.accessibility
+  );
   const interpreter = new PostScriptInterpreter(new PostScriptTokenizer(eps), writer);
   interpreter.run();
   return { svg: writer.serialize(), warnings: interpreter.getWarnings() };

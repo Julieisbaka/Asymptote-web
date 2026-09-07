@@ -296,6 +296,20 @@ test("configures WebGL iframe styles and injected behavior", async () => {
   assert.doesNotMatch(iframe.srcdoc, /MouseEvent/);
 });
 
+test("respects prefers-reduced-motion for WebGL setup", async () => {
+  const target = document.createElement("div");
+  const originalMatchMedia = window.matchMedia;
+  window.matchMedia = () => ({ matches: true });
+  try {
+    await asy.mountWebGL(target, "three");
+  } finally {
+    window.matchMedia = originalMatchMedia;
+  }
+  const iframe = target.firstElementChild;
+  assert.doesNotMatch(iframe.srcdoc, /MouseEvent/);
+  assert.match(iframe.srcdoc, /prefers-reduced-motion/);
+});
+
 test("rejects invalid WebGL iframe timeouts", async () => {
   const target = document.createElement("div");
   await assert.rejects(

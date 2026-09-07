@@ -42,6 +42,7 @@ export type {
   RenderOptions,
   RenderResult,
   WebGLIframeStyles,
+  SvgAccessibility,
   WebGLLabel,
   UnsafeSvgCustomizer,
   UnsafeWebGLCustomizer,
@@ -161,16 +162,24 @@ function defaultFilename(format: RenderResult["format"]): string {
 function containWebGLScroll(
   html: string,
   containScroll = true,
-  primeZoom = true
+  primeZoom = true,
+  reducedMotion = false
 ): string {
   const guard = `<script>(function(){function stop(event){event.preventDefault()}document.addEventListener("wheel",stop,{capture:true,passive:false});document.addEventListener("touchmove",stop,{capture:true,passive:false})})()</script>`;
   const prime = `<script>(function(){var attempts=0;function prime(){var canvas=document.getElementById("Asymptote");if(!canvas||!canvas.onmousedown){if(++attempts<120)setTimeout(prime,16);return}canvas.dispatchEvent(new MouseEvent("mousedown",{bubbles:true,clientX:0,clientY:0}));canvas.dispatchEvent(new MouseEvent("mouseup",{bubbles:true}))}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",prime,{once:true});else prime()})()</script>`;
   const head = html.indexOf("</head>");
-  const withGuard = containScroll && head >= 0
-    ? `${html.slice(0, head)}${guard}${html.slice(head)}`
+  const motionStyle = reducedMotion
+    ? `<style>@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}</style>`
+    : "";
+  const withMotionStyle = head >= 0
+    ? `${html.slice(0, head)}${motionStyle}${html.slice(head)}`
+    : `${motionStyle}${html}`;
+  const motionHead = withMotionStyle.indexOf("</head>");
+  const withGuard = containScroll && motionHead >= 0
+    ? `${withMotionStyle.slice(0, motionHead)}${guard}${withMotionStyle.slice(motionHead)}`
     : containScroll
-      ? `${guard}${html}`
-      : html;
+      ? `${guard}${withMotionStyle}`
+      : withMotionStyle;
   const body = withGuard.indexOf("</body>");
   return primeZoom
     ? body >= 0
@@ -218,10 +227,14 @@ function createWebGLIframe(
   renderOptions: RenderOptions
 ): HTMLIFrameElement {
   const iframe = document.createElement("iframe");
+  const reducedMotion = renderOptions.respectReducedMotion !== false &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   iframe.srcdoc = containWebGLScroll(
     html,
     renderOptions.containWebGLScroll !== false,
-    renderOptions.primeWebGLZoom !== false
+    renderOptions.primeWebGLZoom !== false && !reducedMotion,
+    reducedMotion
   );
   const styles = {
     border: "none",

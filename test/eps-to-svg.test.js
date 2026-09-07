@@ -16,6 +16,21 @@ test("converts a filled path with compact coordinates", () => {
   assert.doesNotMatch(svg, /10\.500|20\.000/);
 });
 
+test("adds accessible SVG metadata when requested", () => {
+  const svg = convert("newpath 0 0 moveto 10 10 lineto stroke", {
+    accessibility: {
+      title: "Diagonal line",
+      description: "A line from the lower-left to the upper-right.",
+    },
+  });
+
+  assert.match(svg, /role="img"/);
+  assert.match(svg, /aria-labelledby="asy-title-\d+"/);
+  assert.match(svg, /aria-describedby="asy-description-\d+"/);
+  assert.match(svg, /<title id="asy-title-\d+">Diagonal line<\/title>/);
+  assert.match(svg, /<desc id="asy-description-\d+">A line from the lower-left to the upper-right\.<\/desc>/);
+});
+
 test("accepts scientific-notation coordinates emitted by Asymptote", () => {
   const result = epsToSvgWithWarnings(
     header + "newpath 10 20 moveto 4.78047431e-15 30 lineto stroke"

@@ -1,4 +1,7 @@
 import { compose, type GraphicsState, type Gradient, type GradientStop, type Matrix } from "./eps-graphics.js";
+import type { SvgAccessibility } from "./types.js";
+
+let accessibilityId = 0;
 
 const LINECAP = ["butt", "round", "square"];
 const LINEJOIN = ["miter", "round", "bevel"];
@@ -109,7 +112,8 @@ export class SvgWriter {
     private readonly width: number,
     private readonly height: number,
     private readonly formatNumber: (value: number) => string,
-    private readonly customFonts: Record<string, string> = {}
+    private readonly customFonts: Record<string, string> = {},
+    private readonly accessibility: SvgAccessibility = {}
   ) { }
 
   get currentPoint(): { x: number; y: number } {
@@ -328,9 +332,26 @@ export class SvgWriter {
   }
 
   serialize(): string {
+    const title = this.accessibility.title;
+    const description = this.accessibility.description;
+    const titleId = title ? `asy-title-${accessibilityId += 1}` : undefined;
+    const descriptionId = description ? `asy-description-${accessibilityId += 1}` : undefined;
+    const labelledBy = this.accessibility.labelledBy ?? titleId;
+    const describedBy = this.accessibility.describedBy ?? descriptionId;
+    const role = this.accessibility.role ?? (title || description ? "img" : undefined);
+    const accessibilityAttributes = [
+      role ? ` role="${escapeXml(role)}"` : "",
+      labelledBy ? ` aria-labelledby="${escapeXml(labelledBy)}"` : "",
+      describedBy ? ` aria-describedby="${escapeXml(describedBy)}"` : "",
+    ].join("");
+    const metadata = [
+      title ? `<title id="${titleId}">${escapeXml(title)}</title>` : "",
+      description ? `<desc id="${descriptionId}">${escapeXml(description)}</desc>` : "",
+    ].join("");
     return (
       `<svg xmlns="http://www.w3.org/2000/svg" width="${this.width}" height="${this.height}" ` +
-      `viewBox="0 0 ${this.width} ${this.height}">` +
+      `viewBox="0 0 ${this.width} ${this.height}"${accessibilityAttributes}>` +
+      metadata +
       (this.defs.length > 0 ? `<defs>${this.defs.join("")}</defs>` : "") +
       this.elements.join("") +
       `</svg>`

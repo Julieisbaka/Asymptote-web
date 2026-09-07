@@ -22,6 +22,20 @@ export interface CompilerDiagnostic {
 /** CSS properties applied to the WebGL iframe element. */
 export type WebGLIframeStyles = Record<string, string>;
 
+/** Accessible metadata for generated SVG output. */
+export interface SvgAccessibility {
+  /** Short accessible name for the graphic. */
+  title?: string;
+  /** Longer explanation of the graphic's content or purpose. */
+  description?: string;
+  /** ARIA role for the SVG. Defaults to `img` when metadata is provided. */
+  role?: string;
+  /** ID of an external element that names the SVG. */
+  labelledBy?: string;
+  /** ID of an external element that describes the SVG. */
+  describedBy?: string;
+}
+
 /** Options accepted by {@link AsymptoteEngine.render}. */
 export interface RenderOptions {
   /**
@@ -123,6 +137,15 @@ export interface RenderOptions {
    * Has no effect for EPS, PS, or WebGL output.
    */
   svgPrecision?: number;
+
+  /** Optional accessible metadata added to generated SVG output. */
+  accessibility?: SvgAccessibility;
+
+  /**
+   * Respect the host page's `prefers-reduced-motion` preference for WebGL
+   * output. Defaults to true.
+   */
+  respectReducedMotion?: boolean;
 
   /**
    * When used with {@link AsymptoteEngine.mount}, update an existing direct

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.7
+
+- Added optional SVG accessibility metadata through `accessibility` options, including titles, descriptions, ARIA roles, and external label/description references for engine renders and standalone EPS/PS conversion.
+- Added `respectReducedMotion` support for WebGL output. When enabled, the package respects `prefers-reduced-motion`, skips synthetic zoom initialization, and reduces iframe animations and transitions.
+
 ## 0.1.6
 
 - Added `getAssetUrls()` to simplify configuring runtime assets for package-relative, public-directory, and CDN deployments.
