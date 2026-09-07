@@ -22,10 +22,15 @@ WASM_PRUNE="${1:-${WASM_PRUNE:-baseline}}"
 WASM_CANDIDATES="${2:-${WASM_CANDIDATES:-all}}"
 # Docker Buildx cache backend to use for the image build (e.g. "gha" for
 # GitHub Actions' cache). Defaults to "gha" when running in GitHub Actions
-# (GITHUB_ACTIONS=true) and to no remote cache otherwise, since the "gha"
-# backend requires credentials only present in Actions runs. Set
-# WASM_CACHE="" to disable explicitly, even in Actions.
-WASM_CACHE="${WASM_CACHE-${GITHUB_ACTIONS:+gha}}"
+# with the documented runtime variables present, and to no remote cache
+# otherwise. Preserve an explicitly supplied value, including an empty value.
+if [ -z "${WASM_CACHE+x}" ]; then
+  if [ "${GITHUB_ACTIONS:-false}" = "true" ] && [ -n "${ACTIONS_RUNTIME_TOKEN:-}" ] && [ -n "${ACTIONS_RESULTS_URL:-}" ]; then
+    WASM_CACHE="gha"
+  else
+    WASM_CACHE=""
+  fi
+fi
 
 case "${WASM_PRUNE}" in
   baseline|candidate) ;;
@@ -38,8 +43,12 @@ esac
 # Git Bash can resolve Docker Desktop's Windows credential helper as a Linux
 # executable (`/usr/bin/docker-credential-desktop.exe`). The build only pulls
 # public images, so use an isolated config without a credential helper. This
-# also avoids modifying the user's normal Docker configuration.
+# also avoids modifying the user's normal Docker configuration. Keep the
+# Buildx metadata in a separate location so the action-created builder is still
+# visible to `docker buildx`.
 DOCKER_CONFIG_DIR="$(mktemp -d)"
+BUILDX_CONFIG="${BUILDX_CONFIG:-${DOCKER_CONFIG_DIR}/buildx}"
+mkdir -p "${BUILDX_CONFIG}"
 trap 'rm -rf "${DOCKER_CONFIG_DIR}"' EXIT
 cat > "${DOCKER_CONFIG_DIR}/config.json" <<EOF
 {
@@ -48,7 +57,7 @@ cat > "${DOCKER_CONFIG_DIR}/config.json" <<EOF
 EOF
 
 docker_cmd() {
-  DOCKER_CONFIG="${DOCKER_CONFIG_DIR}" docker "$@"
+  DOCKER_CONFIG="${DOCKER_CONFIG_DIR}" BUILDX_CONFIG="${BUILDX_CONFIG}" docker "$@"
 }
 
 docker_build() {
