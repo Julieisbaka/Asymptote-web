@@ -359,6 +359,39 @@ The browser helpers require DOM, `Blob`, `FileReader`, `Image`, and canvas
 support. The low-level `imageToPdfBytes()` helper accepts JPEG bytes directly
 and can also be used outside the browser.
 
+### `imagesToPdfBytes(pages, options?)`
+
+Creates a multi-page PDF from multiple JPEG-backed pages. Each page can use
+its own image dimensions, PDF page dimensions, text mode, and selectable text
+runs:
+
+```ts
+import { imagesToPdfBytes } from "asymptote-web/pdf";
+
+const pdfBytes = imagesToPdfBytes([
+  {
+    image: firstJpegBytes,
+    imageWidth: 1200,
+    imageHeight: 800,
+    pageWidth: 600,
+    pageHeight: 400,
+    textRuns: [{ text: "First figure", x: 24, y: 36 }],
+  },
+  {
+    image: secondJpegBytes,
+    imageWidth: 1000,
+    imageHeight: 1000,
+    pageWidth: 500,
+    pageHeight: 500,
+    textRuns: [{ text: "Second figure", x: 24, y: 36 }],
+  },
+]);
+```
+
+This helper writes one PDF page per image. It is intentionally lower-level
+than `svgToPdfBlob()` because callers may already have canvas/JPEG snapshots
+or may want to combine images from different sources into one document.
+
 ### `mount(target, source, options?)`
 
 Renders source as SVG and replaces the target element's contents with the

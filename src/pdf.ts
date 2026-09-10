@@ -71,6 +71,28 @@ export interface ImageToPdfOptions extends PdfMetadata {
   textRuns?: readonly PdfTextRun[];
 }
 
+export interface PdfImagePage {
+  /** JPEG bytes for this page's raster image. */
+  image: Uint8Array;
+  /** Raster image width in pixels. */
+  imageWidth: number;
+  /** Raster image height in pixels. */
+  imageHeight: number;
+  /** PDF page width. Defaults to `imageWidth`. */
+  pageWidth?: number;
+  /** PDF page height. Defaults to `imageHeight`. */
+  pageHeight?: number;
+  /** Text-layer mode for this page. Defaults to the document option. */
+  textMode?: "invisible" | "visible" | "none";
+  /** Real PDF text runs for this page. */
+  textRuns?: readonly PdfTextRun[];
+}
+
+export interface ImagesToPdfOptions extends PdfMetadata {
+  /** Default text-layer mode for pages that do not specify one. */
+  textMode?: "invisible" | "visible" | "none";
+}
+
 interface SvgDimensions {
   minX: number;
   minY: number;
@@ -409,51 +431,90 @@ function buildPdf(objects: PdfObject[], rootObjectId: number, infoObjectId?: num
 }
 
 /**
- * Create an image-backed PDF from JPEG bytes and optional real text overlay.
+ * Create a multi-page image-backed PDF from JPEG bytes and optional text overlays.
+ * This low-level helper is dependency-free and works in browsers and Node.
+ */
+export function imagesToPdfBytes(pages: readonly PdfImagePage[], options: ImagesToPdfOptions = {}): Uint8Array {
+  if (pages.length === 0) throw new TypeError("asymptote-web/pdf: at least one image page is required");
+
+  const fontObjectId = 3 + pages.length * 3;
+  const pageObjects: number[] = [];
+  const objects: PdfObject[] = [
+    { id: 1, body: "<< /Type /Catalog /Pages 2 0 R >>" },
+  ];
+
+  for (let index = 0; index < pages.length; index += 1) {
+    const page = pages[index];
+    if (page.image.length === 0) throw new TypeError(`asymptote-web/pdf: image page ${index + 1} must not be empty`);
+    assertFinitePositive(page.imageWidth, `pages[${index}].imageWidth`);
+    assertFinitePositive(page.imageHeight, `pages[${index}].imageHeight`);
+    const pageWidth = page.pageWidth ?? page.imageWidth;
+    const pageHeight = page.pageHeight ?? page.imageHeight;
+    assertFinitePositive(pageWidth, `pages[${index}].pageWidth`);
+    assertFinitePositive(pageHeight, `pages[${index}].pageHeight`);
+
+    const pageObjectId = 3 + index * 3;
+    const imageObjectId = pageObjectId + 1;
+    const contentObjectId = pageObjectId + 2;
+    pageObjects.push(pageObjectId);
+
+    const text = textOperators(
+      page.textRuns ?? [],
+      pageWidth,
+      pageHeight,
+      pageWidth,
+      pageHeight,
+      page.textMode ?? options.textMode ?? "invisible"
+    );
+    const imageName = `Im${index}`;
+    const content = `q\n${pdfNumber(pageWidth)} 0 0 ${pdfNumber(pageHeight)} 0 0 cm\n/${imageName} Do\nQ\n${text}`;
+    const contentBytes = utf8(content);
+
+    objects.push(
+      {
+        id: pageObjectId,
+        body: `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pdfNumber(pageWidth)} ${pdfNumber(pageHeight)}] /Resources << /XObject << /${imageName} ${imageObjectId} 0 R >> /Font << /F1 ${fontObjectId} 0 R /F2 ${fontObjectId + 1} 0 R /F3 ${fontObjectId + 2} 0 R >> >> /Contents ${contentObjectId} 0 R >>`,
+      },
+      {
+        id: imageObjectId,
+        body: concat([
+          utf8(`<< /Type /XObject /Subtype /Image /Width ${Math.round(page.imageWidth)} /Height ${Math.round(page.imageHeight)} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${page.image.length} >>\nstream\n`),
+          page.image,
+          utf8("\nendstream"),
+        ]),
+      },
+      { id: contentObjectId, body: concat([utf8(`<< /Length ${contentBytes.length} >>\nstream\n`), contentBytes, utf8("\nendstream")]) }
+    );
+  }
+
+  objects.splice(1, 0, { id: 2, body: `<< /Type /Pages /Kids [${pageObjects.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageObjects.length} >>` });
+  objects.push(
+    { id: fontObjectId, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>" },
+    { id: fontObjectId + 1, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>" },
+    { id: fontObjectId + 2, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>" }
+  );
+  const info = metadataObject(options);
+  const infoObjectId = info ? fontObjectId + 3 : undefined;
+  if (infoObjectId && info) objects.push({ id: infoObjectId, body: info });
+  return buildPdf(objects, 1, infoObjectId);
+}
+
+/**
+ * Create a single-page image-backed PDF from JPEG bytes and optional real text overlay.
  * This low-level helper is dependency-free and works in browsers and Node.
  */
 export function imageToPdfBytes(image: Uint8Array, options: ImageToPdfOptions): Uint8Array {
-  if (image.length === 0) throw new TypeError("asymptote-web/pdf: image must not be empty");
-  assertFinitePositive(options.imageWidth, "imageWidth");
-  assertFinitePositive(options.imageHeight, "imageHeight");
-  const pageWidth = options.pageWidth ?? options.imageWidth;
-  const pageHeight = options.pageHeight ?? options.imageHeight;
-  assertFinitePositive(pageWidth, "pageWidth");
-  assertFinitePositive(pageHeight, "pageHeight");
-
-  const text = textOperators(
-    options.textRuns ?? [],
-    pageWidth,
-    pageHeight,
-    pageWidth,
-    pageHeight,
-    options.textMode ?? "invisible"
-  );
-  const content = `q\n${pdfNumber(pageWidth)} 0 0 ${pdfNumber(pageHeight)} 0 0 cm\n/Im0 Do\nQ\n${text}`;
-  const contentBytes = utf8(content);
-  const info = metadataObject(options);
-  const objects: PdfObject[] = [
-    { id: 1, body: "<< /Type /Catalog /Pages 2 0 R >>" },
-    { id: 2, body: "<< /Type /Pages /Kids [3 0 R] /Count 1 >>" },
+  return imagesToPdfBytes([
     {
-      id: 3,
-      body: `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pdfNumber(pageWidth)} ${pdfNumber(pageHeight)}] /Resources << /XObject << /Im0 4 0 R >> /Font << /F1 6 0 R /F2 7 0 R /F3 8 0 R >> >> /Contents 5 0 R >>`,
+      image,
+      imageWidth: options.imageWidth,
+      imageHeight: options.imageHeight,
+      pageWidth: options.pageWidth,
+      pageHeight: options.pageHeight,
+      textMode: options.textMode,
+      textRuns: options.textRuns,
     },
-    {
-      id: 4,
-      body: concat([
-        utf8(`<< /Type /XObject /Subtype /Image /Width ${Math.round(options.imageWidth)} /Height ${Math.round(options.imageHeight)} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${image.length} >>\nstream\n`),
-        image,
-        utf8("\nendstream"),
-      ]),
-    },
-    { id: 5, body: concat([utf8(`<< /Length ${contentBytes.length} >>\nstream\n`), contentBytes, utf8("\nendstream")]) },
-    { id: 6, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>" },
-    { id: 7, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>" },
-    { id: 8, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>" },
-  ];
-  if (info) objects.push({ id: 9, body: info });
-  return buildPdf(objects, 1, info ? 9 : undefined);
+  ], options);
 }
 
 /** Convert an SVG string to a raster-backed PDF with selectable SVG text runs. */

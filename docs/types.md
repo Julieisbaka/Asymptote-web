@@ -236,6 +236,25 @@ interface PdfOptions {
 interface RenderToPdfOptions extends PdfOptions {
   render?: Omit<RenderOptions, "format">;
 }
+
+interface PdfImagePage {
+  image: Uint8Array;
+  imageWidth: number;
+  imageHeight: number;
+  pageWidth?: number;
+  pageHeight?: number;
+  textMode?: "invisible" | "visible" | "none";
+  textRuns?: readonly PdfTextRun[];
+}
+
+interface ImagesToPdfOptions {
+  textMode?: "invisible" | "visible" | "none";
+  title?: string;
+  author?: string;
+  subject?: string;
+  keywords?: string;
+  creator?: string;
+}
 ```
 
 Key functions:
@@ -255,4 +274,9 @@ function downloadPdf(
   filename?: string,
   options?: RenderToPdfOptions
 ): Promise<RenderResult>;
+
+function imagesToPdfBytes(
+  pages: readonly PdfImagePage[],
+  options?: ImagesToPdfOptions
+): Uint8Array;
 ```

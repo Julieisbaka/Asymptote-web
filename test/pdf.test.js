@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-const { imageToPdfBytes } = await import("../dist/pdf.js");
+const { imageToPdfBytes, imagesToPdfBytes } = await import("../dist/pdf.js");
 
 // Minimal 1x1 white JPEG.
 const jpeg = Uint8Array.from([
@@ -54,4 +54,37 @@ test("imageToPdfBytes embeds a JPEG image and selectable text layer", () => {
 
 test("imageToPdfBytes rejects invalid dimensions", () => {
   assert.throws(() => imageToPdfBytes(jpeg, { imageWidth: 0, imageHeight: 1 }), /imageWidth/);
+});
+
+test("imagesToPdfBytes writes multiple images as separate PDF pages", () => {
+  const pdf = imagesToPdfBytes([
+    {
+      image: jpeg,
+      imageWidth: 100,
+      imageHeight: 50,
+      textRuns: [{ text: "First page", x: 5, y: 10 }],
+    },
+    {
+      image: jpeg,
+      imageWidth: 80,
+      imageHeight: 80,
+      pageWidth: 120,
+      pageHeight: 120,
+      textMode: "visible",
+      textRuns: [{ text: "Second page", x: 8, y: 16 }],
+    },
+  ], { title: "Two page PDF" });
+  const text = latin1(pdf);
+
+  assert.match(text, /\/Count 2/);
+  assert.equal((text.match(/\/Subtype \/Image/g) ?? []).length, 2);
+  assert.match(text, /\/Im0 Do/);
+  assert.match(text, /\/Im1 Do/);
+  assert.match(text, /\(First page\) Tj/);
+  assert.match(text, /\(Second page\) Tj/);
+  assert.match(text, /trailer\n<< \/Size 13 \/Root 1 0 R \/Info 12 0 R >>/);
+});
+
+test("imagesToPdfBytes rejects empty page lists", () => {
+  assert.throws(() => imagesToPdfBytes([]), /at least one image page/);
 });
