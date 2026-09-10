@@ -294,7 +294,8 @@ function pdfNumber(value: number): string {
 function pdfName(value: string): "F1" | "F2" | "F3" {
   const normalized = value.toLowerCase();
   if (normalized.includes("courier") || normalized.includes("mono")) return "F3";
-  if (normalized.includes("times") || normalized.includes("serif")) return "F2";
+  if (normalized.includes("helvetica") || normalized.includes("arial") || normalized.includes("sans-serif")) return "F1";
+  if (normalized.includes("times") || /(?:^|[,\s])serif(?:$|[,\s])/.test(normalized)) return "F2";
   return "F1";
 }
 

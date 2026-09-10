@@ -35,6 +35,7 @@ test("imageToPdfBytes embeds a JPEG image and selectable text layer", () => {
     title: "PDF export smoke test",
     textRuns: [
       { text: "Selectable label", x: 10, y: 20, fontSize: 12, fontFamily: "Arial, sans-serif" },
+      { text: "Monospace", x: 10, y: 35, fontSize: 10, fontFamily: "Courier New, monospace" },
     ],
   });
   const text = latin1(pdf);
@@ -43,6 +44,7 @@ test("imageToPdfBytes embeds a JPEG image and selectable text layer", () => {
   assert.match(text, /\/Subtype \/Image/);
   assert.match(text, /\/Filter \/DCTDecode/);
   assert.match(text, /\/BaseFont \/Helvetica/);
+  assert.match(text, /\/BaseFont \/Courier/);
   assert.match(text, /3 Tr/);
   assert.match(text, /1 0 0 1 10 30 Tm/);
   assert.match(text, /\(Selectable label\) Tj/);

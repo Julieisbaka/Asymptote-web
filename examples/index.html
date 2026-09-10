@@ -269,6 +269,85 @@ draw(shift(2,0,0)*unitcube, red);
       };
     }
 
+    function demoPdfSource(svgWithLabel, svgWithoutLabel) {
+      const parser = new DOMParser();
+      const withDoc = parser.parseFromString(svgWithLabel, "image/svg+xml");
+      const withoutDoc = parser.parseFromString(svgWithoutLabel, "image/svg+xml");
+      const svg = withDoc.documentElement;
+      const backgroundPathCount = withoutDoc.querySelectorAll("path").length;
+      const paths = Array.from(svg.querySelectorAll("path"));
+      const labelPaths = paths.slice(backgroundPathCount);
+      if (labelPaths.length === 0) {
+        const { height, width } = svgDimensions(svgWithLabel);
+        return {
+          svg: svgWithoutLabel,
+          textRun: {
+            text: "Selectable PDF text",
+            x: 0,
+            y: height + 28,
+            fontSize: Math.max(12, Math.min(24, width / 16)),
+            fontFamily: "Helvetica, Arial, sans-serif",
+            color: "#0000ff",
+          },
+        };
+      }
+
+      const host = document.createElement("div");
+      host.style.cssText = "position:absolute;left:-10000px;top:-10000px;width:0;height:0;overflow:hidden;";
+      host.appendChild(document.importNode(svg, true));
+      document.body.appendChild(host);
+      const mountedSvg = host.querySelector("svg");
+      const mountedPaths = Array.from(mountedSvg.querySelectorAll("path"));
+      const mountedLabelPaths = mountedPaths.slice(backgroundPathCount);
+      const bounds = mountedLabelPaths.reduce((box, path) => {
+        const next = path.getBBox();
+        if (!Number.isFinite(next.width) || !Number.isFinite(next.height)) return box;
+        if (!box) return {
+          x1: next.x,
+          y1: next.y,
+          x2: next.x + next.width,
+          y2: next.y + next.height,
+        };
+        return {
+          x1: Math.min(box.x1, next.x),
+          y1: Math.min(box.y1, next.y),
+          x2: Math.max(box.x2, next.x + next.width),
+          y2: Math.max(box.y2, next.y + next.height),
+        };
+      }, null);
+      for (const path of mountedLabelPaths) path.remove();
+      const textlessSvg = new XMLSerializer().serializeToString(mountedSvg);
+      host.remove();
+
+      if (!bounds) {
+        const { height, width } = svgDimensions(svgWithLabel);
+        return {
+          svg: textlessSvg,
+          textRun: {
+            text: "Selectable PDF text",
+            x: 0,
+            y: height + 28,
+            fontSize: Math.max(12, Math.min(24, width / 16)),
+            fontFamily: "Helvetica, Arial, sans-serif",
+            color: "#0000ff",
+          },
+        };
+      }
+
+      const labelHeight = bounds.y2 - bounds.y1;
+      return {
+        svg: textlessSvg,
+        textRun: {
+          text: "Selectable PDF text",
+          x: bounds.x1,
+          y: bounds.y2,
+          fontSize: labelHeight / 0.72,
+          fontFamily: "Helvetica, Arial, sans-serif",
+          color: "#0000ff",
+        },
+      };
+    }
+
     function downloadBlob(blob, filename) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -332,22 +411,12 @@ draw(shift(2,0,0)*unitcube, red);
           asy.render(source),
           asy.render(pdfBackgroundSource(source)),
         ]);
-        const { width, height } = svgDimensions(pdfBackgroundResult.svg);
-        const pdf = await svgToPdfBlob(pdfBackgroundResult.svg, {
+        const pdfSource = demoPdfSource(previewResult.svg, pdfBackgroundResult.svg);
+        const pdf = await svgToPdfBlob(pdfSource.svg, {
           title: "Asymptote Web demo export",
-          margin: { bottom: 44 },
           scale: 3,
           textMode: "visible",
-          textRuns: [
-            {
-              text: "Selectable PDF text",
-              x: 0,
-              y: height + 28,
-              fontSize: Math.max(12, Math.min(24, width / 16)),
-              fontFamily: "Helvetica, Arial, sans-serif",
-              color: "#0000ff",
-            },
-          ],
+          textRuns: [pdfSource.textRun],
         });
         downloadBlob(pdf, "asymptote-web-demo.pdf");
         output.innerHTML = previewResult.svg;
