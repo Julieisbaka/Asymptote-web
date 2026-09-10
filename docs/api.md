@@ -339,7 +339,7 @@ Options include:
 | `background` | `string \| null` | `"white"` | Canvas background used before rasterization. |
 | `quality` | `number` | browser default | JPEG quality from 0 to 1. |
 | `margin` | `number \| { top?, right?, bottom?, left? }` | `0` | Extra page space around the SVG before rasterization, useful when labels extend beyond the SVG viewport. |
-| `textMode` | `"invisible" \| "visible" \| "none"` | `"invisible"` | Whether to add invisible selectable text, visible overlay text, or no text layer. |
+| `textMode` | `"invisible" \| "visible" \| "none"` | `"invisible"` | Whether to add invisible selectable text, visible overlay text, or no text layer. Some PDF viewers do not expose invisible text for selection; use `"visible"` when reliable click/drag selection is more important than preserving the exact rasterized label appearance. |
 | `textRuns` | `PdfTextRun[]` | auto-extracted SVG text | Explicit text runs to write into the PDF; use this for native fallback labels that are drawn as paths. |
 | `render` | `RenderOptions` except `format` | `{}` | Options passed to `engine.render()`; PDF export forces SVG output. |
 

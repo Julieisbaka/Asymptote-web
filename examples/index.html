@@ -278,6 +278,14 @@ draw(shift(2,0,0)*unitcube, red);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
+    function pdfBackgroundSource(source) {
+      // The browser-native fallback turns labels into vector paths before they
+      // reach SVG, so there is no text object for PDF viewers to select. For
+      // the demo PDF, render the graphic without the sample path-label and add
+      // that label back as real visible PDF text in the margin.
+      return source.replace(/^\s*label\("Selectable PDF text", \(0,-1\.35\), blue\);\s*$/m, "");
+    }
+
     btn.addEventListener("click", async () => {
       if (!asy) return;
       btn.disabled = true;
@@ -320,13 +328,16 @@ draw(shift(2,0,0)*unitcube, red);
         // Keep the optional PDF module out of the initial demo bundle. It is
         // loaded only when the user asks for PDF export.
         const { svgToPdfBlob } = await import("../dist/pdf.js");
-        const result = await asy.render(source);
-        const { width, height } = svgDimensions(result.svg);
-        const pdf = await svgToPdfBlob(result.svg, {
+        const [previewResult, pdfBackgroundResult] = await Promise.all([
+          asy.render(source),
+          asy.render(pdfBackgroundSource(source)),
+        ]);
+        const { width, height } = svgDimensions(pdfBackgroundResult.svg);
+        const pdf = await svgToPdfBlob(pdfBackgroundResult.svg, {
           title: "Asymptote Web demo export",
           margin: { bottom: 44 },
           scale: 3,
-          textMode: "invisible",
+          textMode: "visible",
           textRuns: [
             {
               text: "Selectable PDF text",
@@ -339,11 +350,12 @@ draw(shift(2,0,0)*unitcube, red);
           ],
         });
         downloadBlob(pdf, "asymptote-web-demo.pdf");
-        output.innerHTML = result.svg;
-        status.textContent = result.warnings.length
-          ? "PDF downloaded (with warnings):\n" + result.warnings.join("\n")
+        output.innerHTML = previewResult.svg;
+        const warnings = [...previewResult.warnings, ...pdfBackgroundResult.warnings];
+        status.textContent = warnings.length
+          ? "PDF downloaded (with warnings):\n" + warnings.join("\n")
           : "PDF downloaded ✓";
-        status.className = result.warnings.length ? "status error" : "status info";
+        status.className = warnings.length ? "status error" : "status info";
       } catch (err) {
         status.textContent = "PDF export failed.";
         status.className = "status error";
