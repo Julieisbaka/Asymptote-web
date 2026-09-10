@@ -112,6 +112,12 @@ export interface RenderOptions {
   /** CSS properties applied to the mounted WebGL iframe. */
   webglIframeStyles?: WebGLIframeStyles;
 
+  /**
+   * Accessible name applied to the mounted WebGL iframe's `title` attribute.
+   * Defaults to `"Asymptote WebGL viewer"`. Has no effect for non-WebGL output.
+   */
+  webglTitle?: string;
+
   /** Prevent wheel and touch scrolling inside the WebGL iframe. Defaults to true. */
   containWebGLScroll?: boolean;
 

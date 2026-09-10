@@ -1,6 +1,6 @@
 {
   "name": "asymptote-web",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "description": "Run the Asymptote vector graphics language entirely in the browser via WebAssembly.",
   "type": "module",
   "repository": {
@@ -62,6 +62,7 @@
     "svg",
     "browser"
   ],
+  "sideEffects": false,
   "license": "LGPL-3.0-only",
   "devDependencies": {
     "@stylistic/eslint-plugin": "^5.10.0",

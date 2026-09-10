@@ -227,6 +227,17 @@ function createWebGLIframe(
   renderOptions: RenderOptions
 ): HTMLIFrameElement {
   const iframe = document.createElement("iframe");
+  // Accessible name (WCAG 4.1.2) so assistive tech announces the embedded
+  // viewer instead of an unlabelled frame.
+  iframe.setAttribute("title", renderOptions.webglTitle ?? "Asymptote WebGL viewer");
+  // Restrict the generated document to what the bundled viewer actually
+  // needs (running its script, and same-origin access so `unsafe.mountWebGL`
+  // and WebGL labels can reach `contentDocument`). This blocks top-level
+  // navigation, popups, and other capabilities an unsandboxed iframe would
+  // otherwise have. Note: `allow-scripts` + `allow-same-origin` together do
+  // not defend against script injection inside the viewer document itself —
+  // treat that document's contents as trusted, as documented on `unsafe.*`.
+  iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
   const reducedMotion = renderOptions.respectReducedMotion !== false &&
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;

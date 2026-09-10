@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- Added a `title` attribute (`"Asymptote WebGL viewer"` by default, overridable via `webglTitle`) to mounted WebGL iframes so assistive technology announces them.
+- Sandboxed mounted WebGL iframes with `allow-scripts allow-same-origin`, removing capabilities like top-level navigation and popups that unsandboxed iframes previously had.
+- Fixed the WASM module staying permanently unusable after an uncaught crash during a render; the module is now reinitialized automatically on the next render instead of failing indefinitely.
+
 ## 0.1.7
 
 - Added optional SVG accessibility metadata through `accessibility` options, including titles, descriptions, ARIA roles, and external label/description references for engine renders and standalone EPS/PS conversion.

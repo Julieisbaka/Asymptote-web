@@ -289,7 +289,23 @@ async function runAsymptoteUnsafe(
       inputFile,
     ];
 
-    const exitCode = mod.callMain(args);
+    let exitCode: number;
+    try {
+      exitCode = mod.callMain(args);
+    } catch (error) {
+      // An uncaught WASM-level abort leaves the module instance permanently
+      // unusable (Emscripten cannot resume after abort()). Drop the cached
+      // instance so the next render lazily reinitializes a fresh module
+      // instead of repeatedly failing against the crashed one.
+      _modulePromise = null;
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new AsymptoteError(
+        `ASYMPTOTE ERROR: the WebAssembly module crashed while rendering (${reason}). It will be reinitialized on the next render.`,
+        -1,
+        stderrLines.join("\n"),
+        []
+      );
+    }
     const stderr = stderrLines.join("\n");
     const diagnostics = remapDiagnosticSources(
       parseCompilerDiagnostics(stderr),
@@ -334,7 +350,13 @@ async function runAsymptoteUnsafe(
   } finally {
     mod.print = origPrint;
     mod.printErr = origPrintErr;
-    if (mod.FS.analyzePath(renderDir).exists) removeTree(mod, renderDir);
+    // Best-effort cleanup: a crashed module may throw here too, but that
+    // must not mask the original error above.
+    try {
+      if (mod.FS.analyzePath(renderDir).exists) removeTree(mod, renderDir);
+    } catch {
+      // Ignored — see comment above.
+    }
   }
 }
 
