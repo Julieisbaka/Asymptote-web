@@ -80,12 +80,20 @@ RUN set -eux; \
     for p in /patches/candidate/*.patch; do \
     [ -e "$p" ] || continue; \
     name="$(basename "$p")"; \
+    if [ "$WASM_CANDIDATES" = all ]; then \
+    patch --batch --forward -p1 < "$p"; \
+    else \
     case ",$WASM_CANDIDATES," in *",$name,"*) patch --batch --forward -p1 < "$p";; esac; \
+    fi; \
     done; \
     for p in /patches/candidate/*.py; do \
     [ -e "$p" ] || continue; \
     name="$(basename "$p")"; \
+    if [ "$WASM_CANDIDATES" = all ]; then \
+    python3 "$p"; \
+    else \
     case ",$WASM_CANDIDATES," in *",$name,"*) python3 "$p";; esac; \
+    fi; \
     done; \
     fi
 
