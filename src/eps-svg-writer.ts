@@ -1,5 +1,6 @@
 import { compose, type GraphicsState, type Gradient, type GradientStop, type Matrix } from "./eps-graphics.js";
-import type { SvgAccessibility } from "./types.js";
+import type { SvgAccessibility, SvgFontDescriptor, SvgFontMap } from "./types.js";
+import type { Dictionary, Operand } from "./eps-interpreter-types.js";
 
 let accessibilityId = 0;
 
@@ -34,6 +35,15 @@ interface CssFont {
   family: string;
   weight?: string;
   style?: string;
+  stretch?: string;
+}
+
+interface SvgFontDescriptorNormalized {
+  family?: string;
+  fallbacks?: string[];
+  weight?: string;
+  style?: string;
+  stretch?: string;
 }
 
 interface FontFamilyRule {
@@ -92,20 +102,8 @@ function normalizeFontName(font: string): string {
   return font.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-function customFontFamily(font: string, customFonts: Record<string, string>): string | undefined {
-  if (Object.prototype.hasOwnProperty.call(customFonts, font)) return customFonts[font];
-  const normalized = normalizeFontName(font);
-  for (const [name, family] of Object.entries(customFonts)) {
-    if (normalizeFontName(name) === normalized) return family;
-  }
-  return undefined;
-}
-
-function inferFontStyle(normalized: string): Pick<CssFont, "weight" | "style"> {
-  const style: Pick<CssFont, "weight" | "style"> = {};
-  if (/(bold|demi|black|heavy)/.test(normalized)) style.weight = "bold";
-  if (/(italic|oblique)/.test(normalized)) style.style = "italic";
-  return style;
+function normalizeFontAlias(font: string): string {
+  return normalizeFontName(font).replace(/(?:ps|mt|std|pro)/g, "");
 }
 
 function knownFontFamily(normalized: string): string | undefined {
@@ -114,21 +112,136 @@ function knownFontFamily(normalized: string): string | undefined {
   )?.family;
 }
 
-function toCssFont(font: string, customFonts: Record<string, string> = {}): CssFont {
-  const custom = customFontFamily(font, customFonts);
-  if (custom) return { family: custom };
-
-  const normalized = normalizeFontName(font);
-  const family = knownFontFamily(normalized);
-  const inferredStyle = inferFontStyle(normalized);
-  if (family) return { family, ...inferredStyle };
-
-  // Preserve the original PostScript font name in the CSS stack in case the
-  // host page happens to have a matching font installed.
-  return { family: font ? `${font}, sans-serif` : "sans-serif", ...inferredStyle };
+function inferWeight(normalized: string): string | undefined {
+  if (/(thin|hairline)/.test(normalized)) return "100";
+  if (/(extralight|ultralight)/.test(normalized)) return "200";
+  if (/light/.test(normalized)) return "300";
+  if (/(regular|normal|book)/.test(normalized)) return "400";
+  if (/medium/.test(normalized)) return "500";
+  if (/(semibold|demibold)/.test(normalized)) return "600";
+  if (/bold/.test(normalized)) return "700";
+  if (/(extrabold|ultrabold)/.test(normalized)) return "800";
+  if (/(black|heavy)/.test(normalized)) return "900";
+  return undefined;
 }
 
-export class SvgWriter {
+function inferStyle(normalized: string): string | undefined {
+  if (/oblique/.test(normalized)) return "oblique";
+  if (/italic/.test(normalized)) return "italic";
+  return undefined;
+}
+
+function inferStretch(normalized: string): string | undefined {
+  if (/(ultracondensed|extracondensed)/.test(normalized)) return "extra-condensed";
+  if (/(semicondensed|condensed|narrow)/.test(normalized)) return "condensed";
+  if (/expanded/.test(normalized)) return "expanded";
+  if (/(extraexpanded|extended)/.test(normalized)) return "extra-expanded";
+  return undefined;
+}
+
+function inferGenericFallback(normalized: string): string {
+  if (/(mono|courier|code|typewriter|console)/.test(normalized)) return "monospace";
+  if (/(script|chancery)/.test(normalized)) return "cursive";
+  if (/(symbol|dingbat|math)/.test(normalized)) return "serif";
+  if (/(serif|roman|garamond|times|georgia|palatino|bookman|schoolbook|cambria)/.test(normalized)) return "serif";
+  return "sans-serif";
+}
+
+function normalizeDescriptor(value: unknown): SvgFontDescriptorNormalized | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const descriptor = value as SvgFontDescriptor;
+  const family = typeof descriptor.family === "string" ? descriptor.family.trim() : undefined;
+  const fallbacks = Array.isArray(descriptor.fallbacks)
+    ? descriptor.fallbacks.filter((fallback): fallback is string => typeof fallback === "string" && fallback.trim().length > 0)
+    : undefined;
+  const weight = typeof descriptor.weight === "number"
+    ? String(descriptor.weight)
+    : typeof descriptor.weight === "string"
+      ? descriptor.weight.trim()
+      : undefined;
+  const style = typeof descriptor.style === "string" ? descriptor.style.trim() : undefined;
+  const stretch = typeof descriptor.stretch === "string" ? descriptor.stretch.trim() : undefined;
+  if (!family && (!fallbacks || fallbacks.length === 0) && !weight && !style && !stretch) return null;
+  return {
+    family,
+    fallbacks: fallbacks && fallbacks.length > 0 ? fallbacks : undefined,
+    weight,
+    style,
+    stretch,
+  };
+}
+
+function resolveCustomFont(font: string, customFonts: SvgFontMap): string | SvgFontDescriptor | undefined {
+  if (Object.prototype.hasOwnProperty.call(customFonts, font)) return customFonts[font];
+  const normalized = normalizeFontName(font);
+  const normalizedAlias = normalizeFontAlias(font);
+  for (const [name, descriptor] of Object.entries(customFonts)) {
+    const candidate = normalizeFontName(name);
+    if (candidate === normalized) return descriptor;
+    if (candidate.length > 0 && (normalized.startsWith(candidate) || normalizedAlias.startsWith(candidate))) {
+      return descriptor;
+    }
+  }
+  return undefined;
+}
+
+
+function toCssFont(
+  font: string,
+  customFonts: SvgFontMap,
+  warnUnknown: (fontName: string) => void,
+  warnMalformedDescriptor: (fontName: string) => void
+): CssFont {
+  const normalized = normalizeFontAlias(font);
+  const knownFamily = knownFontFamily(normalized);
+  const inferred: CssFont = {
+    family: knownFamily ?? (font ? `${font}, ${inferGenericFallback(normalized)}` : "sans-serif"),
+    weight: inferWeight(normalized),
+    style: inferStyle(normalized),
+    stretch: inferStretch(normalized),
+  };
+
+  const custom = resolveCustomFont(font, customFonts);
+  if (typeof custom === "string") {
+    return { ...inferred, family: custom };
+  }
+  if (custom !== undefined) {
+    const descriptor = normalizeDescriptor(custom);
+    if (!descriptor) {
+      warnMalformedDescriptor(font);
+      return inferred;
+    }
+    const families = [descriptor.family, ...(descriptor.fallbacks ?? [])].filter((value): value is string =>
+      typeof value === "string" && value.trim().length > 0
+    );
+    return {
+      family: families.length > 0 ? families.join(", ") : inferred.family,
+      weight: descriptor.weight ?? inferred.weight,
+      style: descriptor.style ?? inferred.style,
+      stretch: descriptor.stretch ?? inferred.stretch,
+    };
+  }
+
+  if (!knownFamily) warnUnknown(font || "(empty)");
+  return inferred;
+}
+
+function operandToDataString(value: Operand): string {
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "0";
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.map((entry) => operandToDataString(entry)).join(",");
+  if (value && typeof value === "object") {
+    return Object.entries(value as Dictionary)
+      .map(([key, entry]) => `${key}:${operandToDataString(entry)}`)
+      .join(";");
+  }
+  return "";
+}
+
+interface NativeLabelContext {
+  metadata: Dictionary;
+  elements: string[];
+}export class SvgWriter {
   private clipCounter = 0;
   private gradientCounter = 0;
   private readonly defs: string[] = [];
@@ -143,6 +256,10 @@ export class SvgWriter {
   private subpathStartY = 0;
   private currentX = 0;
   private currentY = 0;
+  private readonly warnings: string[] = [];
+  private readonly warnedUnknownFonts = new Set<string>();
+  private readonly warnedMalformedFontDescriptors = new Set<string>();
+  private readonly nativeLabelStack: NativeLabelContext[] = [];
 
   constructor(
     private readonly llx: number,
@@ -150,10 +267,30 @@ export class SvgWriter {
     private readonly width: number,
     private readonly height: number,
     private readonly formatNumber: (value: number) => string,
-    private readonly customFonts: Record<string, string> = {},
+    private readonly customFonts: SvgFontMap = {},
     private readonly accessibility: SvgAccessibility = {}
   ) { }
 
+
+  getWarnings(): string[] {
+    return [...this.warnings];
+  }
+
+  beginNativeLabel(metadata: Dictionary): void {
+    this.nativeLabelStack.push({ metadata, elements: [] });
+  }
+
+  endNativeLabel(): boolean {
+    const context = this.nativeLabelStack.pop();
+    if (!context) return false;
+    const group = this.serializeNativeLabel(context);
+    if (this.nativeLabelStack.length > 0) {
+      this.nativeLabelStack[this.nativeLabelStack.length - 1].elements.push(group);
+    } else {
+      this.elements.push(group);
+    }
+    return true;
+  }
   get currentPoint(): { x: number; y: number } {
     return { x: this.currentX, y: this.currentY };
   }
@@ -292,7 +429,7 @@ export class SvgWriter {
       e: transformed.e - this.llx,
       f: this.height + this.lly - transformed.f,
     };
-    this.elements.push(`<image x="0" y="0" width="${width}" height="${height}" transform="matrix(${this.formatNumber(matrix.a)},${this.formatNumber(matrix.b)},${this.formatNumber(matrix.c)},${this.formatNumber(matrix.d)},${this.formatNumber(matrix.e)},${this.formatNumber(matrix.f)})" href="data:image/svg+xml;base64,${encoded}" opacity="${formatOpacity(state.opacity)}"/>`);
+    this.pushElement(`<image x="0" y="0" width="${width}" height="${height}" transform="matrix(${this.formatNumber(matrix.a)},${this.formatNumber(matrix.b)},${this.formatNumber(matrix.c)},${this.formatNumber(matrix.d)},${this.formatNumber(matrix.e)},${this.formatNumber(matrix.f)})" href="data:image/svg+xml;base64,${encoded}" opacity="${formatOpacity(state.opacity)}"/>`);
     return true;
   }
 
@@ -322,7 +459,7 @@ export class SvgWriter {
       const dash = state.dasharray.length > 0
         ? ` stroke-dasharray="${state.dasharray.join(",")}" stroke-dashoffset="${state.dashoffset}"`
         : "";
-      this.elements.push(
+      this.pushElement(
         `<path d="${d}" fill="none" stroke="${state.stroke}" stroke-width="${state.linewidth}" ` +
         `stroke-linecap="${LINECAP[state.linecap] ?? "butt"}" stroke-linejoin="${LINEJOIN[state.linejoin] ?? "miter"}" ` +
         `stroke-miterlimit="${state.miterlimit}"${dash}${opacityAttr}${clipAttr}/>`
@@ -330,7 +467,7 @@ export class SvgWriter {
     } else {
       const rule = mode === "eofill" ? ' fill-rule="evenodd"' : "";
       const fill = state.gradient ? this.gradientFill(state.gradient, state) : state.fill;
-      this.elements.push(`<path d="${d}" fill="${fill}"${rule}${opacityAttr}${clipAttr}/>`);
+      this.pushElement(`<path d="${d}" fill="${fill}"${rule}${opacityAttr}${clipAttr}/>`);
     }
     this.newPath();
   }
@@ -340,13 +477,19 @@ export class SvgWriter {
     const y = this.height - (this.currentY - this.lly);
     const scale = Math.sqrt(state.ctm.a ** 2 + state.ctm.b ** 2);
     const angle = -(Math.atan2(state.ctm.b, state.ctm.a) * 180) / Math.PI;
-    const font = toCssFont(state.fontFamily, this.customFonts);
+    const font = toCssFont(
+      state.fontFamily,
+      this.customFonts,
+      (fontName) => this.warnUnknownFont(fontName),
+      (fontName) => this.warnMalformedFontDescriptor(fontName)
+    );
     const transform = angle !== 0
       ? ` transform="rotate(${this.formatNumber(angle)} ${this.formatNumber(x)} ${this.formatNumber(y)})"`
       : "";
     const opacityAttr = state.opacity < 1 ? ` opacity="${formatOpacity(state.opacity)}"` : "";
     const weightAttr = font.weight ? ` font-weight="${font.weight}"` : "";
     const styleAttr = font.style ? ` font-style="${font.style}"` : "";
+    const stretchAttr = font.stretch ? ` font-stretch="${font.stretch}"` : "";
     const chars = Array.from(text);
     const content = adjustments.length === 0
       ? escapeXml(text)
@@ -357,10 +500,10 @@ export class SvgWriter {
         const ty = -(state.ctm.b * dx + state.ctm.d * dy);
         return `<tspan dx="${this.formatNumber(tx)}" dy="${this.formatNumber(ty)}">${escapeXml(char)}</tspan>`;
       }).join("");
-    this.elements.push(
+    this.pushElement(
       `<text x="${this.formatNumber(x)}" y="${this.formatNumber(y)}" fill="${state.fill}" ` +
       `font-family="${escapeXml(font.family)}" font-size="${this.formatNumber(state.fontSize * scale)}"` +
-      `${weightAttr}${styleAttr}${transform}${opacityAttr}>${content}</text>`
+      `${weightAttr}${styleAttr}${stretchAttr}${transform}${opacityAttr}>${content}</text>`
     );
     const advance = state.fontSize * 0.6 * chars.length;
     const extraX = adjustments.reduce((sum, value) => sum + value[0], 0);
@@ -369,7 +512,58 @@ export class SvgWriter {
     this.currentY += state.ctm.b * (advance + extraX) + state.ctm.d * extraY;
   }
 
+
+  private pushElement(element: string): void {
+    if (this.nativeLabelStack.length > 0) {
+      this.nativeLabelStack[this.nativeLabelStack.length - 1].elements.push(element);
+      return;
+    }
+    this.elements.push(element);
+  }
+
+  private warn(message: string): void {
+    this.warnings.push(`EPS/PS: ${message}`);
+  }
+
+  private warnUnknownFont(fontName: string): void {
+    if (this.warnedUnknownFonts.has(fontName)) return;
+    this.warnedUnknownFonts.add(fontName);
+    this.warn(`unknown font '${fontName}'; preserving family with generic fallback`);
+  }
+
+  private warnMalformedFontDescriptor(fontName: string): void {
+    if (this.warnedMalformedFontDescriptors.has(fontName)) return;
+    this.warnedMalformedFontDescriptors.add(fontName);
+    this.warn(`ignored malformed custom font descriptor for '${fontName}'`);
+  }
+
+  private finalizeOpenNativeLabels(): void {
+    while (this.nativeLabelStack.length > 0) {
+      this.warn("unmatched native-label begin marker; auto-closing at end of file");
+      this.endNativeLabel();
+    }
+  }
+
+  private serializeNativeLabel(context: NativeLabelContext): string {
+    const attributes = Object.entries(context.metadata)
+      .map(([name, value]) => {
+        const safeName = name.replace(/[^a-zA-Z0-9_-]/g, "-").replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+        const serialized = operandToDataString(value);
+        return serialized.length > 0
+          ? ` data-asy-label-${safeName}="${escapeXml(serialized)}"`
+          : "";
+      })
+      .join("");
+    const labelText = ["text", "label", "string"]
+      .map((key) => context.metadata[key])
+      .find((value): value is string => typeof value === "string" && value.length > 0);
+    const semanticText = labelText
+      ? `<text opacity="0" fill="none" stroke="none" aria-hidden="false">${escapeXml(labelText)}</text>`
+      : "";
+    return `<g class="asy-native-label"${attributes}>${context.elements.join("")}${semanticText}</g>`;
+  }
   serialize(): string {
+    this.finalizeOpenNativeLabels();
     const title = this.accessibility.title;
     const description = this.accessibility.description;
     const titleId = title ? `asy-title-${accessibilityId += 1}` : undefined;

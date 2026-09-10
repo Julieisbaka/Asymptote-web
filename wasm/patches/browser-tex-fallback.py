@@ -57,7 +57,7 @@ def main():
     }
     (*t)[0]=width;
   (*t)[1]=fontsize;
-  (*t)[2]=0.0;
+  (*t)[2]=0.2*fontsize;
   return t;
 }
 """

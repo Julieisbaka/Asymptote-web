@@ -210,10 +210,37 @@ def build_replacement():
         patharray *P=new array(0);
         double x=0.0;
         for(size_t ci=0; ci < str.size(); ++ci) {{
-                        unsigned char character=static_cast<unsigned char>(str[ci]);
+            unsigned int codepoint=static_cast<unsigned char>(str[ci]);
+            if((codepoint & 0xE0u) == 0xC0u && ci+1 < str.size()) {{
+                unsigned int c1=static_cast<unsigned char>(str[ci+1]);
+                codepoint=((codepoint & 0x1Fu) << 6) | (c1 & 0x3Fu);
+                ++ci;
+            }} else if((codepoint & 0xF0u) == 0xE0u && ci+2 < str.size()) {{
+                unsigned int c1=static_cast<unsigned char>(str[ci+1]);
+                unsigned int c2=static_cast<unsigned char>(str[ci+2]);
+                codepoint=((codepoint & 0x0Fu) << 12) | ((c1 & 0x3Fu) << 6) | (c2 & 0x3Fu);
+                ci += 2;
+            }}
+            unsigned char character='?';
+            switch(codepoint) {{
+                case 0x03B1: character='a'; break; // alpha
+                case 0x03B2: character='b'; break; // beta
+                case 0x03B3: character='g'; break; // gamma
+                case 0x0394: character='D'; break; // Delta
+                case 0x03A9: character='W'; break; // Omega
+                case 0x2212: character='-'; break; // minus
+                case 0x00B1: character='+'; break; // plus-minus
+                case 0x2264: character='<'; break; // <=
+                case 0x2265: character='>'; break; // >=
+                case 0x2192: character='>'; break; // arrow
+                case 0x221E: character='8'; break; // infinity
+                default:
+                    if(codepoint <= 0xFFu) character=static_cast<unsigned char>(codepoint);
+                    break;
+            }}
             size_t glyph=questionGlyph;
             for(size_t gi=0; gi < sizeof(glyphChars)-1; ++gi)
-                                if(glyphChars[gi] == character) {{ glyph=gi; break; }}
+                if(glyphChars[gi] == character) {{ glyph=gi; break; }}
             for(size_t si=glyphOffsets[glyph]; si < glyphOffsets[glyph+1]; si += 4) {{
                 double x0=x+glyphData[si]*em/10.0, y0=glyphData[si+1]*em/10.0;
                 double x1=x+glyphData[si+2]*em/10.0, y1=glyphData[si+3]*em/10.0;

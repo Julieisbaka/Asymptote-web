@@ -252,12 +252,12 @@ test("maps styled and symbolic PostScript fonts", () => {
     "/AvantGarde-BookOblique findfont 12 scalefont setfont 60 20 moveto (f) show"
   );
 
-  assert.match(svg, /font-family="Arial, sans-serif"[^>]*font-weight="bold"[^>]*font-style="italic"/);
+  assert.match(svg, /font-family="Arial, sans-serif"[^>]*font-weight="700"[^>]*font-style="oblique"/);
   assert.match(svg, /font-family="Symbol, serif"/);
-  assert.match(svg, /font-family="Times New Roman, serif"[^>]*font-weight="bold"[^>]*font-style="italic"/);
+  assert.match(svg, /font-family="Times New Roman, serif"[^>]*font-weight="700"[^>]*font-style="italic"/);
   assert.match(svg, /font-family="Courier New, monospace"[^>]*font-style="italic"/);
-  assert.match(svg, /font-family="Palatino Linotype, Palatino, serif"[^>]*font-weight="bold"/);
-  assert.match(svg, /font-family="Avant Garde, Century Gothic, sans-serif"[^>]*font-style="italic"/);
+  assert.match(svg, /font-family="Palatino Linotype, Palatino, serif"[^>]*font-weight="700"/);
+  assert.match(svg, /font-family="Avant Garde, Century Gothic, sans-serif"[^>]*font-style="oblique"/);
 });
 
 test("emits per-character spacing adjustments", () => {
@@ -307,4 +307,91 @@ test("native text patch includes lowercase glyphs and proportional advances", as
   assert.match(patch, /glyphAdvanceTenths/);
   assert.doesNotMatch(patch, /character >= 'a' && character <= 'z'/);
   assert.match(patch, /glyphChars\[gi\] == character/);
+});
+
+test("supports rich custom font descriptors with inferred fallback styles", () => {
+  const svg = convert(
+    "/Helvetica-BoldOblique findfont 12 scalefont setfont 10 20 moveto (A) show " +
+    "/UnknownNarrowPS-BoldMT findfont 12 scalefont setfont 20 20 moveto (B) show",
+    {
+      fonts: {
+        Helvetica: { family: "Inter", fallbacks: ["Arial", "sans-serif"], weight: 500 },
+      },
+    }
+  );
+
+  assert.match(svg, /font-family="Inter, Arial, sans-serif"[^>]*font-weight="500"[^>]*font-style="oblique"/);
+  assert.match(svg, /font-family="UnknownNarrowPS-BoldMT, sans-serif"[^>]*font-weight="700"[^>]*font-stretch="condensed"/);
+});
+
+test("reports unknown fonts once per font name", () => {
+  const result = epsToSvgWithWarnings(
+    header +
+    "/MysterySans findfont 10 scalefont setfont 0 10 moveto (A) show " +
+    "/MysterySans findfont 10 scalefont setfont 0 20 moveto (B) show " +
+    "/AnotherMystery findfont 10 scalefont setfont 0 30 moveto (C) show"
+  );
+
+  const warnings = result.warnings.filter((warning) => /unknown font/.test(warning));
+  assert.equal(warnings.length, 2);
+});
+
+test("warns for malformed custom font descriptors", () => {
+  const result = epsToSvgWithWarnings(
+    header + "/BadFont findfont 10 scalefont setfont 0 10 moveto (A) show",
+    {
+      fonts: {
+        BadFont: {},
+      },
+    }
+  );
+
+  assert.match(result.warnings.join("\n"), /malformed custom font descriptor/);
+});
+
+test("groups native-label paths and emits semantic metadata", () => {
+  const result = epsToSvgWithWarnings(
+    header +
+    "<< /text (alpha) /font (Helvetica) /size 12 >> asy_label_begin " +
+    "newpath 10 10 moveto 20 20 lineto stroke " +
+    "asy_label_end"
+  );
+
+  assert.match(result.svg, /<g class="asy-native-label"[^>]*data-asy-label-text="alpha"[^>]*>/);
+  assert.match(result.svg, /<g class="asy-native-label"[\s\S]*<path /);
+  assert.match(result.svg, /<text opacity="0" fill="none" stroke="none" aria-hidden="false">alpha<\/text>/);
+});
+
+test("warns on malformed or unmatched native-label markers", () => {
+  const result = epsToSvgWithWarnings(
+    header +
+    "(bad) asy_label_begin " +
+    "newpath 0 0 moveto 10 0 lineto stroke " +
+    "asy_label_end"
+  );
+
+  assert.match(result.warnings.join("\n"), /malformed native-label begin marker/);
+  assert.match(result.warnings.join("\n"), /unmatched native-label end marker/);
+});
+
+test("native text patch decodes UTF-8 Greek and math aliases", async () => {
+  const patch = await readFile(new URL("../wasm/patches/native-text-font.py", import.meta.url), "utf8");
+
+  assert.match(patch, /unsigned int codepoint/);
+  assert.match(patch, /case 0x03B1: character='a'/);
+  assert.match(patch, /case 0x2264: character='<'/);
+  assert.match(patch, /case 0x221E: character='8'/);
+});
+
+test("browser TeX fallback includes descender depth", async () => {
+  const patch = await readFile(new URL("../wasm/patches/browser-tex-fallback.py", import.meta.url), "utf8");
+
+  assert.match(patch, /\(\*t\)\[2\]=0\.2\*fontsize/);
+});
+
+test("native label metadata patch emits begin/end marker operators", async () => {
+  const patch = await readFile(new URL("../wasm/patches/native-label-metadata.py", import.meta.url), "utf8");
+
+  assert.match(patch, /asy_label_begin/);
+  assert.match(patch, /asy_label_end/);
 });

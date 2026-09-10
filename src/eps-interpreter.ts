@@ -381,6 +381,15 @@ export class PostScriptInterpreter {
       case "eoclip":
         this.writer.clip(this.state, true);
         break;
+      case "asy_label_begin": {
+        const metadata = this.stack.pop();
+        if (isDictionary(metadata)) this.writer.beginNativeLabel(metadata);
+        else this.warn("ignored malformed native-label begin marker");
+        break;
+      }
+      case "asy_label_end":
+        if (!this.writer.endNativeLabel()) this.warn("ignored unmatched native-label end marker");
+        break;
       case "showpage":
       case "grestoreall":
         break;

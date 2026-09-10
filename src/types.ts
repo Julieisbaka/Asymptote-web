@@ -36,6 +36,23 @@ export interface SvgAccessibility {
   describedBy?: string;
 }
 
+/** Rich CSS font descriptor used by EPS/PS-to-SVG conversion. */
+export interface SvgFontDescriptor {
+  /** Primary CSS font-family name, for example `Inter` or `Times New Roman`. */
+  family?: string;
+  /** Optional fallback family names appended after {@link family}. */
+  fallbacks?: string[];
+  /** Optional CSS font-weight value (`normal`, `bold`, `600`, etc.). */
+  weight?: string | number;
+  /** Optional CSS font-style value (`normal`, `italic`, `oblique`). */
+  style?: string;
+  /** Optional CSS font-stretch value (`condensed`, `expanded`, etc.). */
+  stretch?: string;
+}
+
+/** Custom PostScript font mapping table for SVG conversion. */
+export type SvgFontMap = Record<string, string | SvgFontDescriptor>;
+
 /** Options accepted by {@link AsymptoteEngine.render}. */
 export interface RenderOptions {
   /**
@@ -147,6 +164,9 @@ export interface RenderOptions {
   /** Optional accessible metadata added to generated SVG output. */
   accessibility?: SvgAccessibility;
 
+  /** Optional PostScript-to-CSS font mappings for SVG conversion. */
+  svgFonts?: SvgFontMap;
+
   /**
    * Respect the host page's `prefers-reduced-motion` preference for WebGL
    * output. Defaults to true.
@@ -178,7 +198,8 @@ export interface CreateOptions {
    * URL of the Emscripten-generated `asymptote.js` glue module.
    *
    * Set this when a bundler relocates the wrapper module during dependency
-   * optimization, such as Vite's `node_modules/.vite/deps` directory.
+   * optimization, such as Vite's 
+ode_modules/.vite/deps` directory.
    */
   glueUrl?: string;
 
@@ -315,14 +336,16 @@ export interface AsymptoteEngine {
    */
   readonly unsafe: {
     /**
-     * Return the live SVG child currently mounted in the target, or `null`
+     * Return the live SVG child currently mounted in the target, or 
+ull`
      * when the target is missing or does not contain a direct SVG child.
      * The returned element may be modified freely by the caller.
      */
     getSvg(target: string | Element): SVGSVGElement | null;
 
     /**
-     * Return the live WebGL iframe currently mounted in the target, or `null`
+     * Return the live WebGL iframe currently mounted in the target, or 
+ull`
      * when the target is missing or does not contain a direct iframe child.
      * The returned iframe and same-origin document may be modified freely.
      */

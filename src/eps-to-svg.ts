@@ -5,14 +5,14 @@
 import { PostScriptInterpreter } from "./eps-interpreter.js";
 import { PostScriptTokenizer } from "./eps-tokenizer.js";
 import { SvgWriter } from "./eps-svg-writer.js";
-import type { SvgAccessibility } from "./types.js";
+import type { SvgAccessibility, SvgFontMap } from "./types.js";
 
 /** Options for the in-process EPS/PS-to-SVG converter. */
 export interface EpsToSvgOptions {
   /** Number of decimal places used for generated coordinates. Defaults to 3. */
   precision?: number;
   /** PostScript font names mapped to CSS font-family values. */
-  fonts?: Record<string, string>;
+  fonts?: SvgFontMap;
   /** Optional accessible metadata added to the generated SVG. */
   accessibility?: SvgAccessibility;
 }
@@ -96,5 +96,5 @@ export function epsToSvgWithWarnings(
   );
   const interpreter = new PostScriptInterpreter(new PostScriptTokenizer(eps), writer);
   interpreter.run();
-  return { svg: writer.serialize(), warnings: interpreter.getWarnings() };
+  return { svg: writer.serialize(), warnings: [...interpreter.getWarnings(), ...writer.getWarnings()] };
 }

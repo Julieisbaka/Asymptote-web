@@ -144,6 +144,7 @@ helper is also exported for parsing captured Asymptote output.
 | `primeWebGLZoom` | `boolean` | `true` | Prime the viewer's zoom handling with a synthetic interaction. |
 | `raw` | `boolean` | `false` | For the default SVG mode, return the native EPS instead of converting it to SVG. |
 | `svgPrecision` | `number` | `3` | Opt-in number of decimal places for generated SVG coordinates. Valid range: 0–12. |
+| `svgFonts` | `SvgFontMap` | `{}` | Optional PostScript-to-CSS font mapping for SVG conversion (`family`, `fallbacks`, `weight`, `style`, `stretch`). |
 | `reuseSvg` | `boolean` | `false` | For `mount()`, reuse an existing direct child SVG instead of replacing it. |
 
 The default SVG path is WASM-safe: Asymptote generates native EPS and the
@@ -152,22 +153,25 @@ package converts that EPS to SVG in-process. The browser build forces
 available inside the WASM runtime.
 
 For standalone EPS/PS conversion, custom CSS fonts can be selected by mapping
-PostScript font names to `font-family` values:
+PostScript font names to either plain `font-family` strings or rich descriptors.
+The same map is available from `render({ svgFonts })`.
 
 ```ts
 const svg = epsToSvg(eps, {
   fonts: {
-    Helvetica: "Inter, sans-serif",
+    Helvetica: { family: "Inter", fallbacks: ["Arial", "sans-serif"], weight: 500 },
     MyPostScriptFont: "My Web Font, sans-serif",
   },
 });
-```
+``` 
 
 The fonts must already be installed or loaded by the host page, for example
 with `@font-face`. The converter recognizes common PostScript/Base 35 aliases
 such as Times, Helvetica/Arial, Courier, Symbol, Zapf Dingbats, Palatino,
 Bookman, New Century Schoolbook, Avant Garde, and Zapf Chancery, including
-bold/italic variants where browsers can represent them. This option affects
+bold/italic/stretch variants where browsers can represent them. Unknown fonts
+preserve the original PostScript family and receive a generic fallback, and
+malformed descriptors are reported as converter warnings. This option affects
 EPS/PS `<text>` output; normal Asymptote browser labels remain vector paths in
 the current WASM fallback.
 

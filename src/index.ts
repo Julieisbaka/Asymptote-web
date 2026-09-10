@@ -43,6 +43,8 @@ export type {
   RenderResult,
   WebGLIframeStyles,
   SvgAccessibility,
+  SvgFontDescriptor,
+  SvgFontMap,
   WebGLLabel,
   UnsafeSvgCustomizer,
   UnsafeWebGLCustomizer,
