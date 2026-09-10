@@ -200,7 +200,9 @@ const url = URL.createObjectURL(pdf);
 The PDF helper renders SVG, rasterizes that SVG into the PDF page image, and
 adds a real text layer for SVG `<text>` labels. This keeps labels selectable
 and searchable while preserving the current browser-safe rendering pipeline.
-It is a hybrid raster PDF export, not native vector PDF output.
+Native fallback labels that Asymptote emits as vector paths can be made
+selectable by passing matching `textRuns`. It is a hybrid raster PDF export,
+not native vector PDF output.
 
 Raw flags remain available for Asymptote features that do not have typed
 options:
@@ -336,8 +338,9 @@ Options include:
 | `scale` | `number` | `2` | Rasterization scale before JPEG embedding. Higher values improve zoom/print quality but increase file size. |
 | `background` | `string \| null` | `"white"` | Canvas background used before rasterization. |
 | `quality` | `number` | browser default | JPEG quality from 0 to 1. |
+| `margin` | `number \| { top?, right?, bottom?, left? }` | `0` | Extra page space around the SVG before rasterization, useful when labels extend beyond the SVG viewport. |
 | `textMode` | `"invisible" \| "visible" \| "none"` | `"invisible"` | Whether to add invisible selectable text, visible overlay text, or no text layer. |
-| `textRuns` | `PdfTextRun[]` | auto-extracted SVG text | Explicit text runs to write into the PDF. |
+| `textRuns` | `PdfTextRun[]` | auto-extracted SVG text | Explicit text runs to write into the PDF; use this for native fallback labels that are drawn as paths. |
 | `render` | `RenderOptions` except `format` | `{}` | Options passed to `engine.render()`; PDF export forces SVG output. |
 
 ### `svgToPdfBlob(svg, options?)`

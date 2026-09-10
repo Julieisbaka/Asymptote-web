@@ -27,8 +27,10 @@ function latin1(bytes) {
 
 test("imageToPdfBytes embeds a JPEG image and selectable text layer", () => {
   const pdf = imageToPdfBytes(jpeg, {
-    imageWidth: 100,
-    imageHeight: 50,
+    imageWidth: 300,
+    imageHeight: 150,
+    pageWidth: 100,
+    pageHeight: 50,
     textMode: "invisible",
     title: "PDF export smoke test",
     textRuns: [
@@ -42,6 +44,7 @@ test("imageToPdfBytes embeds a JPEG image and selectable text layer", () => {
   assert.match(text, /\/Filter \/DCTDecode/);
   assert.match(text, /\/BaseFont \/Helvetica/);
   assert.match(text, /3 Tr/);
+  assert.match(text, /1 0 0 1 10 30 Tm/);
   assert.match(text, /\(Selectable label\) Tj/);
   assert.match(text, /xref\n0 10/);
   assert.match(text, /%%EOF\n$/);

@@ -218,6 +218,12 @@ interface PdfOptions {
   scale?: number;
   background?: string | null;
   quality?: number;
+  margin?: number | {
+    top?: number;
+    right?: number;
+    bottom?: number;
+    left?: number;
+  };
   textMode?: "invisible" | "visible" | "none";
   textRuns?: readonly PdfTextRun[];
   title?: string;
