@@ -116,7 +116,8 @@ interface CreateOptions {
 `EpsToSvgOptions` also accepts `fonts?: Record<string, string>`, mapping
 PostScript font names to CSS `font-family` values for standalone EPS/PS
 conversion. The host page is responsible for loading or installing those
-fonts.
+fonts. Common PostScript/Base 35 names are mapped to browser-friendly CSS font
+families with bold and italic styles when available.
 
 `glueUrl` can be set to the Emscripten `asymptote.js` URL when a bundler
 relocates the wrapper module during dependency optimization. This is commonly

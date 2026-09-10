@@ -164,13 +164,19 @@ const svg = epsToSvg(eps, {
 ```
 
 The fonts must already be installed or loaded by the host page, for example
-with `@font-face`. This option affects EPS/PS `<text>` output; normal Asymptote
-browser labels remain vector paths in the current WASM fallback.
+with `@font-face`. The converter recognizes common PostScript/Base 35 aliases
+such as Times, Helvetica/Arial, Courier, Symbol, Zapf Dingbats, Palatino,
+Bookman, New Century Schoolbook, Avant Garde, and Zapf Chancery, including
+bold/italic variants where browsers can represent them. This option affects
+EPS/PS `<text>` output; normal Asymptote browser labels remain vector paths in
+the current WASM fallback.
 
-Ordinary labels use the bundled native vector fallback. Explicit `texsize()`
-calls return approximate native metrics, while explicit `texpath()` calls
-return an empty path array and emit a warning because TeX shaping is not
-available in the browser build.
+Ordinary labels use the bundled native vector fallback. The fallback includes
+digits, uppercase and lowercase ASCII letters, and common punctuation with
+simple proportional advances; it is intended for browser-safe labels, not full
+TeX shaping. Explicit `texsize()` calls return approximate native metrics,
+while explicit `texpath()` calls return an empty path array and emit a warning
+because TeX shaping is not available in the browser build.
 
 EPS and PS output can be retrieved as text:
 

@@ -245,11 +245,19 @@ test("merges adjacent same-color image pixels into single runs", () => {
 test("maps styled and symbolic PostScript fonts", () => {
   const svg = convert(
     "/Helvetica-BoldOblique findfont 12 scalefont setfont 10 20 moveto (A) show " +
-    "/Symbol findfont 12 scalefont setfont 20 20 moveto (b) show"
+    "/Symbol findfont 12 scalefont setfont 20 20 moveto (b) show " +
+    "/TimesNewRomanPS-BoldItalicMT findfont 12 scalefont setfont 30 20 moveto (c) show " +
+    "/CourierNewPS-ItalicMT findfont 12 scalefont setfont 40 20 moveto (d) show " +
+    "/Palatino-Bold findfont 12 scalefont setfont 50 20 moveto (e) show " +
+    "/AvantGarde-BookOblique findfont 12 scalefont setfont 60 20 moveto (f) show"
   );
 
   assert.match(svg, /font-family="Arial, sans-serif"[^>]*font-weight="bold"[^>]*font-style="italic"/);
   assert.match(svg, /font-family="Symbol, serif"/);
+  assert.match(svg, /font-family="Times New Roman, serif"[^>]*font-weight="bold"[^>]*font-style="italic"/);
+  assert.match(svg, /font-family="Courier New, monospace"[^>]*font-style="italic"/);
+  assert.match(svg, /font-family="Palatino Linotype, Palatino, serif"[^>]*font-weight="bold"/);
+  assert.match(svg, /font-family="Avant Garde, Century Gothic, sans-serif"[^>]*font-style="italic"/);
 });
 
 test("emits per-character spacing adjustments", () => {
@@ -290,9 +298,13 @@ test("keeps psToSvg as the public alias", () => {
   assert.equal(psToSvg, epsToSvg);
 });
 
-test("native text patch normalizes lowercase glyph lookup", async () => {
+test("native text patch includes lowercase glyphs and proportional advances", async () => {
   const patch = await readFile(new URL("../wasm/patches/native-text-font.py", import.meta.url), "utf8");
 
-  assert.match(patch, /character >= 'a' && character <= 'z'/);
+  assert.match(patch, /"a": strokes/);
+  assert.match(patch, /"z": strokes/);
+  assert.match(patch, /"&": strokes/);
+  assert.match(patch, /glyphAdvanceTenths/);
+  assert.doesNotMatch(patch, /character >= 'a' && character <= 'z'/);
   assert.match(patch, /glyphChars\[gi\] == character/);
 });

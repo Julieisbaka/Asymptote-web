@@ -44,45 +44,166 @@ function toCssFont(font: string, customFonts: Record<string, string> = {}): CssF
     case "Times-Roman":
     case "Times":
     case "TimesNewRoman":
+    case "TimesRoman":
+    case "TimesNewRomanPSMT":
       return { family: "Times New Roman, serif" };
     case "Times-Bold":
     case "TimesNewRoman-Bold":
+    case "TimesBold":
+    case "TimesNewRomanPS-BoldMT":
       return { family: "Times New Roman, serif", weight: "bold" };
     case "Times-Italic":
     case "TimesNewRoman-Italic":
+    case "TimesItalic":
+    case "TimesNewRomanPS-ItalicMT":
       return { family: "Times New Roman, serif", style: "italic" };
     case "Times-BoldItalic":
     case "TimesNewRoman-BoldItalic":
+    case "TimesBoldItalic":
+    case "TimesNewRomanPS-BoldItalicMT":
       return { family: "Times New Roman, serif", weight: "bold", style: "italic" };
     case "Helvetica":
     case "Arial":
     case "ArialMT":
+    case "HelveticaNeue":
       return { family: "Arial, sans-serif" };
     case "Helvetica-Bold":
     case "Arial-BoldMT":
+    case "HelveticaNeue-Bold":
+    case "ArialBoldMT":
       return { family: "Arial, sans-serif", weight: "bold" };
     case "Helvetica-Oblique":
     case "Arial-ItalicMT":
+    case "Helvetica-Italic":
+    case "HelveticaNeue-Italic":
+    case "ArialItalicMT":
       return { family: "Arial, sans-serif", style: "italic" };
     case "Helvetica-BoldOblique":
     case "Arial-BoldItalicMT":
+    case "Helvetica-BoldItalic":
+    case "HelveticaNeue-BoldItalic":
+    case "ArialBoldItalicMT":
       return { family: "Arial, sans-serif", weight: "bold", style: "italic" };
+    case "Helvetica-Narrow":
+    case "HelveticaNarrow":
+      return { family: "Arial Narrow, Arial, sans-serif" };
+    case "Helvetica-Narrow-Bold":
+    case "HelveticaNarrowBold":
+      return { family: "Arial Narrow, Arial, sans-serif", weight: "bold" };
+    case "Helvetica-Narrow-Oblique":
+    case "HelveticaNarrowOblique":
+    case "Helvetica-Narrow-Italic":
+    case "HelveticaNarrowItalic":
+      return { family: "Arial Narrow, Arial, sans-serif", style: "italic" };
+    case "Helvetica-Narrow-BoldOblique":
+    case "HelveticaNarrowBoldOblique":
+    case "Helvetica-Narrow-BoldItalic":
+    case "HelveticaNarrowBoldItalic":
+      return { family: "Arial Narrow, Arial, sans-serif", weight: "bold", style: "italic" };
     case "Courier":
     case "CourierNew":
+    case "CourierNewPSMT":
       return { family: "Courier New, monospace" };
     case "Courier-Bold":
     case "CourierNew-Bold":
+    case "CourierBold":
+    case "CourierNewPS-BoldMT":
       return { family: "Courier New, monospace", weight: "bold" };
     case "Courier-Oblique":
     case "CourierNew-Italic":
+    case "Courier-Italic":
+    case "CourierOblique":
+    case "CourierItalic":
+    case "CourierNewPS-ItalicMT":
       return { family: "Courier New, monospace", style: "italic" };
     case "Courier-BoldOblique":
     case "CourierNew-BoldItalic":
+    case "Courier-BoldItalic":
+    case "CourierBoldOblique":
+    case "CourierBoldItalic":
+    case "CourierNewPS-BoldItalicMT":
       return { family: "Courier New, monospace", weight: "bold", style: "italic" };
     case "Symbol":
       return { family: "Symbol, serif" };
     case "ZapfDingbats":
       return { family: "Zapf Dingbats, sans-serif" };
+    case "Palatino-Roman":
+    case "PalatinoRoman":
+    case "PalatinoLinotype-Roman":
+    case "PalatinoLinotypeRoman":
+      return { family: "Palatino Linotype, Palatino, serif" };
+    case "Palatino-Bold":
+    case "PalatinoBold":
+    case "PalatinoLinotype-Bold":
+    case "PalatinoLinotypeBold":
+      return { family: "Palatino Linotype, Palatino, serif", weight: "bold" };
+    case "Palatino-Italic":
+    case "PalatinoItalic":
+    case "PalatinoLinotype-Italic":
+    case "PalatinoLinotypeItalic":
+      return { family: "Palatino Linotype, Palatino, serif", style: "italic" };
+    case "Palatino-BoldItalic":
+    case "PalatinoBoldItalic":
+    case "PalatinoLinotype-BoldItalic":
+    case "PalatinoLinotypeBoldItalic":
+      return { family: "Palatino Linotype, Palatino, serif", weight: "bold", style: "italic" };
+    case "Bookman-Light":
+    case "BookmanLight":
+    case "BookmanOldStyle":
+      return { family: "Bookman Old Style, serif" };
+    case "Bookman-Demi":
+    case "BookmanDemi":
+    case "BookmanOldStyle-Bold":
+    case "BookmanOldStyleBold":
+      return { family: "Bookman Old Style, serif", weight: "bold" };
+    case "Bookman-LightItalic":
+    case "BookmanLightItalic":
+    case "BookmanOldStyle-Italic":
+    case "BookmanOldStyleItalic":
+      return { family: "Bookman Old Style, serif", style: "italic" };
+    case "Bookman-DemiItalic":
+    case "BookmanDemiItalic":
+    case "BookmanOldStyle-BoldItalic":
+    case "BookmanOldStyleBoldItalic":
+      return { family: "Bookman Old Style, serif", weight: "bold", style: "italic" };
+    case "NewCenturySchlbk-Roman":
+    case "NewCenturySchlbkRoman":
+    case "CenturySchoolbook":
+      return { family: "Century Schoolbook, serif" };
+    case "NewCenturySchlbk-Bold":
+    case "NewCenturySchlbkBold":
+    case "CenturySchoolbook-Bold":
+    case "CenturySchoolbookBold":
+      return { family: "Century Schoolbook, serif", weight: "bold" };
+    case "NewCenturySchlbk-Italic":
+    case "NewCenturySchlbkItalic":
+    case "CenturySchoolbook-Italic":
+    case "CenturySchoolbookItalic":
+      return { family: "Century Schoolbook, serif", style: "italic" };
+    case "NewCenturySchlbk-BoldItalic":
+    case "NewCenturySchlbkBoldItalic":
+    case "CenturySchoolbook-BoldItalic":
+    case "CenturySchoolbookBoldItalic":
+      return { family: "Century Schoolbook, serif", weight: "bold", style: "italic" };
+    case "AvantGarde-Book":
+    case "AvantGardeBook":
+      return { family: "Avant Garde, Century Gothic, sans-serif" };
+    case "AvantGarde-Demi":
+    case "AvantGardeDemi":
+      return { family: "Avant Garde, Century Gothic, sans-serif", weight: "bold" };
+    case "AvantGarde-BookOblique":
+    case "AvantGardeBookOblique":
+    case "AvantGarde-BookItalic":
+    case "AvantGardeBookItalic":
+      return { family: "Avant Garde, Century Gothic, sans-serif", style: "italic" };
+    case "AvantGarde-DemiOblique":
+    case "AvantGardeDemiOblique":
+    case "AvantGarde-DemiItalic":
+    case "AvantGardeDemiItalic":
+      return { family: "Avant Garde, Century Gothic, sans-serif", weight: "bold", style: "italic" };
+    case "ZapfChancery-MediumItalic":
+    case "ZapfChanceryMediumItalic":
+      return { family: "Apple Chancery, Zapf Chancery, cursive", style: "italic" };
     default:
       // Preserve the original PostScript font name in the CSS stack in case
       // the host page happens to have a matching font installed.

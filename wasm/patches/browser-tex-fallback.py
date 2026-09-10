@@ -39,11 +39,23 @@ def main():
 
     texsize = """realarray *texsize(string *s, pen p=CURRENTPEN)
 {
-  // Browser fallback: native vector labels use approximate em metrics.
+    // Browser fallback: native vector labels use approximate em metrics that
+    // match the compact textpath() fallback's simple proportional advances.
   realarray *t=new array(3);
   double fontsize=p.size();
   if(fontsize <= 0) fontsize=10.0;
-  (*t)[0]=0.6*fontsize*s->size();
+    double em=fontsize/7.0;
+    double width=0.0;
+    for(size_t i=0; i < s->size(); ++i) {
+        unsigned char c=static_cast<unsigned char>((*s)[i]);
+        if(c == ' ') width += 3.5*em;
+        else if(c == 'i' || c == 'l' || c == '.' || c == ',' || c == '\\'' || c == '|') width += 2.5*em;
+        else if(c == 'I' || c == 'j' || c == '\"') width += 3.5*em;
+        else if(c == 'm' || c == 'M' || c == 'W' || c == 'w') width += 7.0*em;
+        else if(c == '!' || c == ':' || c == ';') width += 3.0*em;
+        else width += 6.0*em;
+    }
+    (*t)[0]=width;
   (*t)[1]=fontsize;
   (*t)[2]=0.0;
   return t;

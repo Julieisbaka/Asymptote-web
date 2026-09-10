@@ -16,8 +16,9 @@ def strokes(*segments):
 
 # Coordinates are in a 5x7 em square. Each segment is expanded into a narrow
 # filled quadrilateral in C++, so the result is still a patharray2 and keeps
-# the existing textpath() ABI. Lowercase input deliberately reuses uppercase
-# outlines to keep the browser fallback small and deterministic.
+# the existing textpath() ABI. The fallback is intentionally compact, but it
+# includes distinct lowercase outlines and common punctuation so browser labels
+# look less like shouted plotter text.
 GLYPH_STROKES = {
     " ": (),
     "0": strokes(
@@ -93,6 +94,32 @@ GLYPH_STROKES = {
     "X": strokes((0, 7, 5, 0), (5, 7, 0, 0)),
     "Y": strokes((0, 7, 2.5, 3.5), (5, 7, 2.5, 3.5), (2.5, 3.5, 2.5, 0)),
     "Z": strokes((0, 7, 5, 7), (5, 7, 0, 0), (0, 0, 5, 0)),
+    "a": strokes((0.5, 3, 1.5, 4), (1.5, 4, 4.5, 4), (4.5, 4, 4.5, 0), (4.5, 2, 1, 2), (1, 2, 0.5, 1), (0.5, 1, 1.5, 0), (1.5, 0, 4.5, 0)),
+    "b": strokes((0.5, 7, 0.5, 0), (0.5, 3.5, 2, 4), (2, 4, 4.5, 3.5), (4.5, 3.5, 4.5, 0.5), (4.5, 0.5, 2, 0), (2, 0, 0.5, 0.5)),
+    "c": strokes((4.5, 4, 1, 4), (1, 4, 0.5, 3.5), (0.5, 3.5, 0.5, 0.5), (0.5, 0.5, 1, 0), (1, 0, 4.5, 0)),
+    "d": strokes((4.5, 7, 4.5, 0), (4.5, 3.5, 3, 4), (3, 4, 0.5, 3.5), (0.5, 3.5, 0.5, 0.5), (0.5, 0.5, 3, 0), (3, 0, 4.5, 0.5)),
+    "e": strokes((0.5, 2, 4.5, 2), (4.5, 2, 4.5, 3.5), (4.5, 3.5, 3.5, 4), (3.5, 4, 1, 4), (1, 4, 0.5, 3.5), (0.5, 3.5, 0.5, 0.5), (0.5, 0.5, 1, 0), (1, 0, 4.5, 0)),
+    "f": strokes((4, 7, 2, 7), (2, 7, 1.5, 6), (1.5, 6, 1.5, 0), (0.5, 4, 3.5, 4)),
+    "g": strokes((4.5, 4, 4.5, -1.5), (4.5, -1.5, 3.5, -2), (3.5, -2, 1, -2), (1, -2, 0.5, -1.5), (0.5, 4, 4.5, 4), (0.5, 4, 0.5, 1), (0.5, 1, 1, 0.5), (1, 0.5, 4.5, 0.5)),
+    "h": strokes((0.5, 7, 0.5, 0), (0.5, 3.5, 2, 4), (2, 4, 4.5, 3.5), (4.5, 3.5, 4.5, 0)),
+    "i": strokes((2.5, 5.5, 2.5, 5.5), (2.5, 4, 2.5, 0)),
+    "j": strokes((3, 5.5, 3, 5.5), (3, 4, 3, -1.5), (3, -1.5, 2, -2), (2, -2, 0.5, -2)),
+    "k": strokes((0.5, 7, 0.5, 0), (4.5, 4, 0.5, 1.5), (2, 2, 4.5, 0)),
+    "l": strokes((2.5, 7, 2.5, 0)),
+    "m": strokes((0.5, 4, 0.5, 0), (0.5, 3.5, 1.5, 4), (1.5, 4, 2.5, 3.5), (2.5, 3.5, 2.5, 0), (2.5, 3.5, 3.5, 4), (3.5, 4, 4.5, 3.5), (4.5, 3.5, 4.5, 0)),
+    "n": strokes((0.5, 4, 0.5, 0), (0.5, 3.5, 2, 4), (2, 4, 4.5, 3.5), (4.5, 3.5, 4.5, 0)),
+    "o": strokes((1, 4, 4, 4), (4, 4, 4.5, 3.5), (4.5, 3.5, 4.5, 0.5), (4.5, 0.5, 4, 0), (4, 0, 1, 0), (1, 0, 0.5, 0.5), (0.5, 0.5, 0.5, 3.5), (0.5, 3.5, 1, 4)),
+    "p": strokes((0.5, 4, 0.5, -2), (0.5, 3.5, 2, 4), (2, 4, 4.5, 3.5), (4.5, 3.5, 4.5, 0.5), (4.5, 0.5, 2, 0), (2, 0, 0.5, 0.5)),
+    "q": strokes((4.5, 4, 4.5, -2), (4.5, 3.5, 3, 4), (3, 4, 0.5, 3.5), (0.5, 3.5, 0.5, 0.5), (0.5, 0.5, 3, 0), (3, 0, 4.5, 0.5)),
+    "r": strokes((0.5, 4, 0.5, 0), (0.5, 3, 2, 4), (2, 4, 4, 4)),
+    "s": strokes((4.5, 4, 1, 4), (1, 4, 0.5, 3.5), (0.5, 3.5, 4.5, 0.5), (4.5, 0.5, 4, 0), (4, 0, 0.5, 0)),
+    "t": strokes((2.5, 6, 2.5, 0.5), (2.5, 0.5, 3.5, 0), (1, 4, 4, 4)),
+    "u": strokes((0.5, 4, 0.5, 0.5), (0.5, 0.5, 2, 0), (2, 0, 4.5, 0.5), (4.5, 4, 4.5, 0)),
+    "v": strokes((0.5, 4, 2.5, 0), (2.5, 0, 4.5, 4)),
+    "w": strokes((0.5, 4, 1.5, 0), (1.5, 0, 2.5, 2.5), (2.5, 2.5, 3.5, 0), (3.5, 0, 4.5, 4)),
+    "x": strokes((0.5, 4, 4.5, 0), (4.5, 4, 0.5, 0)),
+    "y": strokes((0.5, 4, 2.5, 0), (4.5, 4, 2, -2), (2, -2, 0.5, -2)),
+    "z": strokes((0.5, 4, 4.5, 4), (4.5, 4, 0.5, 0), (0.5, 0, 4.5, 0)),
     ".": strokes((2, 0, 3, 0)),
     ",": strokes((2, 1, 3, 0)),
     "!": strokes((2.5, 7, 2.5, 2), (2.5, 0, 2.5, 0)),
@@ -116,26 +143,61 @@ GLYPH_STROKES = {
     "{": strokes((4, 7, 2, 7), (2, 7, 2, 0), (2, 0, 4, 0)),
     "}": strokes((1, 7, 3, 7), (3, 7, 3, 0), (3, 0, 1, 0)),
     "~": strokes((0, 4, 1, 5), (1, 5, 2, 4), (2, 4, 3, 3), (3, 3, 4, 4), (4, 4, 5, 5)),
+    "[": strokes((4, 7, 1, 7), (1, 7, 1, 0), (1, 0, 4, 0)),
+    "]": strokes((1, 7, 4, 7), (4, 7, 4, 0), (4, 0, 1, 0)),
+    "<": strokes((4.5, 6, 0.5, 3.5), (0.5, 3.5, 4.5, 1)),
+    ">": strokes((0.5, 6, 4.5, 3.5), (4.5, 3.5, 0.5, 1)),
+    "*": strokes((2.5, 6, 2.5, 1), (0.5, 4.75, 4.5, 2.25), (4.5, 4.75, 0.5, 2.25)),
+    "#": strokes((1.5, 7, 1, 0), (4, 7, 3.5, 0), (0.5, 5, 4.5, 5), (0.5, 2, 4.5, 2)),
+    "&": strokes((4.5, 0, 1.5, 3.5), (1.5, 3.5, 1, 5), (1, 5, 2, 6), (2, 6, 3, 5), (3, 5, 1, 2), (1, 2, 1.5, 0), (1.5, 0, 4, 0), (3, 2.5, 4.5, 0)),
+    "@": strokes((4, 1, 2, 1), (2, 1, 1, 2), (1, 2, 1, 5), (1, 5, 2, 6), (2, 6, 4, 6), (4, 6, 5, 5), (5, 5, 5, 2), (5, 2, 4, 1), (4, 4, 4, 2), (4, 2, 2.5, 2), (2.5, 2, 2.5, 4), (2.5, 4, 4, 4)),
+    "%": strokes((0.5, 0, 4.5, 7), (1, 6, 1, 6), (4, 1, 4, 1)),
+}
+
+ADVANCE_TENTHS = {
+    " ": 35,
+    "I": 35,
+    "i": 25,
+    "j": 35,
+    "l": 25,
+    "m": 70,
+    "M": 70,
+    "W": 70,
+    "w": 70,
+    ".": 25,
+    ",": 25,
+    "'": 25,
+    '"': 35,
+    "!": 30,
+    ":": 30,
+    ";": 30,
+    "|": 25,
 }
 
 
 def build_replacement():
-    glyph_chars = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ.,!?:;'\"-+=/()^$_{}~|\\"
+    glyph_chars = "".join(GLYPH_STROKES.keys())
     glyph_data = []
     offsets = [0]
+    advances = []
     for char in glyph_chars:
         for segment in GLYPH_STROKES.get(char, GLYPH_STROKES.get(char.upper(), ())):
             glyph_data.extend(segment)
         offsets.append(len(glyph_data))
+        advances.append(ADVANCE_TENTHS.get(char, 60))
     chars_literal = glyph_chars.replace("\\", "\\\\").replace('"', '\\"')
     data_literal = ",".join(str(int(value * 10)) for value in glyph_data)
     offsets_literal = ",".join(str(value) for value in offsets)
+    advances_literal = ",".join(str(value) for value in advances)
+    question_glyph = glyph_chars.index("?")
     return f"""patharray2 *textpath(stringarray *s, penarray *p)
 {{
     // Compact stroke-vector fallback; no groff/Ghostscript process is needed.
     static const char glyphChars[]="{chars_literal}";
     static const signed char glyphData[]={{ {data_literal} }};
     static const unsigned short glyphOffsets[]={{ {offsets_literal} }};
+    static const unsigned char glyphAdvanceTenths[]={{ {advances_literal} }};
+    static const size_t questionGlyph={question_glyph};
     size_t n=checkArrays(s,p);
     if(n == 0) return new array(0);
     patharray2 *PP=new array(0);
@@ -149,8 +211,7 @@ def build_replacement():
         double x=0.0;
         for(size_t ci=0; ci < str.size(); ++ci) {{
                         unsigned char character=static_cast<unsigned char>(str[ci]);
-                        if(character >= 'a' && character <= 'z') character -= 'a'-'A';
-            size_t glyph=0;
+            size_t glyph=questionGlyph;
             for(size_t gi=0; gi < sizeof(glyphChars)-1; ++gi)
                                 if(glyphChars[gi] == character) {{ glyph=gi; break; }}
             for(size_t si=glyphOffsets[glyph]; si < glyphOffsets[glyph+1]; si += 4) {{
@@ -168,7 +229,7 @@ def build_replacement():
                 }}
                 P->push(path(nodes,4,true));
             }}
-            x += 6.0*em;
+            x += glyphAdvanceTenths[glyph]*em/10.0;
         }}
         PP->push(P);
     }}
