@@ -26,7 +26,14 @@ import type { Dictionary, Operand } from "./eps-interpreter-types.js";
 import { SvgWriter } from "./eps-svg-writer.js";
 import { PostScriptTokenizer } from "./eps-tokenizer.js";
 
+// Thrown internally when nested array/dictionary literals go deeper than
+// MAX_NESTING_DEPTH, so malformed or adversarial input can't exhaust the
+// call stack; caught and turned into a warning in `run()`.
+class EpsNestingLimitError extends Error { }
+
 export class PostScriptInterpreter {
+  private static readonly MAX_NESTING_DEPTH = 64;
+  private nestingDepth = 0;
   private state: GraphicsState = {
     ctm: IDENTITY,
     fill: "black",
@@ -54,29 +61,39 @@ export class PostScriptInterpreter {
   ) { }
 
   run(): void {
-    for (let tok = this.tokens.next(); tok !== null; tok = this.tokens.next()) {
-      if (NUMBER_RE.test(tok)) {
-        this.stack.push(parseFloat(tok));
-        continue;
-      }
-      if (tok.startsWith("(") && tok.endsWith(")")) {
-        this.stack.push(unescapePostScriptString(tok));
-        continue;
-      }
-      if (tok === "[") {
-        this.stack.push(this.readArray());
-        continue;
-      }
-      if (tok === "<<") {
-        this.stack.push(this.readDictionary());
-        continue;
-      }
-      if (tok.startsWith("/")) {
-        this.stack.push(tok.slice(1));
-        continue;
-      }
+    try {
+      for (let tok = this.tokens.next(); tok !== null; tok = this.tokens.next()) {
+        if (NUMBER_RE.test(tok)) {
+          this.stack.push(parseFloat(tok));
+          continue;
+        }
+        if (tok.startsWith("(") && tok.endsWith(")")) {
+          this.stack.push(unescapePostScriptString(tok));
+          continue;
+        }
+        if (tok === "[") {
+          this.stack.push(this.readArray());
+          continue;
+        }
+        if (tok === "<<") {
+          this.stack.push(this.readDictionary());
+          continue;
+        }
+        if (tok.startsWith("/")) {
+          this.stack.push(tok.slice(1));
+          continue;
+        }
 
-      this.dispatch(tok);
+        this.dispatch(tok);
+      }
+    } catch (error) {
+      if (error instanceof EpsNestingLimitError) {
+        this.warn("stopped parsing: exceeded maximum nested array/dictionary depth");
+      } else if (error instanceof RangeError) {
+        this.warn("stopped parsing: input exceeded the interpreter's safe recursion depth");
+      } else {
+        throw error;
+      }
     }
   }
 
@@ -383,23 +400,35 @@ export class PostScriptInterpreter {
   }
 
   private readArray(): Operand[] {
-    const values: Operand[] = [];
-    for (let token = this.tokens.next(); token !== null && token !== "]"; token = this.tokens.next()) {
-      values.push(this.readValue(token));
+    this.nestingDepth += 1;
+    if (this.nestingDepth > PostScriptInterpreter.MAX_NESTING_DEPTH) throw new EpsNestingLimitError();
+    try {
+      const values: Operand[] = [];
+      for (let token = this.tokens.next(); token !== null && token !== "]"; token = this.tokens.next()) {
+        values.push(this.readValue(token));
+      }
+      return values;
+    } finally {
+      this.nestingDepth -= 1;
     }
-    return values;
   }
 
   private readDictionary(): Dictionary {
-    const dictionary: Dictionary = {};
-    for (let token = this.tokens.next(); token !== null && token !== ">>";) {
-      const key = token.startsWith("/") ? token.slice(1) : token;
-      const valueToken = this.tokens.next();
-      if (valueToken === null) break;
-      dictionary[key] = this.readValue(valueToken);
-      token = this.tokens.next() ?? ">>";
+    this.nestingDepth += 1;
+    if (this.nestingDepth > PostScriptInterpreter.MAX_NESTING_DEPTH) throw new EpsNestingLimitError();
+    try {
+      const dictionary: Dictionary = {};
+      for (let token = this.tokens.next(); token !== null && token !== ">>";) {
+        const key = token.startsWith("/") ? token.slice(1) : token;
+        const valueToken = this.tokens.next();
+        if (valueToken === null) break;
+        dictionary[key] = this.readValue(valueToken);
+        token = this.tokens.next() ?? ">>";
+      }
+      return dictionary;
+    } finally {
+      this.nestingDepth -= 1;
     }
-    return dictionary;
   }
 
   private readValue(token: string): Operand {

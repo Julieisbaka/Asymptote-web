@@ -5,6 +5,7 @@
 - Added a `title` attribute (`"Asymptote WebGL viewer"` by default, overridable via `webglTitle`) to mounted WebGL iframes so assistive technology announces them.
 - Sandboxed mounted WebGL iframes with `allow-scripts allow-same-origin`, removing capabilities like top-level navigation and popups that unsandboxed iframes previously had.
 - Fixed the WASM module staying permanently unusable after an uncaught crash during a render; the module is now reinitialized automatically on the next render instead of failing indefinitely.
+- Fixed `epsToSvg()`/`epsToSvgWithWarnings()` crashing with an uncaught stack-overflow error on EPS/PS input containing deeply nested array or dictionary literals; parsing now stops with a warning instead.
 
 ## 0.1.7
 
