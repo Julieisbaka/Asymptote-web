@@ -58,9 +58,11 @@ export default defineConfig({
   plugins: [serveEmscriptenGlueRaw(), cleanReleaseSourceMap(debugBuild)],
   build: {
     lib: {
-      entry: "src/index.ts",
+      entry: {
+        "asymptote-web": "src/index.ts",
+        pdf: "src/pdf.ts",
+      },
       name: "AsymptoteWeb",
-      fileName: "asymptote-web",
       formats: ["es"],
     },
     rollupOptions: {

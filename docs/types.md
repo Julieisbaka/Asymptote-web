@@ -193,3 +193,60 @@ class AsymptoteError extends Error {
   readonly diagnostics: CompilerDiagnostic[];
 }
 ```
+
+## Optional PDF subpath
+
+The `asymptote-web/pdf` subpath exports dependency-free helpers for hybrid
+raster PDF export with selectable SVG text labels. It is separate from the
+main entry point and is only loaded when imported directly.
+
+```ts
+interface PdfTextRun {
+  text: string;
+  x: number;
+  y: number;
+  fontSize?: number;
+  fontFamily?: string;
+  color?: string;
+  opacity?: number;
+  rotate?: number;
+}
+
+interface PdfOptions {
+  width?: number;
+  height?: number;
+  scale?: number;
+  background?: string | null;
+  quality?: number;
+  textMode?: "invisible" | "visible" | "none";
+  textRuns?: readonly PdfTextRun[];
+  title?: string;
+  author?: string;
+  subject?: string;
+  keywords?: string;
+  creator?: string;
+}
+
+interface RenderToPdfOptions extends PdfOptions {
+  render?: Omit<RenderOptions, "format">;
+}
+```
+
+Key functions:
+
+```ts
+function renderToPdfBlob(
+  engine: AsymptoteEngine,
+  source: string,
+  options?: RenderToPdfOptions
+): Promise<Blob>;
+
+function svgToPdfBlob(svg: string, options?: PdfOptions): Promise<Blob>;
+
+function downloadPdf(
+  engine: AsymptoteEngine,
+  source: string,
+  filename?: string,
+  options?: RenderToPdfOptions
+): Promise<RenderResult>;
+```

@@ -5,7 +5,9 @@ import { join } from "node:path";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const requiredFiles = [
   "dist/asymptote-web.js",
+  "dist/pdf.js",
   "dist/index.d.ts",
+  "dist/pdf.d.ts",
   "dist/asset-url.d.ts",
   "dist/asymptote-js.d.ts",
   "dist/asymptote.js",

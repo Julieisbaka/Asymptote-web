@@ -37,6 +37,10 @@
     "./asygl.js": {
       "types": "./dist/asset-url.d.ts",
       "default": "./dist/asygl.js"
+    },
+    "./pdf": {
+      "types": "./dist/pdf.d.ts",
+      "import": "./dist/pdf.js"
     }
   },
   "files": [

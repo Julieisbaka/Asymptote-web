@@ -186,6 +186,22 @@ PDF output is not available in the browser build. The candidate WASM build
 stubs the Ghostscript-backed PDF conversion and reports an explicit error;
 this does not affect SVG, EPS, PS, or WebGL output.
 
+For browser-generated PDF export, use the optional `asymptote-web/pdf`
+subpath. It is intentionally not imported by the main package entry, so PDF
+helpers and browser canvas work only load when requested:
+
+```ts
+import { renderToPdfBlob } from "asymptote-web/pdf";
+
+const pdf = await renderToPdfBlob(asy, "label(\"A selectable label\", origin);");
+const url = URL.createObjectURL(pdf);
+```
+
+The PDF helper renders SVG, rasterizes that SVG into the PDF page image, and
+adds a real text layer for SVG `<text>` labels. This keeps labels selectable
+and searchable while preserving the current browser-safe rendering pipeline.
+It is a hybrid raster PDF export, not native vector PDF output.
+
 Raw flags remain available for Asymptote features that do not have typed
 options:
 
@@ -286,6 +302,59 @@ await asy.download("draw(unitcircle);", undefined, { format: "eps" });
 
 This method requires browser `Blob`, `URL`, `document`, and anchor-download
 support. It is not intended for server-side rendering.
+
+## Optional PDF export: `asymptote-web/pdf`
+
+PDF helpers live in a separate subpath so applications that only render SVG,
+EPS, PS, or WebGL do not import any PDF code:
+
+```ts
+import { downloadPdf, renderToPdfBlob, svgToPdfBlob } from "asymptote-web/pdf";
+```
+
+### `renderToPdfBlob(engine, source, options?)`
+
+Renders Asymptote source as SVG, rasterizes the SVG in a browser canvas, and
+returns an `application/pdf` `Blob`. SVG `<text>` nodes are also written as a
+real PDF text layer so labels remain selectable/searchable:
+
+```ts
+const pdf = await renderToPdfBlob(asy, `
+  size(150);
+  draw(unitcircle);
+  label("selectable", origin);
+`, {
+  title: "Circle diagram",
+  scale: 3,
+});
+```
+
+Options include:
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `scale` | `number` | `2` | Rasterization scale before JPEG embedding. Higher values improve zoom/print quality but increase file size. |
+| `background` | `string \| null` | `"white"` | Canvas background used before rasterization. |
+| `quality` | `number` | browser default | JPEG quality from 0 to 1. |
+| `textMode` | `"invisible" \| "visible" \| "none"` | `"invisible"` | Whether to add invisible selectable text, visible overlay text, or no text layer. |
+| `textRuns` | `PdfTextRun[]` | auto-extracted SVG text | Explicit text runs to write into the PDF. |
+| `render` | `RenderOptions` except `format` | `{}` | Options passed to `engine.render()`; PDF export forces SVG output. |
+
+### `svgToPdfBlob(svg, options?)`
+
+Converts an existing SVG string to a PDF `Blob` using the same raster image +
+text-layer strategy. This is useful when you already have SVG output from
+`render()` or from `epsToSvg()`.
+
+### `downloadPdf(engine, source, filename?, options?)`
+
+Renders source, creates a PDF blob, and triggers a browser download. It returns
+the underlying SVG render result so callers can still inspect warnings and
+diagnostics.
+
+The browser helpers require DOM, `Blob`, `FileReader`, `Image`, and canvas
+support. The low-level `imageToPdfBytes()` helper accepts JPEG bytes directly
+and can also be used outside the browser.
 
 ### `mount(target, source, options?)`
 
