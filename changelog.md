@@ -2,6 +2,7 @@
 
 ## 0.2.0
 
+- Added optional browser-generated PDF export through `asymptote-web/pdf`, keeping PDF helpers out of the main bundle while supporting raster-backed PDFs with selectable/searchable text labels.
 - Added a `title` attribute (`"Asymptote WebGL viewer"` by default, overridable via `webglTitle`) to mounted WebGL iframes so assistive technology announces them.
 - Sandboxed mounted WebGL iframes with `allow-scripts allow-same-origin`, removing capabilities like top-level navigation and popups that unsandboxed iframes previously had.
 - Fixed the WASM module staying permanently unusable after an uncaught crash during a render; the module is now reinitialized automatically on the next render instead of failing indefinitely.
