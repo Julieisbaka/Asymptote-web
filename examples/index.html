@@ -90,6 +90,14 @@
       background: #2563eb;
     }
 
+    button.render-btn.secondary {
+      background: #334155;
+    }
+
+    button.render-btn.secondary:hover {
+      background: #1e293b;
+    }
+
     button.render-btn:disabled {
       background: #93c5fd;
       cursor: not-allowed;
@@ -160,9 +168,11 @@ for (int k = 0; k < n; ++k)
 star = star -- cycle;
 
 filldraw(star, yellow, black+1.5);
+label("Selectable PDF text", (0,-1.35), blue);
 </textarea>
       <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
         <button id="render-btn" class="render-btn">Render</button>
+        <button id="pdf-btn" class="render-btn secondary">Download PDF</button>
         <span id="status" class="status info">Loading Asymptote…</span>
       </div>
     </div>
@@ -212,6 +222,7 @@ draw(shift(2,0,0)*unitcube, red);
     import { createAsymptote, AsymptoteError } from "../dist/asymptote-web.js";
 
     const btn = document.getElementById("render-btn");
+    const pdfBtn = document.getElementById("pdf-btn");
     const status = document.getElementById("status");
     const output = document.getElementById("output-panel");
 
@@ -224,7 +235,7 @@ draw(shift(2,0,0)*unitcube, red);
     (async () => {
       try {
         asy = await createAsymptote();
-        for (const [b, s] of [[btn, status], [btn3d, status3d]]) {
+        for (const [b, s] of [[btn, status], [pdfBtn, status], [btn3d, status3d]]) {
           s.textContent = "Ready";
           s.className = "status info";
           b.disabled = false;
@@ -238,11 +249,20 @@ draw(shift(2,0,0)*unitcube, red);
     })();
 
     btn.disabled = true;
+    pdfBtn.disabled = true;
     btn3d.disabled = true;
+
+    function describeError(err) {
+      const isAsymptoteError = err instanceof AsymptoteError;
+      return isAsymptoteError
+        ? `ASYMPTOTE ERROR:\n${err.stderr}`
+        : `PACKAGE ERROR:\n${err instanceof Error ? err.message : String(err)}`;
+    }
 
     btn.addEventListener("click", async () => {
       if (!asy) return;
       btn.disabled = true;
+      pdfBtn.disabled = true;
       status.textContent = "Rendering…";
       status.className = "status info";
 
@@ -259,15 +279,47 @@ draw(shift(2,0,0)*unitcube, red);
         output.innerHTML = "";
         const errSpan = document.createElement("span");
         errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
-        const isAsymptoteError = err instanceof AsymptoteError;
-        errSpan.textContent = isAsymptoteError
-          ? `ASYMPTOTE ERROR:\n${err.stderr}`
-          : `PACKAGE ERROR:\n${err instanceof Error ? err.message : String(err)}`;
+        errSpan.textContent = describeError(err);
         output.appendChild(errSpan);
         status.textContent = "Render failed.";
         status.className = "status error";
       } finally {
         btn.disabled = false;
+        pdfBtn.disabled = false;
+      }
+    });
+
+    pdfBtn.addEventListener("click", async () => {
+      if (!asy) return;
+      btn.disabled = true;
+      pdfBtn.disabled = true;
+      status.textContent = "Rendering PDF…";
+      status.className = "status info";
+
+      try {
+        const source = document.getElementById("source").value;
+        // Keep the optional PDF module out of the initial demo bundle. It is
+        // loaded only when the user asks for PDF export.
+        const { downloadPdf } = await import("../dist/pdf.js");
+        const result = await downloadPdf(asy, source, "asymptote-web-demo.pdf", {
+          title: "Asymptote Web demo export",
+          scale: 3,
+        });
+        output.innerHTML = result.svg;
+        status.textContent = result.warnings.length
+          ? "PDF downloaded (with warnings):\n" + result.warnings.join("\n")
+          : "PDF downloaded ✓";
+        status.className = result.warnings.length ? "status error" : "status info";
+      } catch (err) {
+        status.textContent = "PDF export failed.";
+        status.className = "status error";
+        const errSpan = document.createElement("span");
+        errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
+        errSpan.textContent = describeError(err);
+        output.replaceChildren(errSpan);
+      } finally {
+        btn.disabled = false;
+        pdfBtn.disabled = false;
       }
     });
 
