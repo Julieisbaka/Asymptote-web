@@ -48,6 +48,33 @@ test("accepts scientific-notation bounding boxes", () => {
   assert.match(svg, /width="110" height="220"/);
 });
 
+test("prefers HiRes bounding boxes while accepting all numeric forms", () => {
+  const svg = epsToSvg(
+    "%!PS-Adobe-3.0 EPSF-3.0\n" +
+    "%%BoundingBox: 0 0 10 10\n" +
+    "%%HiResBoundingBox: -1. 2.5 .5 1e2\n"
+  );
+
+  assert.match(svg, /width="1\.5" height="97\.5"/);
+});
+
+test("falls back safely for malformed long bounding-box numbers", () => {
+  const malformedNumber = "9".repeat(10_000) + "x";
+  const svg = epsToSvg(
+    `%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: ${malformedNumber} 0 100 100\n`
+  );
+
+  assert.match(svg, /width="100" height="100"/);
+});
+
+test("accepts signed, trailing-decimal, leading-decimal, and exponent tokens", () => {
+  const svg = convert(
+    "newpath +1. -2.5 moveto .5 1e2 lineto stroke"
+  );
+
+  assert.match(svg, /<path d="M1,102\.5 L0\.5,0/);
+});
+
 test("normalizes invalid dimensions and tiny negative coordinates", () => {
   const svg = epsToSvg(
     "%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 10 20 0 0\n" +

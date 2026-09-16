@@ -1,7 +1,7 @@
 import type { Matrix } from "./eps-graphics.js";
 import type { Dictionary, Operand } from "./eps-interpreter-types.js";
 
-export const NUMBER_RE = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
+export const NUMBER_RE = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
 export function unescapePostScriptString(token: string): string {
   const body = token.slice(1, -1);

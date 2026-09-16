@@ -7,6 +7,8 @@ import { PostScriptTokenizer } from "./eps-tokenizer.js";
 import { SvgWriter } from "./eps-svg-writer.js";
 import type { SvgAccessibility, SvgFontMap } from "./types.js";
 
+const BOUNDING_BOX_NUMBER = "[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?";
+
 /** Options for the in-process EPS/PS-to-SVG converter. */
 export interface EpsToSvgOptions {
   /** Number of decimal places used for generated coordinates. Defaults to 3. */
@@ -74,14 +76,22 @@ export function epsToSvgWithWarnings(
     if (Math.abs(value) < threshold) return "0";
     return value.toFixed(precision).replace(/(?:\.0+|(?:(\.\d*?)0+))$/, "$1");
   };
-  const bboxNumber = "[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?";
-  const bboxMatch = new RegExp(`%%HiResBoundingBox:\\s*(${bboxNumber})\\s+(${bboxNumber})\\s+(${bboxNumber})\\s+(${bboxNumber})`).exec(eps)
-    ?? new RegExp(`%%BoundingBox:\\s*(${bboxNumber})\\s+(${bboxNumber})\\s+(${bboxNumber})\\s+(${bboxNumber})`).exec(eps);
+  const bboxPattern = new RegExp(
+    `%%(HiRes)?BoundingBox:\\s*(${BOUNDING_BOX_NUMBER})\\s+(${BOUNDING_BOX_NUMBER})\\s+(${BOUNDING_BOX_NUMBER})\\s+(${BOUNDING_BOX_NUMBER})`,
+    "g"
+  );
+  let hiresBoundingBox: RegExpExecArray | undefined;
+  let boundingBox: RegExpExecArray | undefined;
+  for (const match of eps.matchAll(bboxPattern)) {
+    if (match[1] === "HiRes") hiresBoundingBox ??= match;
+    else boundingBox ??= match;
+  }
+  const bboxMatch = hiresBoundingBox ?? boundingBox;
 
-  const llx = bboxMatch ? parseFloat(bboxMatch[1]) : 0;
-  const lly = bboxMatch ? parseFloat(bboxMatch[2]) : 0;
-  const urx = bboxMatch ? parseFloat(bboxMatch[3]) : 100;
-  const ury = bboxMatch ? parseFloat(bboxMatch[4]) : 100;
+  const llx = bboxMatch ? parseFloat(bboxMatch[2]) : 0;
+  const lly = bboxMatch ? parseFloat(bboxMatch[3]) : 0;
+  const urx = bboxMatch ? parseFloat(bboxMatch[4]) : 100;
+  const ury = bboxMatch ? parseFloat(bboxMatch[5]) : 100;
   const width = Number.isFinite(urx - llx) && urx > llx ? urx - llx : 100;
   const height = Number.isFinite(ury - lly) && ury > lly ? ury - lly : 100;
 
