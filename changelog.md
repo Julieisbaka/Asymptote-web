@@ -2,6 +2,8 @@
 
 ## 0.2.2 (In development)
 
+- Optimized EPS/PS bounding-box and numeric-token regular expressions to avoid repeated full-document scans and unnecessary backtracking while preserving existing parsing behavior and numeric formats.
+
 ## 0.2.1
 
 - Codebase quality improvements
