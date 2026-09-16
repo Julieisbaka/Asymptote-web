@@ -61,6 +61,7 @@ export default defineConfig({
       entry: {
         "asymptote-web": "src/index.ts",
         pdf: "src/pdf.ts",
+        utils: "src/utils.ts",
       },
       name: "AsymptoteWeb",
       formats: ["es"],

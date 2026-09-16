@@ -3,6 +3,48 @@
 This guide describes the runtime API exported by `asymptote-web`. For the
 exact TypeScript interfaces, see the [type reference](types.md).
 
+## Utility helpers
+
+The package also exposes dependency-free helpers from the `asymptote-web/utils`
+subpath. Importing this subpath does not initialize the WebAssembly runtime:
+
+```ts
+import {
+  colorFromComponents,
+  composeMatrix,
+  hsbToColor,
+  identityMatrix,
+  parseCompilerDiagnostics,
+} from "asymptote-web/utils";
+```
+
+### `parseCompilerDiagnostics(stderr)`
+
+Parses newline-delimited Asymptote compiler output into
+`CompilerDiagnostic[]`. Recognized source locations include both
+`file.asy: 12: message` and `file.asy:12.7: message` forms. Severity prefixes
+(`warning`, `error`, `runtime`, `info`, and `note`) and bracketed diagnostic
+codes are extracted when present; unlocated text defaults to informational.
+
+### `identityMatrix()` and `composeMatrix(first, second)`
+
+`identityMatrix()` returns a new six-value `Matrix` representing the identity
+transform. `composeMatrix()` combines affine transforms in PostScript order.
+
+### `colorFromComponents(components)`
+
+Converts normalized gray, RGB, or CMYK component arrays to an SVG `rgb(...)`
+string. Values are clamped to the displayable range; unsupported component
+counts return `"black"`.
+
+### `hsbToColor(hue, saturation, brightness)`
+
+Converts normalized HSB components to an SVG `rgb(...)` string. Hue wraps
+cyclically, while saturation and brightness are clamped to $[0, 1]$.
+
+The utilities are also included in the `./utils` package export with
+`dist/utils.d.ts` declarations.
+
 ## `createAsymptote(options?)`
 
 Initializes the Asymptote WebAssembly module and returns an

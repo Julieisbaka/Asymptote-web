@@ -41,6 +41,10 @@
     "./pdf": {
       "types": "./dist/pdf.d.ts",
       "import": "./dist/pdf.js"
+    },
+    "./utils": {
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.js"
     }
   },
   "files": [

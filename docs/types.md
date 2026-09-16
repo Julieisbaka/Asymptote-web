@@ -33,6 +33,32 @@ type WebGLIframeStyles = Record<string, string>;
 editor integrations. Location fields are omitted when Asymptote does not
 provide a source location. `raw` preserves the original diagnostic line.
 
+## Utility types and functions
+
+The `asymptote-web/utils` subpath exports the following dependency-free API:
+
+```ts
+type Matrix = {
+  a: number;
+  b: number;
+  c: number;
+  d: number;
+  e: number;
+  f: number;
+};
+
+function parseCompilerDiagnostics(stderr: string): CompilerDiagnostic[];
+function identityMatrix(): Matrix;
+function composeMatrix(first: Matrix, second: Matrix): Matrix;
+function colorFromComponents(components: number[]): string;
+function hsbToColor(hue: number, saturation: number, brightness: number): string;
+```
+
+`Matrix` uses the standard six-value affine order (`a`, `b`, `c`, `d`, `e`,
+`f`). `composeMatrix` follows PostScript composition order. Color components
+are normalized to $[0, 1]$ and produce SVG `rgb(...)` strings; gray, RGB, and
+CMYK arrays are supported by `colorFromComponents`.
+
 ## `RenderOptions`
 
 ```ts
