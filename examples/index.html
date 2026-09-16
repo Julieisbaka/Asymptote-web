@@ -1,159 +1,159 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Asymptote Web — Demo</title>
-  <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: system-ui, sans-serif;
-      background: #f8f8f8;
-      color: #222;
-      padding: 2rem;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      margin-bottom: 0.25rem;
-    }
-
-    p.subtitle {
-      color: #666;
-      margin-bottom: 1.5rem;
-      font-size: 0.95rem;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-
-    @media (max-width: 640px) {
-      .layout {
-        grid-template-columns: 1fr;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Asymptote Web — Demo</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
-    }
 
-    .panel {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
+      body {
+        font-family: system-ui, sans-serif;
+        background: #f8f8f8;
+        color: #222;
+        padding: 2rem;
+        max-width: 900px;
+        margin: 0 auto;
+      }
 
-    label {
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
+      h1 {
+        margin-bottom: 0.25rem;
+      }
 
-    textarea {
-      font-family: "Fira Code", "Cascadia Code", monospace;
-      font-size: 0.85rem;
-      padding: 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      resize: vertical;
-      height: 280px;
-      background: #fff;
-      color: #111;
-      width: 100%;
-    }
+      p.subtitle {
+        color: #666;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+      }
 
-    textarea:focus {
-      outline: 2px solid #3b82f6;
-      border-color: transparent;
-    }
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
 
-    button.render-btn {
-      padding: 0.6rem 1.4rem;
-      background: #3b82f6;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      cursor: pointer;
-      align-self: flex-start;
-      transition: background 0.15s;
-    }
+      @media (max-width: 640px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    button.render-btn:hover {
-      background: #2563eb;
-    }
+      .panel {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
 
-    button.render-btn.secondary {
-      background: #334155;
-    }
+      label {
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
 
-    button.render-btn.secondary:hover {
-      background: #1e293b;
-    }
+      textarea {
+        font-family: "Fira Code", "Cascadia Code", monospace;
+        font-size: 0.85rem;
+        padding: 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        resize: vertical;
+        height: 280px;
+        background: #fff;
+        color: #111;
+        width: 100%;
+      }
 
-    button.render-btn:disabled {
-      background: #93c5fd;
-      cursor: not-allowed;
-    }
+      textarea:focus {
+        outline: 2px solid #3b82f6;
+        border-color: transparent;
+      }
 
-    .output-panel {
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      background: #fff;
-      min-height: 280px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: auto;
-      padding: 1rem;
-    }
+      button.render-btn {
+        padding: 0.6rem 1.4rem;
+        background: #3b82f6;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        align-self: flex-start;
+        transition: background 0.15s;
+      }
 
-    .output-panel svg {
-      max-width: 100%;
-      height: auto;
-    }
+      button.render-btn:hover {
+        background: #2563eb;
+      }
 
-    .output-panel iframe {
-      width: 100%;
-      height: 100%;
-      min-height: 280px;
-    }
+      button.render-btn.secondary {
+        background: #334155;
+      }
 
-    .status {
-      font-size: 0.85rem;
-      min-height: 1.2em;
-    }
+      button.render-btn.secondary:hover {
+        background: #1e293b;
+      }
 
-    .status.error {
-      color: #dc2626;
-      white-space: pre-wrap;
-      font-family: monospace;
-    }
+      button.render-btn:disabled {
+        background: #93c5fd;
+        cursor: not-allowed;
+      }
 
-    .status.info {
-      color: #16a34a;
-    }
-  </style>
-</head>
+      .output-panel {
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #fff;
+        min-height: 280px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+        padding: 1rem;
+      }
 
-<body>
-  <h1>Asymptote Web</h1>
-  <p class="subtitle">
-    Renders <a href="https://asymptote.sourceforge.io/" target="_blank">Asymptote</a>
-    vector graphics entirely in your browser — no server required.
-  </p>
+      .output-panel svg {
+        max-width: 100%;
+        height: auto;
+      }
 
-  <div class="layout">
-    <div class="panel">
-      <label for="source">Asymptote source</label>
-      <textarea id="source" spellcheck="false">size(150);
+      .output-panel iframe {
+        width: 100%;
+        height: 100%;
+        min-height: 280px;
+      }
+
+      .status {
+        font-size: 0.85rem;
+        min-height: 1.2em;
+      }
+
+      .status.error {
+        color: #dc2626;
+        white-space: pre-wrap;
+        font-family: monospace;
+      }
+
+      .status.info {
+        color: #16a34a;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Asymptote Web</h1>
+    <p class="subtitle">
+      Renders <a href="https://asymptote.sourceforge.io/" target="_blank">Asymptote</a>
+      vector graphics entirely in your browser — no server required.
+    </p>
+
+    <div class="layout">
+      <div class="panel">
+        <label for="source">Asymptote source</label>
+        <textarea id="source" spellcheck="false">
+size(150);
 
 // Draw a coloured pentagram
 int n = 5;
@@ -170,304 +170,310 @@ star = star -- cycle;
 filldraw(star, yellow, black+1.5);
 label("Selectable PDF text", (0,-1.35), blue);
 </textarea>
-      <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
-        <button id="render-btn" class="render-btn">Render</button>
-        <button id="pdf-btn" class="render-btn secondary">Download PDF</button>
-        <span id="status" class="status info">Loading Asymptote…</span>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap">
+          <button id="render-btn" class="render-btn">Render</button>
+          <button id="pdf-btn" class="render-btn secondary">Download PDF</button>
+          <span id="status" class="status info">Loading Asymptote…</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <label>Output (SVG)</label>
+        <div id="output-panel" class="output-panel">
+          <span style="color: #aaa; font-size: 0.9rem">Press Render to see output</span>
+        </div>
       </div>
     </div>
 
-    <div class="panel">
-      <label>Output (SVG)</label>
-      <div id="output-panel" class="output-panel">
-        <span style="color:#aaa; font-size:0.9rem;">Press Render to see output</span>
-      </div>
-    </div>
-  </div>
-
-  <h2 style="margin-top:2rem;">3D / WebGL demo</h2>
-  <div class="layout">
-    <div class="panel">
-      <label for="source3d">Asymptote source (3D)</label>
-      <textarea id="source3d" spellcheck="false">import three;
+    <h2 style="margin-top: 2rem">3D / WebGL demo</h2>
+    <div class="layout">
+      <div class="panel">
+        <label for="source3d">Asymptote source (3D)</label>
+        <textarea id="source3d" spellcheck="false">
+import three;
 currentprojection=orthographic(5,4,2);
 draw(unitsphere, blue);
 draw(shift(2,0,0)*unitcube, red);
 </textarea>
-      <label style="font-weight:400; display:flex; gap:0.5rem; align-items:center;">
-        <input id="offline-webgl" type="checkbox" />
-        Embed the WebGL viewer for offline use
-      </label>
-      <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
-        <button id="render3d-btn" class="render-btn">Render 3D</button>
-        <span id="status3d" class="status info">Loading Asymptote…</span>
+        <label style="font-weight: 400; display: flex; gap: 0.5rem; align-items: center">
+          <input id="offline-webgl" type="checkbox" />
+          Embed the WebGL viewer for offline use
+        </label>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap">
+          <button id="render3d-btn" class="render-btn">Render 3D</button>
+          <span id="status3d" class="status info">Loading Asymptote…</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <label>Output (WebGL)</label>
+        <div id="output3d-panel" class="output-panel">
+          <span style="color: #aaa; font-size: 0.9rem">Press Render 3D to see output</span>
+        </div>
       </div>
     </div>
 
-    <div class="panel">
-      <label>Output (WebGL)</label>
-      <div id="output3d-panel" class="output-panel">
-        <span style="color:#aaa; font-size:0.9rem;">Press Render 3D to see output</span>
-      </div>
-    </div>
-  </div>
-
-  <!--
+    <!--
     In a real deployment replace the paths below with the CDN / dist URLs.
     The asymptote.js and asymptote.wasm files must be in the same directory.
   -->
-  <script type="module">
-    // During local dev, point to the built library.
-    // Replace with the published CDN URL for production use.
-    import { createAsymptote, AsymptoteError } from "../dist/asymptote-web.js";
+    <script type="module">
+      // During local dev, point to the built library.
+      // Replace with the published CDN URL for production use.
+      import { createAsymptote, AsymptoteError } from "../dist/asymptote-web.js";
 
-    const btn = document.getElementById("render-btn");
-    const pdfBtn = document.getElementById("pdf-btn");
-    const status = document.getElementById("status");
-    const output = document.getElementById("output-panel");
+      const btn = document.getElementById("render-btn");
+      const pdfBtn = document.getElementById("pdf-btn");
+      const status = document.getElementById("status");
+      const output = document.getElementById("output-panel");
 
-    const btn3d = document.getElementById("render3d-btn");
-    const status3d = document.getElementById("status3d");
-    const output3d = document.getElementById("output3d-panel");
+      const btn3d = document.getElementById("render3d-btn");
+      const status3d = document.getElementById("status3d");
+      const output3d = document.getElementById("output3d-panel");
 
-    let asy = null;
+      let asy = null;
 
-    (async () => {
-      try {
-        asy = await createAsymptote();
-        for (const [b, s] of [[btn, status], [pdfBtn, status], [btn3d, status3d]]) {
-          s.textContent = "Ready";
-          s.className = "status info";
-          b.disabled = false;
+      (async () => {
+        try {
+          asy = await createAsymptote();
+          for (const [b, s] of [
+            [btn, status],
+            [pdfBtn, status],
+            [btn3d, status3d],
+          ]) {
+            s.textContent = "Ready";
+            s.className = "status info";
+            b.disabled = false;
+          }
+        } catch (err) {
+          for (const s of [status, status3d]) {
+            s.textContent = "Failed to load Asymptote: " + err.message;
+            s.className = "status error";
+          }
         }
-      } catch (err) {
-        for (const s of [status, status3d]) {
-          s.textContent = "Failed to load Asymptote: " + err.message;
-          s.className = "status error";
-        }
+      })();
+
+      btn.disabled = true;
+      pdfBtn.disabled = true;
+      btn3d.disabled = true;
+
+      function describeError(err) {
+        const isAsymptoteError = err instanceof AsymptoteError;
+        return isAsymptoteError
+          ? `ASYMPTOTE ERROR:\n${err.stderr}`
+          : `PACKAGE ERROR:\n${err instanceof Error ? err.message : String(err)}`;
       }
-    })();
 
-    btn.disabled = true;
-    pdfBtn.disabled = true;
-    btn3d.disabled = true;
-
-    function describeError(err) {
-      const isAsymptoteError = err instanceof AsymptoteError;
-      return isAsymptoteError
-        ? `ASYMPTOTE ERROR:\n${err.stderr}`
-        : `PACKAGE ERROR:\n${err instanceof Error ? err.message : String(err)}`;
-    }
-
-    function svgDimensions(svgText) {
-      const svg = new DOMParser().parseFromString(svgText, "image/svg+xml").documentElement;
-      const width = Number.parseFloat(svg.getAttribute("width") || "150");
-      const height = Number.parseFloat(svg.getAttribute("height") || "150");
-      return {
-        width: Number.isFinite(width) ? width : 150,
-        height: Number.isFinite(height) ? height : 150,
-      };
-    }
-
-    function demoPdfSource(svgWithLabel, svgWithoutLabel) {
-      const parser = new DOMParser();
-      const withDoc = parser.parseFromString(svgWithLabel, "image/svg+xml");
-      const withoutDoc = parser.parseFromString(svgWithoutLabel, "image/svg+xml");
-      const svg = withDoc.documentElement;
-      const backgroundPathCount = withoutDoc.querySelectorAll("path").length;
-      const paths = Array.from(svg.querySelectorAll("path"));
-      const labelPaths = paths.slice(backgroundPathCount);
-      if (labelPaths.length === 0) {
-        const { height, width } = svgDimensions(svgWithLabel);
+      function svgDimensions(svgText) {
+        const svg = new DOMParser().parseFromString(svgText, "image/svg+xml").documentElement;
+        const width = Number.parseFloat(svg.getAttribute("width") || "150");
+        const height = Number.parseFloat(svg.getAttribute("height") || "150");
         return {
-          svg: svgWithoutLabel,
-          textRun: {
-            text: "Selectable PDF text",
-            x: 0,
-            y: height + 28,
-            fontSize: Math.max(12, Math.min(24, width / 16)),
-            fontFamily: "Helvetica, Arial, sans-serif",
-            color: "#0000ff",
-          },
+          width: Number.isFinite(width) ? width : 150,
+          height: Number.isFinite(height) ? height : 150,
         };
       }
 
-      const host = document.createElement("div");
-      host.style.cssText = "position:absolute;left:-10000px;top:-10000px;width:0;height:0;overflow:hidden;";
-      host.appendChild(document.importNode(svg, true));
-      document.body.appendChild(host);
-      const mountedSvg = host.querySelector("svg");
-      const mountedPaths = Array.from(mountedSvg.querySelectorAll("path"));
-      const mountedLabelPaths = mountedPaths.slice(backgroundPathCount);
-      const bounds = mountedLabelPaths.reduce((box, path) => {
-        const next = path.getBBox();
-        if (!Number.isFinite(next.width) || !Number.isFinite(next.height)) return box;
-        if (!box) return {
-          x1: next.x,
-          y1: next.y,
-          x2: next.x + next.width,
-          y2: next.y + next.height,
-        };
-        return {
-          x1: Math.min(box.x1, next.x),
-          y1: Math.min(box.y1, next.y),
-          x2: Math.max(box.x2, next.x + next.width),
-          y2: Math.max(box.y2, next.y + next.height),
-        };
-      }, null);
-      for (const path of mountedLabelPaths) path.remove();
-      const textlessSvg = new XMLSerializer().serializeToString(mountedSvg);
-      host.remove();
+      function demoPdfSource(svgWithLabel, svgWithoutLabel) {
+        const parser = new DOMParser();
+        const withDoc = parser.parseFromString(svgWithLabel, "image/svg+xml");
+        const withoutDoc = parser.parseFromString(svgWithoutLabel, "image/svg+xml");
+        const svg = withDoc.documentElement;
+        const backgroundPathCount = withoutDoc.querySelectorAll("path").length;
+        const paths = Array.from(svg.querySelectorAll("path"));
+        const labelPaths = paths.slice(backgroundPathCount);
+        if (labelPaths.length === 0) {
+          const { height, width } = svgDimensions(svgWithLabel);
+          return {
+            svg: svgWithoutLabel,
+            textRun: {
+              text: "Selectable PDF text",
+              x: 0,
+              y: height + 28,
+              fontSize: Math.max(12, Math.min(24, width / 16)),
+              fontFamily: "Helvetica, Arial, sans-serif",
+              color: "#0000ff",
+            },
+          };
+        }
 
-      if (!bounds) {
-        const { height, width } = svgDimensions(svgWithLabel);
+        const host = document.createElement("div");
+        host.style.cssText =
+          "position:absolute;left:-10000px;top:-10000px;width:0;height:0;overflow:hidden;";
+        host.appendChild(document.importNode(svg, true));
+        document.body.appendChild(host);
+        const mountedSvg = host.querySelector("svg");
+        const mountedPaths = Array.from(mountedSvg.querySelectorAll("path"));
+        const mountedLabelPaths = mountedPaths.slice(backgroundPathCount);
+        const bounds = mountedLabelPaths.reduce((box, path) => {
+          const next = path.getBBox();
+          if (!Number.isFinite(next.width) || !Number.isFinite(next.height)) return box;
+          if (!box)
+            return {
+              x1: next.x,
+              y1: next.y,
+              x2: next.x + next.width,
+              y2: next.y + next.height,
+            };
+          return {
+            x1: Math.min(box.x1, next.x),
+            y1: Math.min(box.y1, next.y),
+            x2: Math.max(box.x2, next.x + next.width),
+            y2: Math.max(box.y2, next.y + next.height),
+          };
+        }, null);
+        for (const path of mountedLabelPaths) path.remove();
+        const textlessSvg = new XMLSerializer().serializeToString(mountedSvg);
+        host.remove();
+
+        if (!bounds) {
+          const { height, width } = svgDimensions(svgWithLabel);
+          return {
+            svg: textlessSvg,
+            textRun: {
+              text: "Selectable PDF text",
+              x: 0,
+              y: height + 28,
+              fontSize: Math.max(12, Math.min(24, width / 16)),
+              fontFamily: "Helvetica, Arial, sans-serif",
+              color: "#0000ff",
+            },
+          };
+        }
+
+        const labelHeight = bounds.y2 - bounds.y1;
         return {
           svg: textlessSvg,
           textRun: {
             text: "Selectable PDF text",
-            x: 0,
-            y: height + 28,
-            fontSize: Math.max(12, Math.min(24, width / 16)),
+            x: bounds.x1,
+            y: bounds.y2,
+            fontSize: labelHeight / 0.72,
             fontFamily: "Helvetica, Arial, sans-serif",
             color: "#0000ff",
           },
         };
       }
 
-      const labelHeight = bounds.y2 - bounds.y1;
-      return {
-        svg: textlessSvg,
-        textRun: {
-          text: "Selectable PDF text",
-          x: bounds.x1,
-          y: bounds.y2,
-          fontSize: labelHeight / 0.72,
-          fontFamily: "Helvetica, Arial, sans-serif",
-          color: "#0000ff",
-        },
-      };
-    }
-
-    function downloadBlob(blob, filename) {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
-
-    function pdfBackgroundSource(source) {
-      // The browser-native fallback turns labels into vector paths before they
-      // reach SVG, so there is no text object for PDF viewers to select. For
-      // the demo PDF, render the graphic without the sample path-label and add
-      // that label back as real visible PDF text in the margin.
-      return source.replace(/^\s*label\("Selectable PDF text", \(0,-1\.35\), blue\);\s*$/m, "");
-    }
-
-    btn.addEventListener("click", async () => {
-      if (!asy) return;
-      btn.disabled = true;
-      pdfBtn.disabled = true;
-      status.textContent = "Rendering…";
-      status.className = "status info";
-
-      try {
-        const source = document.getElementById("source").value;
-        const result = await asy.render(source);
-
-        output.innerHTML = result.svg;
-        status.textContent = result.warnings.length
-          ? "Done (with warnings):\n" + result.warnings.join("\n")
-          : "Done ✓";
-        status.className = result.warnings.length ? "status error" : "status info";
-      } catch (err) {
-        output.innerHTML = "";
-        const errSpan = document.createElement("span");
-        errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
-        errSpan.textContent = describeError(err);
-        output.appendChild(errSpan);
-        status.textContent = "Render failed.";
-        status.className = "status error";
-      } finally {
-        btn.disabled = false;
-        pdfBtn.disabled = false;
+      function downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
-    });
 
-    pdfBtn.addEventListener("click", async () => {
-      if (!asy) return;
-      btn.disabled = true;
-      pdfBtn.disabled = true;
-      status.textContent = "Rendering PDF…";
-      status.className = "status info";
-
-      try {
-        const source = document.getElementById("source").value;
-        // Keep the optional PDF module out of the initial demo bundle. It is
-        // loaded only when the user asks for PDF export.
-        const { svgToPdfBlob } = await import("../dist/pdf.js");
-        const [previewResult, pdfBackgroundResult] = await Promise.all([
-          asy.render(source),
-          asy.render(pdfBackgroundSource(source)),
-        ]);
-        const pdfSource = demoPdfSource(previewResult.svg, pdfBackgroundResult.svg);
-        const pdf = await svgToPdfBlob(pdfSource.svg, {
-          title: "Asymptote Web demo export",
-          scale: 3,
-          textMode: "visible",
-          textRuns: [pdfSource.textRun],
-        });
-        downloadBlob(pdf, "asymptote-web-demo.pdf");
-        output.innerHTML = previewResult.svg;
-        const warnings = [...previewResult.warnings, ...pdfBackgroundResult.warnings];
-        status.textContent = warnings.length
-          ? "PDF downloaded (with warnings):\n" + warnings.join("\n")
-          : "PDF downloaded ✓";
-        status.className = warnings.length ? "status error" : "status info";
-      } catch (err) {
-        status.textContent = "PDF export failed.";
-        status.className = "status error";
-        const errSpan = document.createElement("span");
-        errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
-        errSpan.textContent = describeError(err);
-        output.replaceChildren(errSpan);
-      } finally {
-        btn.disabled = false;
-        pdfBtn.disabled = false;
+      function pdfBackgroundSource(source) {
+        // The browser-native fallback turns labels into vector paths before they
+        // reach SVG, so there is no text object for PDF viewers to select. For
+        // the demo PDF, render the graphic without the sample path-label and add
+        // that label back as real visible PDF text in the margin.
+        return source.replace(/^\s*label\("Selectable PDF text", \(0,-1\.35\), blue\);\s*$/m, "");
       }
-    });
 
-    btn3d.addEventListener("click", async () => {
-      if (!asy) return;
-      btn3d.disabled = true;
-      status3d.textContent = "Rendering…";
-      status3d.className = "status info";
+      btn.addEventListener("click", async () => {
+        if (!asy) return;
+        btn.disabled = true;
+        pdfBtn.disabled = true;
+        status.textContent = "Rendering…";
+        status.className = "status info";
 
-      try {
-        const source = document.getElementById("source3d").value;
-        const offline = document.getElementById("offline-webgl").checked;
-        const result = await asy.mountWebGL(output3d, source, { offline });
-        status3d.textContent = result.warnings.length
-          ? "Done (with warnings):\n" + result.warnings.join("\n")
-          : "Done ✓";
-        status3d.className = result.warnings.length ? "status error" : "status info";
-      } catch (err) {
-        output3d.innerHTML = "";
-        const errSpan = document.createElement("span");
-        errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
-        const isAsymptoteError = err instanceof AsymptoteError;
-        errSpan.textContent = isAsymptoteError
-          ? `ASYMPTOTE ERROR:\n${err.stderr}`
-          : `PACKAGE ERROR:\n${err instanceof Error ? err.message : String(err)}`;
-        output3d.appendChild(errSpan);
-        status3d.textContent = "Render failed.";
-        status3d.className = "status error";
-      } finally {
-        btn3d.disabled = false;
-      }
-    });
-  </script>
-</body>
+        try {
+          const source = document.getElementById("source").value;
+          const result = await asy.render(source);
 
+          output.innerHTML = result.svg;
+          status.textContent = result.warnings.length
+            ? "Done (with warnings):\n" + result.warnings.join("\n")
+            : "Done ✓";
+          status.className = result.warnings.length ? "status error" : "status info";
+        } catch (err) {
+          output.innerHTML = "";
+          const errSpan = document.createElement("span");
+          errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
+          errSpan.textContent = describeError(err);
+          output.appendChild(errSpan);
+          status.textContent = "Render failed.";
+          status.className = "status error";
+        } finally {
+          btn.disabled = false;
+          pdfBtn.disabled = false;
+        }
+      });
+
+      pdfBtn.addEventListener("click", async () => {
+        if (!asy) return;
+        btn.disabled = true;
+        pdfBtn.disabled = true;
+        status.textContent = "Rendering PDF…";
+        status.className = "status info";
+
+        try {
+          const source = document.getElementById("source").value;
+          // Keep the optional PDF module out of the initial demo bundle. It is
+          // loaded only when the user asks for PDF export.
+          const { svgToPdfBlob } = await import("../dist/pdf.js");
+          const [previewResult, pdfBackgroundResult] = await Promise.all([
+            asy.render(source),
+            asy.render(pdfBackgroundSource(source)),
+          ]);
+          const pdfSource = demoPdfSource(previewResult.svg, pdfBackgroundResult.svg);
+          const pdf = await svgToPdfBlob(pdfSource.svg, {
+            title: "Asymptote Web demo export",
+            scale: 3,
+            textMode: "visible",
+            textRuns: [pdfSource.textRun],
+          });
+          downloadBlob(pdf, "asymptote-web-demo.pdf");
+          output.innerHTML = previewResult.svg;
+          const warnings = [...previewResult.warnings, ...pdfBackgroundResult.warnings];
+          status.textContent = warnings.length
+            ? "PDF downloaded (with warnings):\n" + warnings.join("\n")
+            : "PDF downloaded ✓";
+          status.className = warnings.length ? "status error" : "status info";
+        } catch (err) {
+          status.textContent = "PDF export failed.";
+          status.className = "status error";
+          const errSpan = document.createElement("span");
+          errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
+          errSpan.textContent = describeError(err);
+          output.replaceChildren(errSpan);
+        } finally {
+          btn.disabled = false;
+          pdfBtn.disabled = false;
+        }
+      });
+
+      btn3d.addEventListener("click", async () => {
+        if (!asy) return;
+        btn3d.disabled = true;
+        status3d.textContent = "Rendering…";
+        status3d.className = "status info";
+
+        try {
+          const source = document.getElementById("source3d").value;
+          const offline = document.getElementById("offline-webgl").checked;
+          const result = await asy.mountWebGL(output3d, source, { offline });
+          status3d.textContent = result.warnings.length
+            ? "Done (with warnings):\n" + result.warnings.join("\n")
+            : "Done ✓";
+          status3d.className = result.warnings.length ? "status error" : "status info";
+        } catch (err) {
+          output3d.innerHTML = "";
+          const errSpan = document.createElement("span");
+          errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
+          const isAsymptoteError = err instanceof AsymptoteError;
+          errSpan.textContent = isAsymptoteError
+            ? `ASYMPTOTE ERROR:\n${err.stderr}`
+            : `PACKAGE ERROR:\n${err instanceof Error ? err.message : String(err)}`;
+          output3d.appendChild(errSpan);
+          status3d.textContent = "Render failed.";
+          status3d.className = "status error";
+        } finally {
+          btn3d.disabled = false;
+        }
+      });
+    </script>
+  </body>
 </html>

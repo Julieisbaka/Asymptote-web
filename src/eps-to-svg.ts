@@ -63,10 +63,7 @@ export function epsToSvg(eps: string, options: EpsToSvgOptions = {}): string {
  * Convert EPS/PS and return both SVG and non-fatal conversion diagnostics.
  * Unsupported content is skipped so conversion continues to completion.
  */
-export function epsToSvgWithWarnings(
-  eps: string,
-  options: EpsToSvgOptions = {}
-): EpsToSvgResult {
+export function epsToSvgWithWarnings(eps: string, options: EpsToSvgOptions = {}): EpsToSvgResult {
   const precision = options.precision ?? 3;
   if (!Number.isInteger(precision) || precision < 0 || precision > 12) {
     throw new RangeError("epsToSvg: precision must be an integer from 0 to 12");
@@ -79,7 +76,7 @@ export function epsToSvgWithWarnings(
   };
   const bboxPattern = new RegExp(
     `%%(HiRes)?BoundingBox:\\s*(${BOUNDING_BOX_NUMBER})\\s+(${BOUNDING_BOX_NUMBER})\\s+(${BOUNDING_BOX_NUMBER})\\s+(${BOUNDING_BOX_NUMBER})`,
-    "g"
+    "g",
   );
   let hiresBoundingBox: RegExpExecArray | undefined;
   let boundingBox: RegExpExecArray | undefined;
@@ -103,9 +100,12 @@ export function epsToSvgWithWarnings(
     height,
     formatNumber,
     options.fonts,
-    options.accessibility
+    options.accessibility,
   );
   const interpreter = new PostScriptInterpreter(new PostScriptTokenizer(eps), writer);
   interpreter.run();
-  return { svg: writer.serialize(), warnings: [...interpreter.getWarnings(), ...writer.getWarnings()] };
+  return {
+    svg: writer.serialize(),
+    warnings: [...interpreter.getWarnings(), ...writer.getWarnings()],
+  };
 }

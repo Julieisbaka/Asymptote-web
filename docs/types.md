@@ -167,20 +167,9 @@ interface AsymptoteEngine {
   version(): Promise<string>;
   render(source: string, options?: RenderOptions): Promise<RenderResult>;
   renderToBlob(source: string, options?: RenderOptions): Promise<Blob>;
-  renderBatch(
-    sources: readonly string[],
-    options?: RenderOptions,
-  ): Promise<RenderResult[]>;
-  download(
-    source: string,
-    filename?: string,
-    options?: RenderOptions,
-  ): Promise<RenderResult>;
-  mount(
-    target: string | Element,
-    source: string,
-    options?: RenderOptions,
-  ): Promise<RenderResult>;
+  renderBatch(sources: readonly string[], options?: RenderOptions): Promise<RenderResult[]>;
+  download(source: string, filename?: string, options?: RenderOptions): Promise<RenderResult>;
+  mount(target: string | Element, source: string, options?: RenderOptions): Promise<RenderResult>;
   mountWebGL(
     target: string | Element,
     source: string,
@@ -243,12 +232,14 @@ interface PdfOptions {
   scale?: number;
   background?: string | null;
   quality?: number;
-  margin?: number | {
-    top?: number;
-    right?: number;
-    bottom?: number;
-    left?: number;
-  };
+  margin?:
+    | number
+    | {
+        top?: number;
+        right?: number;
+        bottom?: number;
+        left?: number;
+      };
   textMode?: "invisible" | "visible" | "none";
   textRuns?: readonly PdfTextRun[];
   title?: string;
@@ -288,7 +279,7 @@ Key functions:
 function renderToPdfBlob(
   engine: AsymptoteEngine,
   source: string,
-  options?: RenderToPdfOptions
+  options?: RenderToPdfOptions,
 ): Promise<Blob>;
 
 function svgToPdfBlob(svg: string, options?: PdfOptions): Promise<Blob>;
@@ -297,11 +288,8 @@ function downloadPdf(
   engine: AsymptoteEngine,
   source: string,
   filename?: string,
-  options?: RenderToPdfOptions
+  options?: RenderToPdfOptions,
 ): Promise<RenderResult>;
 
-function imagesToPdfBytes(
-  pages: readonly PdfImagePage[],
-  options?: ImagesToPdfOptions
-): Uint8Array;
+function imagesToPdfBytes(pages: readonly PdfImagePage[], options?: ImagesToPdfOptions): Uint8Array;
 ```

@@ -11,12 +11,14 @@ function isDigit(char: string | undefined): boolean {
 }
 
 /** Parse a source filename, line, and optional column from a diagnostic. */
-function parseLocation(raw: string): {
-  sourceFile: string;
-  line: number;
-  column?: number;
-  message: string;
-} | undefined {
+function parseLocation(raw: string):
+  | {
+      sourceFile: string;
+      line: number;
+      column?: number;
+      message: string;
+    }
+  | undefined {
   for (let i = 0; i < raw.length; i += 1) {
     if (raw[i] !== ":") continue;
     let cursor = i + 1;
@@ -75,7 +77,10 @@ function parseCodeLabel(message: string): { code?: string; message: string } {
 }
 
 /** Classify a diagnostic message, defaulting located messages to errors. */
-function severityFor(text: string, hasLocation: boolean): {
+function severityFor(
+  text: string,
+  hasLocation: boolean,
+): {
   severity: DiagnosticSeverity;
   message: string;
 } {
@@ -89,11 +94,12 @@ function severityFor(text: string, hasLocation: boolean): {
 
   const label = match[1].toLowerCase();
   return {
-    severity: label === "warning"
-      ? "warning"
-      : label === "error" || label === "runtime" || (label === "note" && hasLocation)
-        ? "error"
-        : "info",
+    severity:
+      label === "warning"
+        ? "warning"
+        : label === "error" || label === "runtime" || (label === "note" && hasLocation)
+          ? "error"
+          : "info",
     message: match[2].trim(),
   };
 }
@@ -108,7 +114,7 @@ export function parseCompilerDiagnostics(stderr: string): CompilerDiagnostic[] {
       const location = parseLocation(raw);
       const classified = severityFor(
         stripLeadingSeparator(location?.message ?? raw),
-        Boolean(location)
+        Boolean(location),
       );
       const codeInfo = parseCodeLabel(classified.message);
 
@@ -146,7 +152,8 @@ export function composeMatrix(m1: Matrix, m2: Matrix): Matrix {
 
 /** Convert normalized gray, RGB, or CMYK components to an SVG RGB value. */
 export function colorFromComponents(nums: number[]): string {
-  const clamp = (value: number): number => Math.max(0, Math.min(255, Number.isFinite(value) ? value : 0));
+  const clamp = (value: number): number =>
+    Math.max(0, Math.min(255, Number.isFinite(value) ? value : 0));
   if (nums.length === 1) {
     const v = Math.round(clamp(nums[0] * 255));
     return `rgb(${v},${v},${v})`;
@@ -176,6 +183,13 @@ export function hsbToColor(hue: number, saturation: number, brightness: number):
   const p = v * (1 - s);
   const q = v * (1 - s * fraction);
   const t = v * (1 - s * (1 - fraction));
-  const rgb = [[v, t, p], [q, v, p], [p, v, t], [p, q, v], [t, p, v], [v, p, q]][index % 6];
+  const rgb = [
+    [v, t, p],
+    [q, v, p],
+    [p, v, t],
+    [p, q, v],
+    [t, p, v],
+    [v, p, q],
+  ][index % 6];
   return `rgb(${rgb.map((value) => Math.round(value * 255)).join(",")})`;
 }

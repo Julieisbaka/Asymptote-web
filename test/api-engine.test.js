@@ -103,12 +103,8 @@ globalThis.__asymptoteWebTestState = {
   stderr: [],
 };
 
-const {
-  AsymptoteError,
-  createAsymptote,
-  getAssetUrls,
-  parseCompilerDiagnostics,
-} = await import("../dist/asymptote-web.js");
+const { AsymptoteError, createAsymptote, getAssetUrls, parseCompilerDiagnostics } =
+  await import("../dist/asymptote-web.js");
 const state = globalThis.__asymptoteWebTestState;
 
 test("resolves runtime asset URLs", () => {
@@ -124,8 +120,8 @@ test("resolves runtime asset URLs", () => {
 });
 
 after(async () => {
-  await unlink(gluePath).catch(() => { });
-  await unlink(customGluePath).catch(() => { });
+  await unlink(gluePath).catch(() => {});
+  await unlink(customGluePath).catch(() => {});
   delete globalThis.__asymptoteWebTestState;
 });
 
@@ -146,14 +142,21 @@ test("retries module initialization after a failed factory", async () => {
 test("does not reuse a module loaded with different asset URLs", async () => {
   await createAsymptote();
   const factoryCalls = state.factoryCalls;
-  await createAsymptote({ glueUrl: customGluePath.href, wasmUrl: "https://cdn.example.test/custom.wasm" });
+  await createAsymptote({
+    glueUrl: customGluePath.href,
+    wasmUrl: "https://cdn.example.test/custom.wasm",
+  });
   assert.equal(state.factoryCalls, factoryCalls + 1);
   assert.equal(state.locateFile("asymptote.wasm"), "https://cdn.example.test/custom.wasm");
 });
 
 test("renders SVG and reports compiler/converter warnings", async () => {
   const asy = await createAsymptote();
-  state.stderr.push("Warning: compiler warning", ": warning [unbounded]: x scaling in picture unbounded", "informational output");
+  state.stderr.push(
+    "Warning: compiler warning",
+    ": warning [unbounded]: x scaling in picture unbounded",
+    "informational output",
+  );
   const result = await asy.render("draw((0,0)--(1,1));");
 
   assert.equal(result.format, "svg");
@@ -184,73 +187,78 @@ test("renders SVG and reports compiler/converter warnings", async () => {
 });
 
 test("parses source locations and diagnostic severities", () => {
-  assert.deepEqual(parseCompilerDiagnostics([
-    "/tmp/input.asy: 12.7: error: invalid path",
-    "/tmp/input.asy: 18.3: no matching variable 'bold'",
-    "C:/work/example.asy:4.2: warning [unbounded]: scaling is unbounded",
-    "lib/foo:bar.asy: 9.1: warning: escaped colon filename",
-    "note from compiler",
-    "info: informational message",
-    "note   :   spaced colon note",
-    "/tmp/input.asy: 5.1: note: prefixed note with location",
-  ].join("\n")), [
-    {
-      severity: "error",
-      message: "invalid path",
-      sourceFile: "/tmp/input.asy",
-      line: 12,
-      column: 7,
-      raw: "/tmp/input.asy: 12.7: error: invalid path",
-    },
-    {
-      severity: "error",
-      message: "no matching variable 'bold'",
-      sourceFile: "/tmp/input.asy",
-      line: 18,
-      column: 3,
-      raw: "/tmp/input.asy: 18.3: no matching variable 'bold'",
-    },
-    {
-      severity: "warning",
-      message: "scaling is unbounded",
-      sourceFile: "C:/work/example.asy",
-      line: 4,
-      column: 2,
-      code: "unbounded",
-      raw: "C:/work/example.asy:4.2: warning [unbounded]: scaling is unbounded",
-    },
-    {
-      severity: "warning",
-      message: "escaped colon filename",
-      sourceFile: "lib/foo:bar.asy",
-      line: 9,
-      column: 1,
-      raw: "lib/foo:bar.asy: 9.1: warning: escaped colon filename",
-    },
-    {
-      severity: "info",
-      message: "note from compiler",
-      raw: "note from compiler",
-    },
-    {
-      severity: "info",
-      message: "informational message",
-      raw: "info: informational message",
-    },
-    {
-      severity: "info",
-      message: "spaced colon note",
-      raw: "note   :   spaced colon note",
-    },
-    {
-      severity: "error",
-      message: "prefixed note with location",
-      sourceFile: "/tmp/input.asy",
-      line: 5,
-      column: 1,
-      raw: "/tmp/input.asy: 5.1: note: prefixed note with location",
-    },
-  ]);
+  assert.deepEqual(
+    parseCompilerDiagnostics(
+      [
+        "/tmp/input.asy: 12.7: error: invalid path",
+        "/tmp/input.asy: 18.3: no matching variable 'bold'",
+        "C:/work/example.asy:4.2: warning [unbounded]: scaling is unbounded",
+        "lib/foo:bar.asy: 9.1: warning: escaped colon filename",
+        "note from compiler",
+        "info: informational message",
+        "note   :   spaced colon note",
+        "/tmp/input.asy: 5.1: note: prefixed note with location",
+      ].join("\n"),
+    ),
+    [
+      {
+        severity: "error",
+        message: "invalid path",
+        sourceFile: "/tmp/input.asy",
+        line: 12,
+        column: 7,
+        raw: "/tmp/input.asy: 12.7: error: invalid path",
+      },
+      {
+        severity: "error",
+        message: "no matching variable 'bold'",
+        sourceFile: "/tmp/input.asy",
+        line: 18,
+        column: 3,
+        raw: "/tmp/input.asy: 18.3: no matching variable 'bold'",
+      },
+      {
+        severity: "warning",
+        message: "scaling is unbounded",
+        sourceFile: "C:/work/example.asy",
+        line: 4,
+        column: 2,
+        code: "unbounded",
+        raw: "C:/work/example.asy:4.2: warning [unbounded]: scaling is unbounded",
+      },
+      {
+        severity: "warning",
+        message: "escaped colon filename",
+        sourceFile: "lib/foo:bar.asy",
+        line: 9,
+        column: 1,
+        raw: "lib/foo:bar.asy: 9.1: warning: escaped colon filename",
+      },
+      {
+        severity: "info",
+        message: "note from compiler",
+        raw: "note from compiler",
+      },
+      {
+        severity: "info",
+        message: "informational message",
+        raw: "info: informational message",
+      },
+      {
+        severity: "info",
+        message: "spaced colon note",
+        raw: "note   :   spaced colon note",
+      },
+      {
+        severity: "error",
+        message: "prefixed note with location",
+        sourceFile: "/tmp/input.asy",
+        line: 5,
+        column: 1,
+        raw: "/tmp/input.asy: 5.1: note: prefixed note with location",
+      },
+    ],
+  );
 });
 
 test("maps virtual diagnostic paths to friendly source filenames", async () => {
@@ -278,7 +286,10 @@ test("preserves format flag precedence and WebGL options", async () => {
   const webglCall = state.calls.at(-1).args;
   assert.equal(webgl.format, "webgl");
   assert.match(webgl.output, /Asymptote/);
-  assert.deepEqual(webglCall.slice(webglCall.indexOf("-position"), webglCall.indexOf("-position") + 2), ["-position", "10,20"]);
+  assert.deepEqual(
+    webglCall.slice(webglCall.indexOf("-position"), webglCall.indexOf("-position") + 2),
+    ["-position", "10,20"],
+  );
   assert.equal(webglCall.includes("-devicepixelratio"), true);
   assert.equal(webglCall.includes("-noautobillboard"), true);
   assert.equal(webglCall.includes("-offline"), true);
@@ -288,7 +299,10 @@ test("rejects invalid numeric render options before invoking Asymptote", async (
   const asy = await createAsymptote();
   const callsBefore = state.calls.length;
   await assert.rejects(() => asy.render("invalid", { devicePixelRatio: 0 }), /devicePixelRatio/);
-  await assert.rejects(() => asy.render("invalid", { position: [Number.NaN, 0] }), /position values/);
+  await assert.rejects(
+    () => asy.render("invalid", { position: [Number.NaN, 0] }),
+    /position values/,
+  );
   await assert.rejects(() => asy.render("invalid", { webglIframeTimeoutMs: -1 }), /timeout/);
   assert.equal(state.calls.length, callsBefore);
 });
@@ -303,23 +317,25 @@ test("supports raw output, blobs, batches, and isolated files", async () => {
   assert.equal(blob.type, "application/postscript");
   assert.match(await blob.text(), /^%!PS/);
 
-  const batch = await asy.renderBatch(["first", "second"], { files: { "lib/helper.asy": "helper" } });
+  const batch = await asy.renderBatch(["first", "second"], {
+    files: { "lib/helper.asy": "helper" },
+  });
   assert.equal(batch.length, 2);
-  assert.deepEqual(state.calls.slice(-2).map((call) => call.source), ["first", "second"]);
+  assert.deepEqual(
+    state.calls.slice(-2).map((call) => call.source),
+    ["first", "second"],
+  );
 });
 
 test("rejects unsafe virtual file paths and supports abort", async () => {
   const asy = await createAsymptote();
-  await assert.rejects(
-    () => asy.render("bad", { files: { "../escape.asy": "nope" } }),
-    TypeError
-  );
+  await assert.rejects(() => asy.render("bad", { files: { "../escape.asy": "nope" } }), TypeError);
   const callsBeforeAbort = state.calls.length;
   const controller = new AbortController();
   controller.abort();
   await assert.rejects(
     () => asy.render("aborted", { signal: controller.signal }),
-    (error) => error.name === "AbortError"
+    (error) => error.name === "AbortError",
   );
   assert.equal(state.calls.length, callsBeforeAbort);
 });
@@ -328,7 +344,10 @@ test("serializes concurrent renders and exposes AsymptoteError", async () => {
   const asy = await createAsymptote();
   const results = await Promise.all([asy.render("queued-one"), asy.render("queued-two")]);
   assert.equal(results.length, 2);
-  assert.deepEqual(state.calls.slice(-2).map((call) => call.source), ["queued-one", "queued-two"]);
+  assert.deepEqual(
+    state.calls.slice(-2).map((call) => call.source),
+    ["queued-one", "queued-two"],
+  );
 
   state.exitCode = 7;
   state.stderr.push("compiler failed");
@@ -338,13 +357,15 @@ test("serializes concurrent renders and exposes AsymptoteError", async () => {
       assert.ok(error instanceof AsymptoteError);
       assert.equal(error.exitCode, 7);
       assert.equal(error.stderr, "compiler failed");
-      assert.deepEqual(error.diagnostics, [{
-        severity: "info",
-        message: "compiler failed",
-        raw: "compiler failed",
-      }]);
+      assert.deepEqual(error.diagnostics, [
+        {
+          severity: "info",
+          message: "compiler failed",
+          raw: "compiler failed",
+        },
+      ]);
       assert.match(error.message, /ASYMPTOTE ERROR/);
       return true;
-    }
+    },
   );
 });

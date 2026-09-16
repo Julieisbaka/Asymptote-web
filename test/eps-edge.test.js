@@ -19,7 +19,9 @@ test("decodes octal and continued-line string escapes", () => {
 });
 
 test("applies supported setcolorspace and setcolor operators", () => {
-  const svg = convert("/DeviceRGB setcolorspace 1 0 0 setcolor newpath 0 0 moveto 10 0 lineto stroke");
+  const svg = convert(
+    "/DeviceRGB setcolorspace 1 0 0 setcolor newpath 0 0 moveto 10 0 lineto stroke",
+  );
 
   assert.match(svg, /stroke="rgb\(255,0,0\)"/);
 });
@@ -27,7 +29,7 @@ test("applies supported setcolorspace and setcolor operators", () => {
 test("supports opacity aliases and even-odd clipping", () => {
   const svg = convert(
     "0.25 setalpha newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath eoclip " +
-    "newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath fill"
+      "newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath fill",
   );
 
   assert.match(svg, /clip-rule="evenodd"/);
@@ -44,8 +46,8 @@ test("ignores empty paint operations without emitting paths", () => {
 test("reports unsupported raster image variants", () => {
   const result = convertWithWarnings(
     "1 1 1 [1 0 0 -1 0 1] (\x00) image " +
-    "colorimage imagemask " +
-    "513 513 8 [513 0 0 -1 0 513] () image"
+      "colorimage imagemask " +
+      "513 513 8 [513 0 0 -1 0 513] () image",
   );
 
   assert.equal(result.warnings.length, 4);
@@ -58,11 +60,14 @@ test("reports unsupported raster image variants", () => {
 test("handles malformed matrices and patterns with warnings", () => {
   const result = convertWithWarnings(
     "[1 2] concat 0 0 10 10 [1 2] makepattern setpattern " +
-    "newpath 0 0 moveto 10 10 lineto stroke"
+      "newpath 0 0 moveto 10 10 lineto stroke",
   );
 
   assert.match(result.svg, /<path /);
-  assert.match(result.warnings.join("\n"), /malformed concat matrix|unsupported or malformed shading/);
+  assert.match(
+    result.warnings.join("\n"),
+    /malformed concat matrix|unsupported or malformed shading/,
+  );
 });
 
 test("handles singular transforms without throwing", () => {
@@ -72,7 +77,9 @@ test("handles singular transforms without throwing", () => {
 });
 
 test("does not emit non-finite stroke attributes", () => {
-  const svg = convert("1e999 setlinewidth 1e999 setmiterlimit [1e999 -1] 1e999 setdash newpath 0 0 moveto 10 0 lineto stroke");
+  const svg = convert(
+    "1e999 setlinewidth 1e999 setmiterlimit [1e999 -1] 1e999 setdash newpath 0 0 moveto 10 0 lineto stroke",
+  );
 
   assert.doesNotMatch(svg, /Infinity|NaN/);
 });

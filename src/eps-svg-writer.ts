@@ -1,4 +1,10 @@
-import { compose, type GraphicsState, type Gradient, type GradientStop, type Matrix } from "./eps-graphics.js";
+import {
+  compose,
+  type GraphicsState,
+  type Gradient,
+  type GradientStop,
+  type Matrix,
+} from "./eps-graphics.js";
 import type { SvgAccessibility, SvgFontDescriptor, SvgFontMap } from "./types.js";
 import type { Dictionary, Operand } from "./eps-interpreter-types.js";
 
@@ -116,7 +122,7 @@ function normalizeFontAlias(font: string): string {
 /** Find a standard CSS family for a normalized PostScript font name. */
 function knownFontFamily(normalized: string): string | undefined {
   return FONT_FAMILY_RULES.find((rule) =>
-    rule.aliases.some((alias) => normalized.startsWith(alias))
+    rule.aliases.some((alias) => normalized.startsWith(alias)),
   )?.family;
 }
 
@@ -155,7 +161,8 @@ function inferGenericFallback(normalized: string): string {
   if (/(mono|courier|code|typewriter|console)/.test(normalized)) return "monospace";
   if (/(script|chancery)/.test(normalized)) return "cursive";
   if (/(symbol|dingbat|math)/.test(normalized)) return "serif";
-  if (/(serif|roman|garamond|times|georgia|palatino|bookman|schoolbook|cambria)/.test(normalized)) return "serif";
+  if (/(serif|roman|garamond|times|georgia|palatino|bookman|schoolbook|cambria)/.test(normalized))
+    return "serif";
   return "sans-serif";
 }
 
@@ -165,16 +172,21 @@ function normalizeDescriptor(value: unknown): SvgFontDescriptorNormalized | null
   const descriptor = value as SvgFontDescriptor;
   const family = typeof descriptor.family === "string" ? descriptor.family.trim() : undefined;
   const fallbacks = Array.isArray(descriptor.fallbacks)
-    ? descriptor.fallbacks.filter((fallback): fallback is string => typeof fallback === "string" && fallback.trim().length > 0)
+    ? descriptor.fallbacks.filter(
+        (fallback): fallback is string =>
+          typeof fallback === "string" && fallback.trim().length > 0,
+      )
     : undefined;
-  const weight = typeof descriptor.weight === "number"
-    ? String(descriptor.weight)
-    : typeof descriptor.weight === "string"
-      ? descriptor.weight.trim()
-      : undefined;
+  const weight =
+    typeof descriptor.weight === "number"
+      ? String(descriptor.weight)
+      : typeof descriptor.weight === "string"
+        ? descriptor.weight.trim()
+        : undefined;
   const style = typeof descriptor.style === "string" ? descriptor.style.trim() : undefined;
   const stretch = typeof descriptor.stretch === "string" ? descriptor.stretch.trim() : undefined;
-  if (!family && (!fallbacks || fallbacks.length === 0) && !weight && !style && !stretch) return null;
+  if (!family && (!fallbacks || fallbacks.length === 0) && !weight && !style && !stretch)
+    return null;
   return {
     family,
     fallbacks: fallbacks && fallbacks.length > 0 ? fallbacks : undefined,
@@ -185,27 +197,32 @@ function normalizeDescriptor(value: unknown): SvgFontDescriptorNormalized | null
 }
 
 /** Resolve an exact or normalized custom font mapping. */
-function resolveCustomFont(font: string, customFonts: SvgFontMap): string | SvgFontDescriptor | undefined {
+function resolveCustomFont(
+  font: string,
+  customFonts: SvgFontMap,
+): string | SvgFontDescriptor | undefined {
   if (Object.prototype.hasOwnProperty.call(customFonts, font)) return customFonts[font];
   const normalized = normalizeFontName(font);
   const normalizedAlias = normalizeFontAlias(font);
   for (const [name, descriptor] of Object.entries(customFonts)) {
     const candidate = normalizeFontName(name);
     if (candidate === normalized) return descriptor;
-    if (candidate.length > 0 && (normalized.startsWith(candidate) || normalizedAlias.startsWith(candidate))) {
+    if (
+      candidate.length > 0 &&
+      (normalized.startsWith(candidate) || normalizedAlias.startsWith(candidate))
+    ) {
       return descriptor;
     }
   }
   return undefined;
 }
 
-
 /** Convert a PostScript font name and mapping into CSS font attributes. */
 function toCssFont(
   font: string,
   customFonts: SvgFontMap,
   warnUnknown: (fontName: string) => void,
-  warnMalformedDescriptor: (fontName: string) => void
+  warnMalformedDescriptor: (fontName: string) => void,
 ): CssFont {
   const normalized = normalizeFontAlias(font);
   const knownFamily = knownFontFamily(normalized);
@@ -226,8 +243,8 @@ function toCssFont(
       warnMalformedDescriptor(font);
       return inferred;
     }
-    const families = [descriptor.family, ...(descriptor.fallbacks ?? [])].filter((value): value is string =>
-      typeof value === "string" && value.trim().length > 0
+    const families = [descriptor.family, ...(descriptor.fallbacks ?? [])].filter(
+      (value): value is string => typeof value === "string" && value.trim().length > 0,
     );
     return {
       family: families.length > 0 ? families.join(", ") : inferred.family,
@@ -257,7 +274,8 @@ function operandToDataString(value: Operand): string {
 interface NativeLabelContext {
   metadata: Dictionary;
   elements: string[];
-}export class SvgWriter {
+}
+export class SvgWriter {
   private clipCounter = 0;
   private gradientCounter = 0;
   private readonly defs: string[] = [];
@@ -284,9 +302,8 @@ interface NativeLabelContext {
     private readonly height: number,
     private readonly formatNumber: (value: number) => string,
     private readonly customFonts: SvgFontMap = {},
-    private readonly accessibility: SvgAccessibility = {}
-  ) { }
-
+    private readonly accessibility: SvgAccessibility = {},
+  ) {}
 
   getWarnings(): string[] {
     return [...this.warnings];
@@ -335,7 +352,7 @@ interface NativeLabelContext {
     this.currentX = a * x + c * y + e;
     this.currentY = b * x + d * y + f;
     this.pathParts.push(
-      `${op}${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`
+      `${op}${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`,
     );
     this.pathDirty = true;
     this.pathStarted = true;
@@ -346,7 +363,15 @@ interface NativeLabelContext {
     }
   }
 
-  appendCurve(state: GraphicsState, x1: number, y1: number, x2: number, y2: number, x: number, y: number): void {
+  appendCurve(
+    state: GraphicsState,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    x: number,
+    y: number,
+  ): void {
     const { a, b, c, d, e, f } = state.ctm;
     const ax1 = a * x1 + c * y1 + e;
     const ay1 = b * x1 + d * y1 + f;
@@ -356,8 +381,8 @@ interface NativeLabelContext {
     this.currentY = b * x + d * y + f;
     this.pathParts.push(
       `C${this.formatNumber(ax1 - this.llx)},${this.formatNumber(this.height - (ay1 - this.lly))} ` +
-      `${this.formatNumber(ax2 - this.llx)},${this.formatNumber(this.height - (ay2 - this.lly))} ` +
-      `${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`
+        `${this.formatNumber(ax2 - this.llx)},${this.formatNumber(this.height - (ay2 - this.lly))} ` +
+        `${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`,
     );
     this.pathDirty = true;
     this.pathStarted = true;
@@ -370,7 +395,7 @@ interface NativeLabelContext {
     radius: number,
     startDegrees: number,
     endDegrees: number,
-    counterClockwise: boolean
+    counterClockwise: boolean,
   ): void {
     if (radius < 0 || !Number.isFinite(radius)) return;
     const direction = counterClockwise ? 1 : -1;
@@ -395,8 +420,14 @@ interface NativeLabelContext {
       const factor = (4 / 3) * Math.tan((nextAngle - angle) / 4);
       const p0 = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
       const p3 = { x: cx + radius * Math.cos(nextAngle), y: cy + radius * Math.sin(nextAngle) };
-      const p1 = { x: p0.x - factor * radius * Math.sin(angle), y: p0.y + factor * radius * Math.cos(angle) };
-      const p2 = { x: p3.x + factor * radius * Math.sin(nextAngle), y: p3.y - factor * radius * Math.cos(nextAngle) };
+      const p1 = {
+        x: p0.x - factor * radius * Math.sin(angle),
+        y: p0.y + factor * radius * Math.cos(angle),
+      };
+      const p2 = {
+        x: p3.x + factor * radius * Math.sin(nextAngle),
+        y: p3.y - factor * radius * Math.cos(nextAngle),
+      };
       this.appendCurve(state, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
       angle = nextAngle;
     }
@@ -411,8 +442,15 @@ interface NativeLabelContext {
     }
   }
 
-  image(state: GraphicsState, width: number, height: number, pixels: string, imageMatrix: Matrix): boolean {
-    if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) return false;
+  image(
+    state: GraphicsState,
+    width: number,
+    height: number,
+    pixels: string,
+    imageMatrix: Matrix,
+  ): boolean {
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0)
+      return false;
     if (width * height > 262144 || pixels.length < width * height) return false;
     const rects: string[] = [];
     for (let row = 0; row < height; row += 1) {
@@ -428,7 +466,9 @@ interface NativeLabelContext {
           end += 1;
         }
         if (gray !== 255) {
-          rects.push(`<rect x="${column}" y="${row}" width="${end - column}" height="1" fill="rgb(${gray},${gray},${gray})"/>`);
+          rects.push(
+            `<rect x="${column}" y="${row}" width="${end - column}" height="1" fill="rgb(${gray},${gray},${gray})"/>`,
+          );
         }
         column = end;
       }
@@ -445,20 +485,18 @@ interface NativeLabelContext {
       e: transformed.e - this.llx,
       f: this.height + this.lly - transformed.f,
     };
-    this.pushElement(`<image x="0" y="0" width="${width}" height="${height}" transform="matrix(${this.formatNumber(matrix.a)},${this.formatNumber(matrix.b)},${this.formatNumber(matrix.c)},${this.formatNumber(matrix.d)},${this.formatNumber(matrix.e)},${this.formatNumber(matrix.f)})" href="data:image/svg+xml;base64,${encoded}" opacity="${formatOpacity(state.opacity)}"/>`);
+    this.pushElement(
+      `<image x="0" y="0" width="${width}" height="${height}" transform="matrix(${this.formatNumber(matrix.a)},${this.formatNumber(matrix.b)},${this.formatNumber(matrix.c)},${this.formatNumber(matrix.d)},${this.formatNumber(matrix.e)},${this.formatNumber(matrix.f)})" href="data:image/svg+xml;base64,${encoded}" opacity="${formatOpacity(state.opacity)}"/>`,
+    );
     return true;
   }
 
   clip(state: GraphicsState, evenodd: boolean): void {
-    const id = `asy-clip-${this.clipCounter += 1}`;
+    const id = `asy-clip-${(this.clipCounter += 1)}`;
     const d = this.pathToD();
     const path = `<path d="${d}"${evenodd ? ' clip-rule="evenodd"' : ""}/>`;
-    const content = state.clipId
-      ? `<g clip-path="url(#${state.clipId})">${path}</g>`
-      : path;
-    this.defs.push(
-      `<clipPath id="${id}">${content}</clipPath>`
-    );
+    const content = state.clipId ? `<g clip-path="url(#${state.clipId})">${path}</g>` : path;
+    this.defs.push(`<clipPath id="${id}">${content}</clipPath>`);
     state.clipId = id;
     this.newPath();
   }
@@ -472,13 +510,14 @@ interface NativeLabelContext {
     const clipAttr = state.clipId ? ` clip-path="url(#${state.clipId})"` : "";
     const opacityAttr = state.opacity < 1 ? ` opacity="${formatOpacity(state.opacity)}"` : "";
     if (mode === "stroke") {
-      const dash = state.dasharray.length > 0
-        ? ` stroke-dasharray="${state.dasharray.join(",")}" stroke-dashoffset="${state.dashoffset}"`
-        : "";
+      const dash =
+        state.dasharray.length > 0
+          ? ` stroke-dasharray="${state.dasharray.join(",")}" stroke-dashoffset="${state.dashoffset}"`
+          : "";
       this.pushElement(
         `<path d="${d}" fill="none" stroke="${state.stroke}" stroke-width="${state.linewidth}" ` +
-        `stroke-linecap="${LINECAP[state.linecap] ?? "butt"}" stroke-linejoin="${LINEJOIN[state.linejoin] ?? "miter"}" ` +
-        `stroke-miterlimit="${state.miterlimit}"${dash}${opacityAttr}${clipAttr}/>`
+          `stroke-linecap="${LINECAP[state.linecap] ?? "butt"}" stroke-linejoin="${LINEJOIN[state.linejoin] ?? "miter"}" ` +
+          `stroke-miterlimit="${state.miterlimit}"${dash}${opacityAttr}${clipAttr}/>`,
       );
     } else {
       const rule = mode === "eofill" ? ' fill-rule="evenodd"' : "";
@@ -497,29 +536,33 @@ interface NativeLabelContext {
       state.fontFamily,
       this.customFonts,
       (fontName) => this.warnUnknownFont(fontName),
-      (fontName) => this.warnMalformedFontDescriptor(fontName)
+      (fontName) => this.warnMalformedFontDescriptor(fontName),
     );
-    const transform = angle !== 0
-      ? ` transform="rotate(${this.formatNumber(angle)} ${this.formatNumber(x)} ${this.formatNumber(y)})"`
-      : "";
+    const transform =
+      angle !== 0
+        ? ` transform="rotate(${this.formatNumber(angle)} ${this.formatNumber(x)} ${this.formatNumber(y)})"`
+        : "";
     const opacityAttr = state.opacity < 1 ? ` opacity="${formatOpacity(state.opacity)}"` : "";
     const weightAttr = font.weight ? ` font-weight="${font.weight}"` : "";
     const styleAttr = font.style ? ` font-style="${font.style}"` : "";
     const stretchAttr = font.stretch ? ` font-stretch="${font.stretch}"` : "";
     const chars = Array.from(text);
-    const content = adjustments.length === 0
-      ? escapeXml(text)
-      : chars.map((char, index) => {
-        if (index === 0) return `<tspan>${escapeXml(char)}</tspan>`;
-        const [dx, dy] = adjustments[index - 1] ?? [0, 0];
-        const tx = state.ctm.a * dx + state.ctm.c * dy;
-        const ty = -(state.ctm.b * dx + state.ctm.d * dy);
-        return `<tspan dx="${this.formatNumber(tx)}" dy="${this.formatNumber(ty)}">${escapeXml(char)}</tspan>`;
-      }).join("");
+    const content =
+      adjustments.length === 0
+        ? escapeXml(text)
+        : chars
+            .map((char, index) => {
+              if (index === 0) return `<tspan>${escapeXml(char)}</tspan>`;
+              const [dx, dy] = adjustments[index - 1] ?? [0, 0];
+              const tx = state.ctm.a * dx + state.ctm.c * dy;
+              const ty = -(state.ctm.b * dx + state.ctm.d * dy);
+              return `<tspan dx="${this.formatNumber(tx)}" dy="${this.formatNumber(ty)}">${escapeXml(char)}</tspan>`;
+            })
+            .join("");
     this.pushElement(
       `<text x="${this.formatNumber(x)}" y="${this.formatNumber(y)}" fill="${state.fill}" ` +
-      `font-family="${escapeXml(font.family)}" font-size="${this.formatNumber(state.fontSize * scale)}"` +
-      `${weightAttr}${styleAttr}${stretchAttr}${transform}${opacityAttr}>${content}</text>`
+        `font-family="${escapeXml(font.family)}" font-size="${this.formatNumber(state.fontSize * scale)}"` +
+        `${weightAttr}${styleAttr}${stretchAttr}${transform}${opacityAttr}>${content}</text>`,
     );
     const advance = state.fontSize * 0.6 * chars.length;
     const extraX = adjustments.reduce((sum, value) => sum + value[0], 0);
@@ -527,7 +570,6 @@ interface NativeLabelContext {
     this.currentX += state.ctm.a * (advance + extraX) + state.ctm.c * extraY;
     this.currentY += state.ctm.b * (advance + extraX) + state.ctm.d * extraY;
   }
-
 
   private pushElement(element: string): void {
     if (this.nativeLabelStack.length > 0) {
@@ -563,7 +605,10 @@ interface NativeLabelContext {
   private serializeNativeLabel(context: NativeLabelContext): string {
     const attributes = Object.entries(context.metadata)
       .map(([name, value]) => {
-        const safeName = name.replace(/[^a-zA-Z0-9_-]/g, "-").replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+        const safeName = name
+          .replace(/[^a-zA-Z0-9_-]/g, "-")
+          .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+          .toLowerCase();
         const serialized = operandToDataString(value);
         return serialized.length > 0
           ? ` data-asy-label-${safeName}="${escapeXml(serialized)}"`
@@ -582,8 +627,8 @@ interface NativeLabelContext {
     this.finalizeOpenNativeLabels();
     const title = this.accessibility.title;
     const description = this.accessibility.description;
-    const titleId = title ? `asy-title-${accessibilityId += 1}` : undefined;
-    const descriptionId = description ? `asy-description-${accessibilityId += 1}` : undefined;
+    const titleId = title ? `asy-title-${(accessibilityId += 1)}` : undefined;
+    const descriptionId = description ? `asy-description-${(accessibilityId += 1)}` : undefined;
     const labelledBy = this.accessibility.labelledBy ?? titleId;
     const describedBy = this.accessibility.describedBy ?? descriptionId;
     const role = this.accessibility.role ?? (title || description ? "img" : undefined);
@@ -628,12 +673,15 @@ interface NativeLabelContext {
     const existingId = this.gradientIds.get(key);
     if (existingId) return `url(#${existingId})`;
 
-    const id = `asy-gradient-${this.gradientCounter += 1}`;
+    const id = `asy-gradient-${(this.gradientCounter += 1)}`;
     this.gradientIds.set(key, id);
-    const stops = gradient.stops.map((stop: GradientStop) =>
-      `<stop offset="${formatOpacity(stop.offset)}" stop-color="${stop.color}"` +
-      `${stop.opacity < 1 ? ` stop-opacity="${formatOpacity(stop.opacity)}"` : ""}/>`
-    ).join("");
+    const stops = gradient.stops
+      .map(
+        (stop: GradientStop) =>
+          `<stop offset="${formatOpacity(stop.offset)}" stop-color="${stop.color}"` +
+          `${stop.opacity < 1 ? ` stop-opacity="${formatOpacity(stop.opacity)}"` : ""}/>`,
+      )
+      .join("");
     let definition: string;
     if (gradient.kind === "linear") {
       const matrix = transform.map((value) => this.formatNumber(value)).join(" ");

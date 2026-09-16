@@ -4,7 +4,7 @@
 export class PostScriptTokenizer {
   private index = 0;
 
-  constructor(private readonly source: string) { }
+  constructor(private readonly source: string) {}
 
   /** Return the next token, skipping whitespace, comments, and definitions. */
   next(): string | null {

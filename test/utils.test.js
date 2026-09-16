@@ -26,10 +26,7 @@ test("exports the utility API from the package subpath", () => {
 test("creates and composes affine matrices in PostScript order", () => {
   assert.deepEqual(identityMatrix(), { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 });
   assert.deepEqual(
-    composeMatrix(
-      { a: 2, b: 0, c: 0, d: 3, e: 10, f: 20 },
-      { a: 1, b: 0, c: 0, d: 1, e: 4, f: 5 },
-    ),
+    composeMatrix({ a: 2, b: 0, c: 0, d: 3, e: 10, f: 20 }, { a: 1, b: 0, c: 0, d: 1, e: 4, f: 5 }),
     { a: 2, b: 0, c: 0, d: 3, e: 18, f: 35 },
   );
 });

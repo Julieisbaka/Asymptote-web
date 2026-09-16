@@ -64,7 +64,9 @@ export function cloneState(s: GraphicsState): GraphicsState {
   return {
     ...s,
     dasharray: [...s.dasharray],
-    gradient: s.gradient ? { ...s.gradient, stops: s.gradient.stops.map((stop) => ({ ...stop })) } : null,
+    gradient: s.gradient
+      ? { ...s.gradient, stops: s.gradient.stops.map((stop) => ({ ...stop })) }
+      : null,
   };
 }
 

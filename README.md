@@ -74,9 +74,7 @@ another public directory or CDN, pass that directory to `getAssetUrls()`:
 ```ts
 import { createAsymptote, getAssetUrls } from "asymptote-web";
 
-const asy = await createAsymptote(
-  getAssetUrls("/assets/asymptote/")
-);
+const asy = await createAsymptote(getAssetUrls("/assets/asymptote/"));
 ```
 
 The directory must contain all four runtime assets. `getAssetUrls()` returns
@@ -85,10 +83,13 @@ the matching `glueUrl`, `wasmUrl`, and `asyglUrl` values for `createAsymptote()`
 ### Mount directly to a DOM element
 
 ```ts
-await asy.mount("#output", `
+await asy.mount(
+  "#output",
+  `
   size(100);
   filldraw(unitsquare, yellow, black);
-`);
+`,
+);
 ```
 
 ---
@@ -100,6 +101,8 @@ examples for rendering, downloads, batch rendering, WebGL, output formats,
 errors, and standalone EPS/PS conversion.
 
 The exact exported TypeScript interfaces are in the [type reference](docs/types.md).
+
+Repository conventions are documented in the [style guide](docs/style-guide.md).
 
 For repeatable render timing comparisons, use the browser
 [performance benchmark](docs/performance.md).

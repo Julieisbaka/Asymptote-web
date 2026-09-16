@@ -108,17 +108,13 @@ function updateSvgElement(target: Element, svgText: string): boolean {
     current.setAttribute(attribute.name, attribute.value);
   }
   current.replaceChildren(
-    ...Array.from(next.childNodes).map((node) => document.importNode(node, true))
+    ...Array.from(next.childNodes).map((node) => document.importNode(node, true)),
   );
   return true;
 }
 
 /** Mount an SVG after allowing a trusted callback to customize it. */
-function mountUnsafeSvg(
-  target: Element,
-  svgText: string,
-  customize: UnsafeSvgCustomizer
-): void {
+function mountUnsafeSvg(target: Element, svgText: string, customize: UnsafeSvgCustomizer): void {
   const container = document.createElement("div");
   container.innerHTML = svgText;
   const svg = container.firstElementChild;
@@ -137,17 +133,13 @@ function resolveTarget(target: string | Element): Element | null {
 /** Return the direct mounted SVG child, if present. */
 function getUnsafeSvg(target: string | Element): SVGSVGElement | null {
   const element = resolveTarget(target)?.firstElementChild;
-  return element?.tagName.toLowerCase() === "svg"
-    ? element as SVGSVGElement
-    : null;
+  return element?.tagName.toLowerCase() === "svg" ? (element as SVGSVGElement) : null;
 }
 
 /** Return the direct mounted WebGL iframe child, if present. */
 function getUnsafeWebGLIframe(target: string | Element): HTMLIFrameElement | null {
   const element = resolveTarget(target)?.firstElementChild;
-  return element?.tagName.toLowerCase() === "iframe"
-    ? element as HTMLIFrameElement
-    : null;
+  return element?.tagName.toLowerCase() === "iframe" ? (element as HTMLIFrameElement) : null;
 }
 
 /** Return the MIME type associated with a render result format. */
@@ -173,7 +165,7 @@ function containWebGLScroll(
   html: string,
   containScroll = true,
   primeZoom = true,
-  reducedMotion = false
+  reducedMotion = false,
 ): string {
   const guard = `<script>(function(){function stop(event){event.preventDefault()}document.addEventListener("wheel",stop,{capture:true,passive:false});document.addEventListener("touchmove",stop,{capture:true,passive:false})})()</script>`;
   const prime = `<script>(function(){var attempts=0;function prime(){var canvas=document.getElementById("Asymptote");if(!canvas||!canvas.onmousedown){if(++attempts<120)setTimeout(prime,16);return}canvas.dispatchEvent(new MouseEvent("mousedown",{bubbles:true,clientX:0,clientY:0}));canvas.dispatchEvent(new MouseEvent("mouseup",{bubbles:true}))}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",prime,{once:true});else prime()})()</script>`;
@@ -181,15 +173,15 @@ function containWebGLScroll(
   const motionStyle = reducedMotion
     ? `<style>@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}</style>`
     : "";
-  const withMotionStyle = head >= 0
-    ? `${html.slice(0, head)}${motionStyle}${html.slice(head)}`
-    : `${motionStyle}${html}`;
+  const withMotionStyle =
+    head >= 0 ? `${html.slice(0, head)}${motionStyle}${html.slice(head)}` : `${motionStyle}${html}`;
   const motionHead = withMotionStyle.indexOf("</head>");
-  const withGuard = containScroll && motionHead >= 0
-    ? `${withMotionStyle.slice(0, motionHead)}${guard}${withMotionStyle.slice(motionHead)}`
-    : containScroll
-      ? `${guard}${withMotionStyle}`
-      : withMotionStyle;
+  const withGuard =
+    containScroll && motionHead >= 0
+      ? `${withMotionStyle.slice(0, motionHead)}${guard}${withMotionStyle.slice(motionHead)}`
+      : containScroll
+        ? `${guard}${withMotionStyle}`
+        : withMotionStyle;
   const body = withGuard.indexOf("</body>");
   return primeZoom
     ? body >= 0
@@ -201,7 +193,9 @@ function containWebGLScroll(
 /** Wait for an iframe to load, fail, or exceed its configured timeout. */
 function waitForIframeDocument(iframe: HTMLIFrameElement, timeoutMs = 15000): Promise<Document> {
   if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
-    return Promise.reject(new TypeError("asymptote-web: WebGL iframe timeout must be a non-negative finite number"));
+    return Promise.reject(
+      new TypeError("asymptote-web: WebGL iframe timeout must be a non-negative finite number"),
+    );
   }
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -234,10 +228,7 @@ function waitForIframeDocument(iframe: HTMLIFrameElement, timeoutMs = 15000): Pr
 }
 
 /** Create a sandboxed iframe for generated WebGL HTML. */
-function createWebGLIframe(
-  html: string,
-  renderOptions: RenderOptions
-): HTMLIFrameElement {
+function createWebGLIframe(html: string, renderOptions: RenderOptions): HTMLIFrameElement {
   const iframe = document.createElement("iframe");
   // Accessible name (WCAG 4.1.2) so assistive tech announces the embedded
   // viewer instead of an unlabelled frame.
@@ -250,14 +241,15 @@ function createWebGLIframe(
   // not defend against script injection inside the viewer document itself —
   // treat that document's contents as trusted, as documented on `unsafe.*`.
   iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
-  const reducedMotion = renderOptions.respectReducedMotion !== false &&
+  const reducedMotion =
+    renderOptions.respectReducedMotion !== false &&
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   iframe.srcdoc = containWebGLScroll(
     html,
     renderOptions.containWebGLScroll !== false,
     renderOptions.primeWebGLZoom !== false && !reducedMotion,
-    reducedMotion
+    reducedMotion,
   );
   const styles = {
     border: "none",
@@ -311,9 +303,7 @@ function addWebGLLabels(doc: Document, labels: readonly WebGLLabel[]): void {
  * const { svg } = await asy.render("size(200); draw(unitsquare);");
  * ```
  */
-export async function createAsymptote(
-  options: CreateOptions = {}
-): Promise<AsymptoteEngine> {
+export async function createAsymptote(options: CreateOptions = {}): Promise<AsymptoteEngine> {
   const resolvedOptions: CreateOptions = { ...options };
   await preloadModule(resolvedOptions);
 
@@ -322,24 +312,18 @@ export async function createAsymptote(
       return getAsymptoteVersion(resolvedOptions);
     },
 
-    async render(
-      source: string,
-      renderOptions: RenderOptions = {}
-    ): Promise<RenderResult> {
+    async render(source: string, renderOptions: RenderOptions = {}): Promise<RenderResult> {
       return runAsymptote(source, renderOptions, resolvedOptions);
     },
 
-    async renderToBlob(
-      source: string,
-      renderOptions: RenderOptions = {}
-    ): Promise<Blob> {
+    async renderToBlob(source: string, renderOptions: RenderOptions = {}): Promise<Blob> {
       const result = await runAsymptote(source, renderOptions, resolvedOptions);
       return new Blob([result.output], { type: outputMimeType(result.format) });
     },
 
     async renderBatch(
       sources: readonly string[],
-      renderOptions: RenderOptions = {}
+      renderOptions: RenderOptions = {},
     ): Promise<RenderResult[]> {
       const results: RenderResult[] = [];
       for (let index = 0; index < sources.length; index += 1) {
@@ -357,7 +341,7 @@ export async function createAsymptote(
     async download(
       source: string,
       filename?: string,
-      renderOptions: RenderOptions = {}
+      renderOptions: RenderOptions = {},
     ): Promise<RenderResult> {
       const result = await runAsymptote(source, renderOptions, resolvedOptions);
       const blob = new Blob([result.output], { type: outputMimeType(result.format) });
@@ -375,7 +359,7 @@ export async function createAsymptote(
     async mount(
       target: string | Element,
       source: string,
-      renderOptions: RenderOptions = {}
+      renderOptions: RenderOptions = {},
     ): Promise<RenderResult> {
       const result = await runAsymptote(source, renderOptions, resolvedOptions);
 
@@ -383,10 +367,7 @@ export async function createAsymptote(
         throw new TypeError("asymptote-web: mount only supports SVG output");
       }
 
-      const el =
-        typeof target === "string"
-          ? document.querySelector(target)
-          : target;
+      const el = typeof target === "string" ? document.querySelector(target) : target;
 
       if (!el) {
         throw new TypeError(`asymptote-web: mount target not found: ${target}`);
@@ -409,15 +390,13 @@ export async function createAsymptote(
         target: string | Element,
         source: string,
         customize: UnsafeSvgCustomizer,
-        renderOptions: RenderOptions = {}
+        renderOptions: RenderOptions = {},
       ): Promise<RenderResult> {
         const result = await runAsymptote(source, renderOptions, resolvedOptions);
         if (result.format !== "svg") {
           throw new TypeError("asymptote-web: unsafe.mount only supports SVG output");
         }
-        const el = typeof target === "string"
-          ? document.querySelector(target)
-          : target;
+        const el = typeof target === "string" ? document.querySelector(target) : target;
         if (!el) {
           throw new TypeError(`asymptote-web: unsafe.mount target not found: ${target}`);
         }
@@ -428,16 +407,14 @@ export async function createAsymptote(
         target: string | Element,
         source: string,
         customize: UnsafeWebGLCustomizer,
-        renderOptions: Omit<RenderOptions, "format"> = {}
+        renderOptions: Omit<RenderOptions, "format"> = {},
       ): Promise<RenderResult> {
         const result = await runAsymptote(
           source,
           { ...renderOptions, format: "webgl" },
-          resolvedOptions
+          resolvedOptions,
         );
-        const el = typeof target === "string"
-          ? document.querySelector(target)
-          : target;
+        const el = typeof target === "string" ? document.querySelector(target) : target;
         if (!el) {
           throw new TypeError(`asymptote-web: unsafe.mountWebGL target not found: ${target}`);
         }
@@ -457,18 +434,15 @@ export async function createAsymptote(
     async mountWebGL(
       target: string | Element,
       source: string,
-      renderOptions: RenderOptions = {}
+      renderOptions: RenderOptions = {},
     ): Promise<RenderResult> {
       const result = await runAsymptote(
         source,
         { ...renderOptions, format: "webgl" },
-        resolvedOptions
+        resolvedOptions,
       );
 
-      const el =
-        typeof target === "string"
-          ? document.querySelector(target)
-          : target;
+      const el = typeof target === "string" ? document.querySelector(target) : target;
 
       if (!el) {
         throw new TypeError(`asymptote-web: mountWebGL target not found: ${target}`);

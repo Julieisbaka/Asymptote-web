@@ -30,7 +30,9 @@ function serveEmscriptenGlueRaw(): Plugin {
         if (!existsSync(filePath)) {
           res.statusCode = 503;
           res.setHeader("Content-Type", "text/plain; charset=utf-8");
-          res.end(`Missing dist/${match[1]}.js. Run the WASM build before starting the dev server.\n`);
+          res.end(
+            `Missing dist/${match[1]}.js. Run the WASM build before starting the dev server.\n`,
+          );
           return;
         }
         res.setHeader("Content-Type", "text/javascript");
@@ -45,7 +47,10 @@ function cleanReleaseSourceMap(debugBuild: boolean): Plugin {
     name: "clean-release-source-map",
     closeBundle() {
       if (!debugBuild) {
-        const mapPath = resolve(fileURLToPath(new URL(".", import.meta.url)), "dist/asymptote-web.js.map");
+        const mapPath = resolve(
+          fileURLToPath(new URL(".", import.meta.url)),
+          "dist/asymptote-web.js.map",
+        );
         if (existsSync(mapPath)) unlinkSync(mapPath);
       }
     },

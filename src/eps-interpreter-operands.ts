@@ -29,12 +29,24 @@ export function unescapePostScriptString(token: string): string {
       continue;
     }
     switch (escaped) {
-      case "n": result += "\n"; break;
-      case "r": result += "\r"; break;
-      case "t": result += "\t"; break;
-      case "b": result += "\b"; break;
-      case "f": result += "\f"; break;
-      default: result += escaped; break;
+      case "n":
+        result += "\n";
+        break;
+      case "r":
+        result += "\r";
+        break;
+      case "t":
+        result += "\t";
+        break;
+      case "b":
+        result += "\b";
+        break;
+      case "f":
+        result += "\f";
+        break;
+      default:
+        result += escaped;
+        break;
     }
   }
   return result;
@@ -53,13 +65,17 @@ export function isDictionary(value: Operand | undefined): value is Dictionary {
 /** Return numeric array operands, or null for mixed/non-array values. */
 export function numbers(value: Operand | undefined): number[] | null {
   return Array.isArray(value) && value.every((item) => typeof item === "number")
-    ? value as number[]
+    ? (value as number[])
     : null;
 }
 
 /** Convert a six-number operand into an affine matrix. */
 export function matrixFromOperand(value: Operand | undefined): Matrix | null {
-  if (!Array.isArray(value) || value.length !== 6 || !value.every((item) => typeof item === "number")) {
+  if (
+    !Array.isArray(value) ||
+    value.length !== 6 ||
+    !value.every((item) => typeof item === "number")
+  ) {
     return null;
   }
   return { a: value[0], b: value[1], c: value[2], d: value[3], e: value[4], f: value[5] };
@@ -72,5 +88,7 @@ export function isMatrix(value: Matrix | null): value is Matrix {
 
 /** Narrow an operand to a six-number matrix array. */
 export function isMatrixArray(value: Operand | undefined): value is Operand[] {
-  return Array.isArray(value) && value.length === 6 && value.every((item) => typeof item === "number");
+  return (
+    Array.isArray(value) && value.length === 6 && value.every((item) => typeof item === "number")
+  );
 }

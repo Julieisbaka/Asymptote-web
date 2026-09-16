@@ -29,7 +29,7 @@ import { PostScriptTokenizer } from "./eps-tokenizer.js";
 // Thrown internally when nested array/dictionary literals go deeper than
 // MAX_NESTING_DEPTH, so malformed or adversarial input can't exhaust the
 // call stack; caught and turned into a warning in `run()`.
-class EpsNestingLimitError extends Error { }
+class EpsNestingLimitError extends Error {}
 
 /** Interpret the constrained PostScript subset emitted by Asymptote. */
 export class PostScriptInterpreter {
@@ -58,8 +58,8 @@ export class PostScriptInterpreter {
 
   constructor(
     private readonly tokens: PostScriptTokenizer,
-    private readonly writer: SvgWriter
-  ) { }
+    private readonly writer: SvgWriter,
+  ) {}
 
   /** Consume all tokens and emit supported operations to the SVG writer. */
   run(): void {
@@ -155,7 +155,7 @@ export class PostScriptInterpreter {
           point.x + dx1 + dx2,
           point.y + dy1 + dy2,
           point.x + dx1 + dx2 + dx3,
-          point.y + dy1 + dy2 + dy3
+          point.y + dy1 + dy2 + dy3,
         );
         break;
       }
@@ -193,7 +193,12 @@ export class PostScriptInterpreter {
         const [deg] = this.popN(1);
         const r = (deg * Math.PI) / 180;
         this.state.ctm = compose(this.state.ctm, {
-          a: Math.cos(r), b: Math.sin(r), c: -Math.sin(r), d: Math.cos(r), e: 0, f: 0,
+          a: Math.cos(r),
+          b: Math.sin(r),
+          c: -Math.sin(r),
+          d: Math.cos(r),
+          e: 0,
+          f: 0,
         });
         break;
       }
@@ -274,9 +279,7 @@ export class PostScriptInterpreter {
       case "setopacity":
         {
           const opacity = this.popN(1)[0];
-          this.state.opacity = Number.isFinite(opacity)
-            ? Math.max(0, Math.min(1, opacity))
-            : 0;
+          this.state.opacity = Number.isFinite(opacity) ? Math.max(0, Math.min(1, opacity)) : 0;
         }
         break;
       case "show": {
@@ -287,7 +290,12 @@ export class PostScriptInterpreter {
       case "ashow": {
         const text = this.stack.pop();
         const [ax, ay] = this.popN(2);
-        if (typeof text === "string") this.writer.show(this.state, text, textChars(text).map(() => [ax, ay]));
+        if (typeof text === "string")
+          this.writer.show(
+            this.state,
+            text,
+            textChars(text).map(() => [ax, ay]),
+          );
         break;
       }
       case "widthshow": {
@@ -295,8 +303,11 @@ export class PostScriptInterpreter {
         const char = this.popN(1)[0];
         const [cx, cy] = this.popN(2);
         if (typeof text === "string") {
-          this.writer.show(this.state, text, textChars(text).map((value) =>
-            value === char ? [cx, cy] : [0, 0]));
+          this.writer.show(
+            this.state,
+            text,
+            textChars(text).map((value) => (value === char ? [cx, cy] : [0, 0])),
+          );
         }
         break;
       }
@@ -306,8 +317,11 @@ export class PostScriptInterpreter {
         const [cx, cy] = this.popN(2);
         const [ax, ay] = this.popN(2);
         if (typeof text === "string") {
-          this.writer.show(this.state, text, textChars(text).map((value) =>
-            value === char ? [ax + cx, ay + cy] : [ax, ay]));
+          this.writer.show(
+            this.state,
+            text,
+            textChars(text).map((value) => (value === char ? [ax + cx, ay + cy] : [ax, ay])),
+          );
         }
         break;
       }
@@ -328,7 +342,10 @@ export class PostScriptInterpreter {
         const offset = this.stack.pop();
         const arr = this.stack.pop();
         this.state.dasharray = Array.isArray(arr)
-          ? arr.filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0)
+          ? arr.filter(
+              (value): value is number =>
+                typeof value === "number" && Number.isFinite(value) && value >= 0,
+            )
           : [];
         this.state.dashoffset = typeof offset === "number" && Number.isFinite(offset) ? offset : 0;
         break;
@@ -345,7 +362,8 @@ export class PostScriptInterpreter {
       case "makepattern": {
         const matrix = this.stack.pop();
         const pattern = this.stack.pop();
-        if (isDictionary(pattern) && (Array.isArray(matrix) || matrix === undefined)) this.stack.push(pattern);
+        if (isDictionary(pattern) && (Array.isArray(matrix) || matrix === undefined))
+          this.stack.push(pattern);
         break;
       }
       case "setpattern": {
@@ -370,7 +388,15 @@ export class PostScriptInterpreter {
         const bits = this.stack.pop();
         const height = this.stack.pop();
         const width = this.stack.pop();
-        if (typeof data === "string" && bits === 8 && typeof width === "number" && typeof height === "number" && isMatrixArray(matrix) && this.writer.image(this.state, width, height, data, matrixFromOperand(matrix)!)) break;
+        if (
+          typeof data === "string" &&
+          bits === 8 &&
+          typeof width === "number" &&
+          typeof height === "number" &&
+          isMatrixArray(matrix) &&
+          this.writer.image(this.state, width, height, data, matrixFromOperand(matrix)!)
+        )
+          break;
         this.warn("ignored raster image: only 8-bit grayscale string data is supported");
         break;
       }
@@ -417,10 +443,15 @@ export class PostScriptInterpreter {
 
   private readArray(): Operand[] {
     this.nestingDepth += 1;
-    if (this.nestingDepth > PostScriptInterpreter.MAX_NESTING_DEPTH) throw new EpsNestingLimitError();
+    if (this.nestingDepth > PostScriptInterpreter.MAX_NESTING_DEPTH)
+      throw new EpsNestingLimitError();
     try {
       const values: Operand[] = [];
-      for (let token = this.tokens.next(); token !== null && token !== "]"; token = this.tokens.next()) {
+      for (
+        let token = this.tokens.next();
+        token !== null && token !== "]";
+        token = this.tokens.next()
+      ) {
         values.push(this.readValue(token));
       }
       return values;
@@ -431,7 +462,8 @@ export class PostScriptInterpreter {
 
   private readDictionary(): Dictionary {
     this.nestingDepth += 1;
-    if (this.nestingDepth > PostScriptInterpreter.MAX_NESTING_DEPTH) throw new EpsNestingLimitError();
+    if (this.nestingDepth > PostScriptInterpreter.MAX_NESTING_DEPTH)
+      throw new EpsNestingLimitError();
     try {
       const dictionary: Dictionary = {};
       for (let token = this.tokens.next(); token !== null && token !== ">>";) {
@@ -460,13 +492,24 @@ export class PostScriptInterpreter {
     const count = kind === "linear" ? 4 : 6;
     if (this.stack.length < count) return null;
     const values = this.stack.splice(this.stack.length - count, count);
-    if (!values.every((value): value is number => typeof value === "number" && Number.isFinite(value))) {
+    if (
+      !values.every((value): value is number => typeof value === "number" && Number.isFinite(value))
+    ) {
       return null;
     }
     if (!stops) return null;
     return kind === "linear"
       ? { kind, x1: values[0], y1: values[1], x2: values[2], y2: values[3], stops }
-      : { kind, x1: values[0], y1: values[1], r1: values[2], x2: values[3], y2: values[4], r2: values[5], stops };
+      : {
+          kind,
+          x1: values[0],
+          y1: values[1],
+          r1: values[2],
+          x2: values[3],
+          y2: values[4],
+          r2: values[5],
+          stops,
+        };
   }
 
   private appendTangentArc(x1: number, y1: number, x2: number, y2: number, radius: number): void {
@@ -498,9 +541,18 @@ export class PostScriptInterpreter {
     const bisector = { x: (u.x + v.x) / bisectorLength, y: (u.y + v.y) / bisectorLength };
     const centerDistance = radius / Math.sin(halfAngle);
     const center = { x: x1 + bisector.x * centerDistance, y: y1 + bisector.y * centerDistance };
-    const startAngle = (Math.atan2(tangentStart.y - center.y, tangentStart.x - center.x) * 180) / Math.PI;
+    const startAngle =
+      (Math.atan2(tangentStart.y - center.y, tangentStart.x - center.x) * 180) / Math.PI;
     const endAngle = (Math.atan2(tangentEnd.y - center.y, tangentEnd.x - center.x) * 180) / Math.PI;
     this.writer.appendPoint(this.state, "L", tangentStart.x, tangentStart.y);
-    this.writer.appendArc(this.state, center.x, center.y, radius, startAngle, endAngle, u.x * v.y - u.y * v.x > 0);
+    this.writer.appendArc(
+      this.state,
+      center.x,
+      center.y,
+      radius,
+      startAngle,
+      endAngle,
+      u.x * v.y - u.y * v.x > 0,
+    );
   }
 }

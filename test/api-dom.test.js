@@ -3,7 +3,9 @@ import { unlink, writeFile } from "node:fs/promises";
 import test, { after, before, beforeEach } from "node:test";
 
 const gluePath = new URL("../dist/asymptote.js", import.meta.url);
-await writeFile(gluePath, `
+await writeFile(
+  gluePath,
+  `
 const state = globalThis.__asymptoteDomState ??= { output: "normal", calls: [] };
 function fs() {
   const files = new Map([["/", null]]);
@@ -43,7 +45,9 @@ export default async function factory() {
   };
   return module;
 }
-`, "utf8");
+`,
+  "utf8",
+);
 
 class FakeElement {
   constructor(tagName, ownerDocument) {
@@ -53,26 +57,37 @@ class FakeElement {
     this.childNodes = [];
     this.attributes = [];
     this.style = {
-      setProperty: (name, value) => { this.style[name] = value; },
+      setProperty: (name, value) => {
+        this.style[name] = value;
+      },
     };
     this.className = "";
     this.parentElement = null;
     this._innerHTML = "";
   }
-  get firstElementChild() { return this.children[0] ?? null; }
+  get firstElementChild() {
+    return this.children[0] ?? null;
+  }
   set innerHTML(value) {
     this._innerHTML = value;
     this.replaceChildren();
-    if (value.trim().startsWith("<svg")) this.appendChild(new FakeElement("svg", this.ownerDocument));
+    if (value.trim().startsWith("<svg"))
+      this.appendChild(new FakeElement("svg", this.ownerDocument));
   }
-  get innerHTML() { return this._innerHTML; }
+  get innerHTML() {
+    return this._innerHTML;
+  }
   setAttribute(name, value) {
     const existing = this.attributes.find((attribute) => attribute.name === name);
     if (existing) existing.value = String(value);
     else this.attributes.push({ name, value: String(value) });
   }
-  getAttribute(name) { return this.attributes.find((attribute) => attribute.name === name)?.value ?? null; }
-  removeAttribute(name) { this.attributes = this.attributes.filter((attribute) => attribute.name !== name); }
+  getAttribute(name) {
+    return this.attributes.find((attribute) => attribute.name === name)?.value ?? null;
+  }
+  removeAttribute(name) {
+    this.attributes = this.attributes.filter((attribute) => attribute.name !== name);
+  }
   appendChild(child) {
     child.parentElement = this;
     this.children.push(child);
@@ -99,7 +114,9 @@ class FakeElement {
     }
     return child;
   }
-  click() { this.clicked = true; }
+  click() {
+    this.clicked = true;
+  }
 }
 
 class FakeIframe extends FakeElement {
@@ -115,7 +132,10 @@ class FakeIframe extends FakeElement {
     this.listeners.set(type, list);
   }
   removeEventListener(type, listener) {
-    this.listeners.set(type, (this.listeners.get(type) ?? []).filter((item) => item !== listener));
+    this.listeners.set(
+      type,
+      (this.listeners.get(type) ?? []).filter((item) => item !== listener),
+    );
   }
   dispatch(type) {
     for (const listener of [...(this.listeners.get(type) ?? [])]) listener({ type });
@@ -127,7 +147,9 @@ class FakeDocument {
     this.nodes = new Map();
     this.body = new FakeElement("body", this);
   }
-  querySelector(selector) { return this.nodes.get(selector) ?? null; }
+  querySelector(selector) {
+    return this.nodes.get(selector) ?? null;
+  }
   createElement(tagName) {
     if (tagName.toLowerCase() === "iframe") return new FakeIframe(this);
     const element = new FakeElement(tagName, this);
@@ -153,8 +175,13 @@ const OriginalURL = globalThis.URL;
 class TestURL extends OriginalURL {
   static created = [];
   static revoked = [];
-  static createObjectURL(blob) { TestURL.created.push(blob); return "blob:test"; }
-  static revokeObjectURL(url) { TestURL.revoked.push(url); }
+  static createObjectURL(blob) {
+    TestURL.created.push(blob);
+    return "blob:test";
+  }
+  static revokeObjectURL(url) {
+    TestURL.revoked.push(url);
+  }
 }
 
 globalThis.document = document;
@@ -165,7 +192,10 @@ globalThis.HTMLIFrameElement = FakeIframe;
 globalThis.DOMParser = class {
   parseFromString(value) {
     const parsed = new FakeDocument();
-    parsed.documentElement = new FakeElement(value.trim().startsWith("<svg") ? "svg" : "parsererror", parsed);
+    parsed.documentElement = new FakeElement(
+      value.trim().startsWith("<svg") ? "svg" : "parsererror",
+      parsed,
+    );
     if (parsed.documentElement.tagName === "SVG") {
       parsed.documentElement.setAttribute("width", "100");
       parsed.documentElement.setAttribute("height", "100");
@@ -201,7 +231,7 @@ after(async () => {
   globalThis.HTMLIFrameElement = originalIframeElement;
   globalThis.URL = OriginalURL;
   delete globalThis.__asymptoteDomState;
-  await unlink(gluePath).catch(() => { });
+  await unlink(gluePath).catch(() => {});
 });
 
 test("mounts SVG output and reuses an existing SVG", async () => {
@@ -216,12 +246,18 @@ test("mounts SVG output and reuses an existing SVG", async () => {
   const reused = await asy.mount(target, "draw again", { reuseSvg: true });
   assert.equal(reused.format, "svg");
   assert.equal(target.firstElementChild, oldSvg);
-  assert.equal(target.firstElementChild.attributes.some((attribute) => attribute.name === "width"), true);
+  assert.equal(
+    target.firstElementChild.attributes.some((attribute) => attribute.name === "width"),
+    true,
+  );
 });
 
 test("reports mount target and format errors", async () => {
   await assert.rejects(() => asy.mount("#missing", "draw"), /mount target not found/);
-  await assert.rejects(() => asy.mount(document.createElement("div"), "draw", { format: "eps" }), /only supports SVG/);
+  await assert.rejects(
+    () => asy.mount(document.createElement("div"), "draw", { format: "eps" }),
+    /only supports SVG/,
+  );
 });
 
 test("supports unsafe SVG customization", async () => {
@@ -232,7 +268,10 @@ test("supports unsafe SVG customization", async () => {
     svg.setAttribute("data-custom", "yes");
   });
   assert.equal(customized, true);
-  assert.equal(target.firstElementChild.attributes.some((attribute) => attribute.name === "data-custom"), true);
+  assert.equal(
+    target.firstElementChild.attributes.some((attribute) => attribute.name === "data-custom"),
+    true,
+  );
 });
 
 test("exposes live mounted nodes through unsafe accessors", async () => {
@@ -263,7 +302,9 @@ test("downloads output with a default filename and revokes the object URL", asyn
 test("mounts WebGL and adds screen-space labels", async () => {
   const target = document.createElement("div");
   const result = await asy.mountWebGL(target, "three", {
-    webglLabels: [{ text: "origin", x: 10, y: 20, className: "point", fontFamily: "Inter, sans-serif" }],
+    webglLabels: [
+      { text: "origin", x: 10, y: 20, className: "point", fontFamily: "Inter, sans-serif" },
+    ],
   });
   const iframe = target.firstElementChild;
   assert.equal(result.format, "webgl");
@@ -272,8 +313,14 @@ test("mounts WebGL and adds screen-space labels", async () => {
   assert.equal(iframe.style.width, "100%");
   assert.equal(iframe.style.height, "100%");
   assert.equal(iframe.style.border, "none");
-  assert.equal(iframe.contentDocument.body.firstElementChild.getAttribute("aria-label"), "Asymptote WebGL labels");
-  assert.equal(iframe.contentDocument.body.firstElementChild.firstElementChild.style.fontFamily, "Inter, sans-serif");
+  assert.equal(
+    iframe.contentDocument.body.firstElementChild.getAttribute("aria-label"),
+    "Asymptote WebGL labels",
+  );
+  assert.equal(
+    iframe.contentDocument.body.firstElementChild.firstElementChild.style.fontFamily,
+    "Inter, sans-serif",
+  );
 
   await assert.rejects(() => asy.mountWebGL("#missing", "three"), /mountWebGL target not found/);
 });
@@ -283,7 +330,7 @@ test("waits for public WebGL iframe loading without labels", async () => {
   state.loadIframe = false;
   await assert.rejects(
     () => asy.mountWebGL(target, "three", { webglIframeTimeoutMs: 0 }),
-    /timed out waiting for WebGL iframe/
+    /timed out waiting for WebGL iframe/,
   );
   assert.equal(target.children.length, 0);
 });
@@ -326,8 +373,8 @@ test("respects prefers-reduced-motion for WebGL setup", async () => {
 test("rejects invalid WebGL iframe timeouts", async () => {
   const target = document.createElement("div");
   await assert.rejects(
-    () => asy.unsafe.mountWebGL(target, "three", () => { }, { webglIframeTimeoutMs: -1 }),
-    /timeout must be a non-negative finite number/
+    () => asy.unsafe.mountWebGL(target, "three", () => {}, { webglIframeTimeoutMs: -1 }),
+    /timeout must be a non-negative finite number/,
   );
   assert.equal(target.children.length, 0);
 });
@@ -336,8 +383,12 @@ test("cleans up public WebGL mounts when the iframe fails to load", async () => 
   const target = document.createElement("div");
   state.loadIframe = false;
   await assert.rejects(
-    () => asy.mountWebGL(target, "three", { webglLabels: [{ text: "label", x: 0, y: 0 }], webglIframeTimeoutMs: 0 }),
-    /timed out waiting for WebGL iframe/
+    () =>
+      asy.mountWebGL(target, "three", {
+        webglLabels: [{ text: "label", x: 0, y: 0 }],
+        webglIframeTimeoutMs: 0,
+      }),
+    /timed out waiting for WebGL iframe/,
   );
   assert.equal(target.children.length, 0);
 });
@@ -345,13 +396,16 @@ test("cleans up public WebGL mounts when the iframe fails to load", async () => 
 test("cleans up unsafe WebGL mounts when customization fails", async () => {
   const target = document.createElement("div");
   await assert.rejects(
-    () => asy.unsafe.mountWebGL(target, "three", async () => { throw new Error("customizer failed"); }),
-    /customizer failed/
+    () =>
+      asy.unsafe.mountWebGL(target, "three", async () => {
+        throw new Error("customizer failed");
+      }),
+    /customizer failed/,
   );
   assert.equal(target.children.length, 0);
 
   await assert.rejects(
-    () => asy.unsafe.mountWebGL("#missing", "three", () => { }),
-    /mountWebGL target not found/
+    () => asy.unsafe.mountWebGL("#missing", "three", () => {}),
+    /mountWebGL target not found/,
   );
 });

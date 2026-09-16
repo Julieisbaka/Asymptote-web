@@ -4,16 +4,21 @@ import type { Operand, ParsedStop } from "./eps-interpreter-types.js";
 
 /** Return the component count for a supported PostScript color space. */
 export function colorComponentCount(value: Operand | undefined): number | null {
-  const name = typeof value === "string"
-    ? value
-    : Array.isArray(value) && typeof value[0] === "string"
-      ? value[0]
-      : undefined;
+  const name =
+    typeof value === "string"
+      ? value
+      : Array.isArray(value) && typeof value[0] === "string"
+        ? value[0]
+        : undefined;
   switch (name) {
-    case "DeviceGray": return 1;
-    case "DeviceRGB": return 3;
-    case "DeviceCMYK": return 4;
-    default: return null;
+    case "DeviceGray":
+      return 1;
+    case "DeviceRGB":
+      return 3;
+    case "DeviceCMYK":
+      return 4;
+    default:
+      return null;
   }
 }
 
@@ -32,7 +37,12 @@ function colorStop(value: number[], colorSpace?: Operand): ParsedStop | null {
   if (components === null) {
     if (value.length === 1) return { offset: 0, color: toColor(value), opacity: 1 };
     if (value.length === 3) return { offset: 0, color: toColor(value), opacity: 1 };
-    if (value.length >= 4 && Number.isFinite(value[3])) return { offset: 0, color: toColor(value.slice(0, 3)), opacity: Math.max(0, Math.min(1, value[3])) };
+    if (value.length >= 4 && Number.isFinite(value[3]))
+      return {
+        offset: 0,
+        color: toColor(value.slice(0, 3)),
+        opacity: Math.max(0, Math.min(1, value[3])),
+      };
   }
   return null;
 }
@@ -42,7 +52,7 @@ export function parseStops(
   value: Operand | undefined,
   c1?: Operand,
   c2?: Operand,
-  colorSpace?: Operand
+  colorSpace?: Operand,
 ): ParsedStop[] | null {
   const flat = numbers(value);
   const components = colorComponentCount(colorSpace) ?? 3;
@@ -65,10 +75,7 @@ export function parseStops(
   if (firstStop && secondStop) {
     firstStop.offset = 0;
     secondStop.offset = 1;
-    return [
-      firstStop,
-      secondStop,
-    ];
+    return [firstStop, secondStop];
   }
   return null;
 }
@@ -80,12 +87,22 @@ export function gradientFromValue(value: Operand | undefined): Gradient | null {
   const type = value.ShadingType;
   const coords = numbers(value.Coords);
   if (type !== 2 && type !== 3) return null;
-  if (!coords || (type === 2 && coords.length < 4) || (type === 3 && coords.length < 6)) return null;
+  if (!coords || (type === 2 && coords.length < 4) || (type === 3 && coords.length < 6))
+    return null;
   const stops = parseStops(value.ColorStops, value.C0, value.C1, value.ColorSpace);
   if (!stops) return null;
   return type === 2
     ? { kind: "linear", x1: coords[0], y1: coords[1], x2: coords[2], y2: coords[3], stops }
-    : { kind: "radial", x1: coords[0], y1: coords[1], r1: coords[2], x2: coords[3], y2: coords[4], r2: coords[5], stops };
+    : {
+        kind: "radial",
+        x1: coords[0],
+        y1: coords[1],
+        r1: coords[2],
+        x2: coords[3],
+        y2: coords[4],
+        r2: coords[5],
+        stops,
+      };
 }
 
 /** Describe why an unsupported shading dictionary was skipped. */
