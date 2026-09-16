@@ -2,17 +2,15 @@
   "name": "asymptote-web",
   "version": "0.3.0-dev",
   "description": "Run the Asymptote vector graphics language entirely in the browser via WebAssembly.",
+  "keywords": [
+    "asymptote",
+    "vector-graphics",
+    "wasm",
+    "webassembly",
+    "svg",
+    "browser"
+  ],
   "type": "module",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Julieisbaka/Asymptote-web.git"
-  },
-  "engines": {
-    "node": ">=20.19.0"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
   "main": "./dist/asymptote-web.js",
   "module": "./dist/asymptote-web.js",
   "types": "./dist/index.d.ts",
@@ -50,6 +48,18 @@
   "files": [
     "dist"
   ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Julieisbaka/Asymptote-web.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "LGPL-3.0-only",
   "scripts": {
     "build": "vite build && tsc --emitDeclarationOnly --declaration --project tsconfig.build.json && node scripts/write-package-types.mjs",
     "dev": "vite",
@@ -64,16 +74,6 @@
     "prepack": "npm run build && bash ./wasm/build.sh && npm run verify:package",
     "prepack:experimental": "npm run build && bash ./wasm/build.sh candidate && npm run verify:package"
   },
-  "keywords": [
-    "asymptote",
-    "vector-graphics",
-    "wasm",
-    "webassembly",
-    "svg",
-    "browser"
-  ],
-  "sideEffects": false,
-  "license": "LGPL-3.0-only",
   "devDependencies": {
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/node": "^26.4.1",
