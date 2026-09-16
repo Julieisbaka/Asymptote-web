@@ -471,7 +471,14 @@ export async function createAsymptote(
         ? waitForIframeDocument(iframe, renderOptions.webglIframeTimeoutMs)
         : null;
       el.replaceChildren(iframe);
-      if (loaded) addWebGLLabels(await loaded, renderOptions.webglLabels ?? []);
+      if (loaded) {
+        try {
+          addWebGLLabels(await loaded, renderOptions.webglLabels ?? []);
+        } catch (error) {
+          if (iframe.parentElement === el) el.removeChild(iframe);
+          throw error;
+        }
+      }
 
       return result;
     },

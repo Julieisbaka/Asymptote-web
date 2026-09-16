@@ -143,6 +143,14 @@ test("retries module initialization after a failed factory", async () => {
   assert.equal(state.factoryCalls, 2);
 });
 
+test("does not reuse a module loaded with different asset URLs", async () => {
+  await createAsymptote();
+  const factoryCalls = state.factoryCalls;
+  await createAsymptote({ glueUrl: customGluePath.href, wasmUrl: "https://cdn.example.test/custom.wasm" });
+  assert.equal(state.factoryCalls, factoryCalls + 1);
+  assert.equal(state.locateFile("asymptote.wasm"), "https://cdn.example.test/custom.wasm");
+});
+
 test("renders SVG and reports compiler/converter warnings", async () => {
   const asy = await createAsymptote();
   state.stderr.push("Warning: compiler warning", ": warning [unbounded]: x scaling in picture unbounded", "informational output");
@@ -274,6 +282,15 @@ test("preserves format flag precedence and WebGL options", async () => {
   assert.equal(webglCall.includes("-devicepixelratio"), true);
   assert.equal(webglCall.includes("-noautobillboard"), true);
   assert.equal(webglCall.includes("-offline"), true);
+});
+
+test("rejects invalid numeric render options before invoking Asymptote", async () => {
+  const asy = await createAsymptote();
+  const callsBefore = state.calls.length;
+  await assert.rejects(() => asy.render("invalid", { devicePixelRatio: 0 }), /devicePixelRatio/);
+  await assert.rejects(() => asy.render("invalid", { position: [Number.NaN, 0] }), /position values/);
+  await assert.rejects(() => asy.render("invalid", { webglIframeTimeoutMs: -1 }), /timeout/);
+  assert.equal(state.calls.length, callsBefore);
 });
 
 test("supports raw output, blobs, batches, and isolated files", async () => {

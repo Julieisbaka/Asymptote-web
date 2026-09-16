@@ -43,7 +43,7 @@ type ModuleFactory = (opts?: Partial<EmscriptenModule>) => Promise<EmscriptenMod
 // Module-level singleton so the WASM binary is only loaded once per page.
 // ---------------------------------------------------------------------------
 
-let _modulePromise: Promise<EmscriptenModule> | null = null;
+const _modulePromises = new Map<string, Promise<EmscriptenModule>>();
 
 /**
  * URL of the Emscripten-generated JS glue, relative to this file inside the
@@ -60,10 +60,13 @@ function getGlueUrl(options: CreateOptions = {}): string {
  * Load (or return the cached) Emscripten module.
  */
 async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
-  if (_modulePromise) return _modulePromise;
+  const glueUrl = getGlueUrl(options);
+  const wasmUrl = options.wasmUrl ?? new URL("asymptote.wasm", glueUrl).href;
+  const cacheKey = `${glueUrl}\0${wasmUrl}`;
+  const cached = _modulePromises.get(cacheKey);
+  if (cached) return cached;
 
   const modulePromise = (async (): Promise<EmscriptenModule> => {
-    const glueUrl = getGlueUrl(options);
     const { default: factory }: { default: ModuleFactory } = await import(
       /* @vite-ignore */ glueUrl
     );
@@ -72,7 +75,7 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
     // library data file through this callback. Keep both beside the glue.
     const locateFile = (filename: string) => {
       if (filename.endsWith(".wasm")) {
-        return options.wasmUrl ?? new URL("asymptote.wasm", glueUrl).href;
+        return wasmUrl;
       }
       if (filename.endsWith(".data")) {
         return new URL("asy.data", glueUrl).href;
@@ -84,11 +87,11 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
     return mod;
   })();
 
-  _modulePromise = modulePromise;
+  _modulePromises.set(cacheKey, modulePromise);
   void modulePromise.catch(() => {
     // Allow a later call to retry after a transient load or initialization
     // failure, without clearing a newer successful initialization.
-    if (_modulePromise === modulePromise) _modulePromise = null;
+    if (_modulePromises.get(cacheKey) === modulePromise) _modulePromises.delete(cacheKey);
   });
   return modulePromise;
 }
@@ -114,6 +117,20 @@ function enqueueRender<T>(task: () => Promise<T>): Promise<T> {
 
 function abortError(): DOMException {
   return new DOMException("The render was aborted", "AbortError");
+}
+
+function validateRenderOptions(renderOptions: RenderOptions): void {
+  if (renderOptions.devicePixelRatio !== undefined &&
+    (!Number.isFinite(renderOptions.devicePixelRatio) || renderOptions.devicePixelRatio <= 0)) {
+    throw new RangeError("asymptote-web: devicePixelRatio must be a positive finite number");
+  }
+  if (renderOptions.position && renderOptions.position.some((value) => !Number.isFinite(value))) {
+    throw new RangeError("asymptote-web: position values must be finite numbers");
+  }
+  if (renderOptions.webglIframeTimeoutMs !== undefined &&
+    (!Number.isFinite(renderOptions.webglIframeTimeoutMs) || renderOptions.webglIframeTimeoutMs < 0)) {
+    throw new TypeError("asymptote-web: WebGL iframe timeout must be a non-negative finite number");
+  }
 }
 
 function ensureDirectory(mod: EmscriptenModule, path: string): void {
@@ -220,6 +237,7 @@ export function runAsymptote(
   renderOptions: RenderOptions,
   createOptions: CreateOptions
 ): Promise<RenderResult> {
+  validateRenderOptions(renderOptions);
   return enqueueRender(async () => {
     if (renderOptions.signal?.aborted) throw abortError();
     return runAsymptoteUnsafe(source, renderOptions, createOptions);
@@ -297,7 +315,9 @@ async function runAsymptoteUnsafe(
       // unusable (Emscripten cannot resume after abort()). Drop the cached
       // instance so the next render lazily reinitializes a fresh module
       // instead of repeatedly failing against the crashed one.
-      _modulePromise = null;
+      const glueUrl = getGlueUrl(createOptions);
+      const wasmUrl = createOptions.wasmUrl ?? new URL("asymptote.wasm", glueUrl).href;
+      _modulePromises.delete(`${glueUrl}\0${wasmUrl}`);
       const reason = error instanceof Error ? error.message : String(error);
       throw new AsymptoteError(
         `ASYMPTOTE ERROR: the WebAssembly module crashed while rendering (${reason}). It will be reinitialized on the next render.`,

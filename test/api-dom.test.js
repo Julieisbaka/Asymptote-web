@@ -85,7 +85,9 @@ class FakeElement {
     this.childNodes = [];
     for (const child of children) this.appendChild(child);
     for (const child of children) {
-      if (child instanceof FakeIframe) queueMicrotask(() => child.dispatch("load"));
+      if (child instanceof FakeIframe && globalThis.__asymptoteDomState.loadIframe) {
+        queueMicrotask(() => child.dispatch("load"));
+      }
     }
   }
   removeChild(child) {
@@ -173,7 +175,7 @@ globalThis.DOMParser = class {
   }
 };
 globalThis.URL = TestURL;
-globalThis.__asymptoteDomState = { output: "normal", calls: [] };
+globalThis.__asymptoteDomState = { output: "normal", calls: [], loadIframe: true };
 
 const { createAsymptote } = await import("../dist/asymptote-web.js");
 const state = globalThis.__asymptoteDomState;
@@ -185,6 +187,7 @@ before(() => {
 beforeEach(() => {
   state.output = "normal";
   state.calls.length = 0;
+  state.loadIframe = true;
   TestURL.created.length = 0;
   TestURL.revoked.length = 0;
   document.nodes.clear();
@@ -315,6 +318,16 @@ test("rejects invalid WebGL iframe timeouts", async () => {
   await assert.rejects(
     () => asy.unsafe.mountWebGL(target, "three", () => { }, { webglIframeTimeoutMs: -1 }),
     /timeout must be a non-negative finite number/
+  );
+  assert.equal(target.children.length, 0);
+});
+
+test("cleans up public WebGL mounts when the iframe fails to load", async () => {
+  const target = document.createElement("div");
+  state.loadIframe = false;
+  await assert.rejects(
+    () => asy.mountWebGL(target, "three", { webglLabels: [{ text: "label", x: 0, y: 0 }], webglIframeTimeoutMs: 0 }),
+    /timed out waiting for WebGL iframe/
   );
   assert.equal(target.children.length, 0);
 });

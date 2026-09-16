@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.2.2 (In development)
+## 0.2.3
+
+## 0.2.2
 
 - Optimized EPS/PS bounding-box and numeric-token regular expressions to avoid repeated full-document scans and unnecessary backtracking while preserving existing parsing behavior and numeric formats.
 

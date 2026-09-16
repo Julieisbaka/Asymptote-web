@@ -118,6 +118,12 @@ function assertFinitePositive(value: number, name: string): void {
   }
 }
 
+function assertFiniteRasterSize(value: number, name: string): void {
+  if (!Number.isFinite(value)) {
+    throw new RangeError(`asymptote-web/pdf: ${name} multiplied by scale must be finite`);
+  }
+}
+
 function parseLength(value: string | null): number | undefined {
   if (!value || value.endsWith("%")) return undefined;
   const match = /^\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)(?:px|pt|pc|mm|cm|in)?\s*$/i.exec(value);
@@ -529,6 +535,8 @@ export async function svgToPdfBytes(svg: string, options: PdfOptions = {}): Prom
   assertFinitePositive(width, "width");
   assertFinitePositive(height, "height");
   assertFinitePositive(scale, "scale");
+  assertFiniteRasterSize(width * scale, "width");
+  assertFiniteRasterSize(height * scale, "height");
   const rasterSvg = expandSvgViewport(svg, { ...dimensions, width: contentWidth, height: contentHeight }, margin);
   const textRuns = shiftTextRuns(options.textRuns ?? extractSvgTextRuns(svg), dimensions, margin);
   const image = await rasterizeSvgToJpeg(

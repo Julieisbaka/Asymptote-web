@@ -88,3 +88,11 @@ test("imagesToPdfBytes writes multiple images as separate PDF pages", () => {
 test("imagesToPdfBytes rejects empty page lists", () => {
   assert.throws(() => imagesToPdfBytes([]), /at least one image page/);
 });
+
+test("svgToPdfBytes rejects raster dimension multiplication overflow", async () => {
+  await assert.rejects(
+    () => import("../dist/pdf.js").then(({ svgToPdfBytes }) =>
+      svgToPdfBytes('<svg width="1e308" height="1" viewBox="0 0 1e308 1"></svg>', { scale: 2 })),
+    /multiplied by scale must be finite/
+  );
+});
