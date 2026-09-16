@@ -44,6 +44,7 @@ type ModuleFactory = (opts?: Partial<EmscriptenModule>) => Promise<EmscriptenMod
 // ---------------------------------------------------------------------------
 
 const _modulePromises = new Map<string, Promise<EmscriptenModule>>();
+const _renderQueues = new Map<string, Promise<void>>();
 
 /**
  * URL of the Emscripten-generated JS glue, relative to this file inside the
@@ -56,13 +57,19 @@ function getGlueUrl(options: CreateOptions = {}): string {
     : new URL(["./asymptote", ".js"].join(""), import.meta.url).href;
 }
 
+function getModuleCacheKey(options: CreateOptions): string {
+  const glueUrl = getGlueUrl(options);
+  const wasmUrl = options.wasmUrl ?? new URL("asymptote.wasm", glueUrl).href;
+  return `${glueUrl}\0${wasmUrl}`;
+}
+
 /**
  * Load (or return the cached) Emscripten module.
  */
 async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
   const glueUrl = getGlueUrl(options);
   const wasmUrl = options.wasmUrl ?? new URL("asymptote.wasm", glueUrl).href;
-  const cacheKey = `${glueUrl}\0${wasmUrl}`;
+  const cacheKey = getModuleCacheKey(options);
   const cached = _modulePromises.get(cacheKey);
   if (cached) return cached;
 
@@ -107,11 +114,10 @@ export async function preloadModule(options: CreateOptions): Promise<void> {
 
 const RENDER_ROOT = "/tmp/asymptote-web";
 let renderCounter = 0;
-let renderQueue: Promise<void> = Promise.resolve();
-
-function enqueueRender<T>(task: () => Promise<T>): Promise<T> {
-  const result = renderQueue.then(task);
-  renderQueue = result.then(() => undefined, () => undefined);
+function enqueueRender<T>(cacheKey: string, task: () => Promise<T>): Promise<T> {
+  const queue = _renderQueues.get(cacheKey) ?? Promise.resolve();
+  const result = queue.then(task);
+  _renderQueues.set(cacheKey, result.then(() => undefined, () => undefined));
   return result;
 }
 
@@ -238,7 +244,7 @@ export function runAsymptote(
   createOptions: CreateOptions
 ): Promise<RenderResult> {
   validateRenderOptions(renderOptions);
-  return enqueueRender(async () => {
+  return enqueueRender(getModuleCacheKey(createOptions), async () => {
     if (renderOptions.signal?.aborted) throw abortError();
     return runAsymptoteUnsafe(source, renderOptions, createOptions);
   });
@@ -315,9 +321,7 @@ async function runAsymptoteUnsafe(
       // unusable (Emscripten cannot resume after abort()). Drop the cached
       // instance so the next render lazily reinitializes a fresh module
       // instead of repeatedly failing against the crashed one.
-      const glueUrl = getGlueUrl(createOptions);
-      const wasmUrl = createOptions.wasmUrl ?? new URL("asymptote.wasm", glueUrl).href;
-      _modulePromises.delete(`${glueUrl}\0${wasmUrl}`);
+      _modulePromises.delete(getModuleCacheKey(createOptions));
       const reason = error instanceof Error ? error.message : String(error);
       throw new AsymptoteError(
         `ASYMPTOTE ERROR: the WebAssembly module crashed while rendering (${reason}). It will be reinitialized on the next render.`,
@@ -382,7 +386,7 @@ async function runAsymptoteUnsafe(
 
 /** @internal */
 export function getAsymptoteVersion(createOptions: CreateOptions): Promise<string> {
-  return enqueueRender(async () => {
+  return enqueueRender(getModuleCacheKey(createOptions), async () => {
     const mod = await loadModule(createOptions);
     const output: string[] = [];
     const errors: string[] = [];
@@ -402,6 +406,15 @@ export function getAsymptoteVersion(createOptions: CreateOptions): Promise<strin
         );
       }
       return [...output, ...errors].join("\n").trim();
+    } catch (error) {
+      _modulePromises.delete(getModuleCacheKey(createOptions));
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new AsymptoteError(
+        `Unable to read Asymptote version: the WebAssembly module crashed (${reason}). It will be reinitialized on the next render.`,
+        -1,
+        errors.join("\n"),
+        parseCompilerDiagnostics(errors.join("\n"))
+      );
     } finally {
       mod.print = origPrint;
       mod.printErr = origPrintErr;

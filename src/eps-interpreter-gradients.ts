@@ -30,7 +30,7 @@ function colorStop(value: number[], colorSpace?: Operand): ParsedStop | null {
   if (components === null) {
     if (value.length === 1) return { offset: 0, color: toColor(value), opacity: 1 };
     if (value.length === 3) return { offset: 0, color: toColor(value), opacity: 1 };
-    if (value.length >= 4) return { offset: 0, color: toColor(value.slice(0, 3)), opacity: value[3] };
+    if (value.length >= 4 && Number.isFinite(value[3])) return { offset: 0, color: toColor(value.slice(0, 3)), opacity: Math.max(0, Math.min(1, value[3])) };
   }
   return null;
 }
@@ -49,6 +49,7 @@ export function parseStops(
     for (let i = 0; i < flat.length; i += stride) {
       const stop = colorStop(flat.slice(i + 1, i + stride), colorSpace);
       if (!stop) return null;
+      if (!Number.isFinite(flat[i])) return null;
       stop.offset = flat[i];
       stops.push(stop);
     }

@@ -310,7 +310,7 @@ export class PostScriptInterpreter {
       }
       case "setlinewidth":
       case "Setlinewidth":
-        this.state.linewidth = this.popN(1)[0];
+        this.state.linewidth = Math.max(0, this.finiteNumber(this.popN(1)[0]));
         break;
       case "setlinecap":
         this.state.linecap = this.popN(1)[0];
@@ -319,15 +319,15 @@ export class PostScriptInterpreter {
         this.state.linejoin = this.popN(1)[0];
         break;
       case "setmiterlimit":
-        this.state.miterlimit = this.popN(1)[0];
+        this.state.miterlimit = Math.max(0, this.finiteNumber(this.popN(1)[0]));
         break;
       case "setdash": {
         const offset = this.stack.pop();
         const arr = this.stack.pop();
         this.state.dasharray = Array.isArray(arr)
-          ? arr.filter((value): value is number => typeof value === "number")
+          ? arr.filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0)
           : [];
-        this.state.dashoffset = typeof offset === "number" ? offset : 0;
+        this.state.dashoffset = typeof offset === "number" && Number.isFinite(offset) ? offset : 0;
         break;
       }
       case "fill":
@@ -406,6 +406,10 @@ export class PostScriptInterpreter {
       nums.unshift(typeof value === "number" ? value : 0);
     }
     return nums;
+  }
+
+  private finiteNumber(value: number): number {
+    return Number.isFinite(value) ? value : 0;
   }
 
   private readArray(): Operand[] {

@@ -278,6 +278,16 @@ test("mounts WebGL and adds screen-space labels", async () => {
   await assert.rejects(() => asy.mountWebGL("#missing", "three"), /mountWebGL target not found/);
 });
 
+test("waits for public WebGL iframe loading without labels", async () => {
+  const target = document.createElement("div");
+  state.loadIframe = false;
+  await assert.rejects(
+    () => asy.mountWebGL(target, "three", { webglIframeTimeoutMs: 0 }),
+    /timed out waiting for WebGL iframe/
+  );
+  assert.equal(target.children.length, 0);
+});
+
 test("configures WebGL iframe styles and injected behavior", async () => {
   const target = document.createElement("div");
   await asy.mountWebGL(target, "three", {

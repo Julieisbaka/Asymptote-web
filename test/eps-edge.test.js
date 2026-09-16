@@ -70,3 +70,9 @@ test("handles singular transforms without throwing", () => {
 
   assert.match(svg, /^<svg/);
 });
+
+test("does not emit non-finite stroke attributes", () => {
+  const svg = convert("1e999 setlinewidth 1e999 setmiterlimit [1e999 -1] 1e999 setdash newpath 0 0 moveto 10 0 lineto stroke");
+
+  assert.doesNotMatch(svg, /Infinity|NaN/);
+});

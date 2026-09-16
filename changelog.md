@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.4-dev
+
+- Isolated cached WebAssembly runtimes by glue and WASM asset URLs so separate engine configurations do not reuse the wrong module.
+- Added early validation for invalid WebGL render options, including device-pixel ratio, camera position, and iframe timeout values.
+- Removed failed or timed-out public WebGL iframes from their mount targets.
+- Rejected PDF rasterization dimensions whose multiplication by the scale would overflow to a non-finite value.
+- Made public WebGL mounts wait for iframe loading and clean up on timeout or load failure even when no labels are used.
+- Reinitialized the cached WASM runtime after a crash while reading the Asymptote version.
+- Isolated render queues per WASM runtime configuration so independent engines do not block one another.
+- Preserved visible PDF text opacity with per-page PDF graphics-state resources.
+- Sanitized non-finite EPS/PS line width, miter, dash, and gradient values before SVG serialization.
+
 ## 0.2.3
 
 - Made some stuff more consistent

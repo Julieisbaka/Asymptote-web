@@ -467,17 +467,14 @@ export async function createAsymptote(
       // styles, and viewer <script>) — embed it in an iframe rather than
       // splicing it into the host page's DOM.
       const iframe = createWebGLIframe(result.output, renderOptions);
-      const loaded = renderOptions.webglLabels?.length
-        ? waitForIframeDocument(iframe, renderOptions.webglIframeTimeoutMs)
-        : null;
+      const loaded = waitForIframeDocument(iframe, renderOptions.webglIframeTimeoutMs);
       el.replaceChildren(iframe);
-      if (loaded) {
-        try {
-          addWebGLLabels(await loaded, renderOptions.webglLabels ?? []);
-        } catch (error) {
-          if (iframe.parentElement === el) el.removeChild(iframe);
-          throw error;
-        }
+      try {
+        const viewerDocument = await loaded;
+        addWebGLLabels(viewerDocument, renderOptions.webglLabels ?? []);
+      } catch (error) {
+        if (iframe.parentElement === el) el.removeChild(iframe);
+        throw error;
       }
 
       return result;

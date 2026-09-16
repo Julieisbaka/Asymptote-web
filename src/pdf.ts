@@ -375,12 +375,13 @@ function textOperators(
   pageHeight: number,
   sourceWidth: number,
   sourceHeight: number,
-  textMode: "invisible" | "visible" | "none"
+  textMode: "invisible" | "visible" | "none",
+  gstateIds: readonly (number | undefined)[] = []
 ): string {
   if (textMode === "none" || runs.length === 0) return "";
   const scaleX = pageWidth / sourceWidth;
   const scaleY = pageHeight / sourceHeight;
-  return runs.map((run) => {
+  return runs.map((run, index) => {
     const size = (run.fontSize ?? 12) * scaleY;
     const x = run.x * scaleX;
     const y = pageHeight - run.y * scaleY;
@@ -390,6 +391,7 @@ function textOperators(
     const [r, g, b] = rgb(run.color);
     const renderingMode = textMode === "invisible" ? "3" : "0";
     return [
+      textMode === "visible" && gstateIds[index] !== undefined ? `/GS${index} gs` : "",
       "BT",
       `/${pdfName(run.fontFamily ?? "")} ${pdfNumber(size)} Tf`,
       `${renderingMode} Tr`,
@@ -399,6 +401,11 @@ function textOperators(
       "ET",
     ].join("\n");
   }).join("\n");
+}
+
+function needsTextOpacity(run: PdfTextRun, textMode: "invisible" | "visible" | "none"): boolean {
+  return textMode === "visible" && run.opacity !== undefined &&
+    Number.isFinite(run.opacity) && run.opacity !== 1;
 }
 
 function metadataObject(metadata: PdfMetadata): string | undefined {
@@ -444,6 +451,12 @@ export function imagesToPdfBytes(pages: readonly PdfImagePage[], options: Images
   if (pages.length === 0) throw new TypeError("asymptote-web/pdf: at least one image page is required");
 
   const fontObjectId = 3 + pages.length * 3;
+  const pageTextModes = pages.map((page) => page.textMode ?? options.textMode ?? "invisible");
+  const gstateCounts = pages.map((page, index) =>
+    (page.textRuns ?? []).filter((run) => needsTextOpacity(run, pageTextModes[index])).length
+  );
+  const gstateStartId = fontObjectId + 3;
+  const gstateCount = gstateCounts.reduce((sum, count) => sum + count, 0);
   const pageObjects: number[] = [];
   const objects: PdfObject[] = [
     { id: 1, body: "<< /Type /Catalog /Pages 2 0 R >>" },
@@ -464,13 +477,23 @@ export function imagesToPdfBytes(pages: readonly PdfImagePage[], options: Images
     const contentObjectId = pageObjectId + 2;
     pageObjects.push(pageObjectId);
 
+    const gstateOffset = gstateCounts.slice(0, index).reduce((sum, count) => sum + count, 0);
+    let nextGstate = gstateOffset;
+    const gstateIds = (page.textRuns ?? []).map((run) =>
+      needsTextOpacity(run, pageTextModes[index]) ? gstateStartId + nextGstate++ : undefined
+    );
+    const gstates = gstateIds.some((id) => id !== undefined)
+      ? ` /ExtGState << ${gstateIds.flatMap((id, runIndex) => id === undefined ? [] : [`/GS${runIndex} ${id} 0 R`]).join(" ")} >>`
+      : "";
+
     const text = textOperators(
       page.textRuns ?? [],
       pageWidth,
       pageHeight,
       pageWidth,
       pageHeight,
-      page.textMode ?? options.textMode ?? "invisible"
+      pageTextModes[index],
+      gstateIds
     );
     const imageName = `Im${index}`;
     const content = `q\n${pdfNumber(pageWidth)} 0 0 ${pdfNumber(pageHeight)} 0 0 cm\n/${imageName} Do\nQ\n${text}`;
@@ -479,7 +502,7 @@ export function imagesToPdfBytes(pages: readonly PdfImagePage[], options: Images
     objects.push(
       {
         id: pageObjectId,
-        body: `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pdfNumber(pageWidth)} ${pdfNumber(pageHeight)}] /Resources << /XObject << /${imageName} ${imageObjectId} 0 R >> /Font << /F1 ${fontObjectId} 0 R /F2 ${fontObjectId + 1} 0 R /F3 ${fontObjectId + 2} 0 R >> >> /Contents ${contentObjectId} 0 R >>`,
+        body: `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pdfNumber(pageWidth)} ${pdfNumber(pageHeight)}] /Resources << /XObject << /${imageName} ${imageObjectId} 0 R >> /Font << /F1 ${fontObjectId} 0 R /F2 ${fontObjectId + 1} 0 R /F3 ${fontObjectId + 2} 0 R >>${gstates} >> /Contents ${contentObjectId} 0 R >>`,
       },
       {
         id: imageObjectId,
@@ -499,8 +522,19 @@ export function imagesToPdfBytes(pages: readonly PdfImagePage[], options: Images
     { id: fontObjectId + 1, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>" },
     { id: fontObjectId + 2, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>" }
   );
+  for (let index = 0; index < pages.length; index += 1) {
+    let nextGstate = gstateCounts.slice(0, index).reduce((sum, count) => sum + count, 0);
+    for (const run of pages[index].textRuns ?? []) {
+      if (!needsTextOpacity(run, pageTextModes[index])) continue;
+      const opacity = Math.max(0, Math.min(1, run.opacity ?? 1));
+      objects.push({
+        id: gstateStartId + nextGstate++,
+        body: `<< /Type /ExtGState /ca ${pdfNumber(opacity)} /CA ${pdfNumber(opacity)} >>`,
+      });
+    }
+  }
   const info = metadataObject(options);
-  const infoObjectId = info ? fontObjectId + 3 : undefined;
+  const infoObjectId = info ? gstateStartId + gstateCount : undefined;
   if (infoObjectId && info) objects.push({ id: infoObjectId, body: info });
   return buildPdf(objects, 1, infoObjectId);
 }

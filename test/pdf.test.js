@@ -56,6 +56,19 @@ test("imageToPdfBytes rejects invalid dimensions", () => {
   assert.throws(() => imageToPdfBytes(jpeg, { imageWidth: 0, imageHeight: 1 }), /imageWidth/);
 });
 
+test("imageToPdfBytes preserves visible text opacity", () => {
+  const pdf = imageToPdfBytes(jpeg, {
+    imageWidth: 1,
+    imageHeight: 1,
+    textMode: "visible",
+    textRuns: [{ text: "Faded", x: 0, y: 1, opacity: 0.25 }],
+  });
+  const text = latin1(pdf);
+  assert.match(text, /\/ExtGState << \/GS0 \d+ 0 R >>/);
+  assert.match(text, /\/GS0 gs/);
+  assert.match(text, /\/ca 0\.25 \/CA 0\.25/);
+});
+
 test("imagesToPdfBytes writes multiple images as separate PDF pages", () => {
   const pdf = imagesToPdfBytes([
     {
