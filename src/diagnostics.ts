@@ -1,12 +1,16 @@
 import type { CompilerDiagnostic, DiagnosticSeverity } from "./types.js";
 
+/** Recognizes severity prefixes emitted by the Asymptote compiler. */
 const SEVERITY_PATTERN = /^(warning|error|runtime)\b\s*:?[ \t]*(.*)$/i;
+/** Recognizes informational diagnostic prefixes. */
 const INFO_PATTERN = /^(info|note)\s*:(.*)$/i;
 
+/** Return whether a character is an ASCII decimal digit. */
 function isDigit(char: string | undefined): boolean {
   return char !== undefined && char >= "0" && char <= "9";
 }
 
+/** Parse a source filename, line, and optional column from a diagnostic. */
 function parseLocation(raw: string): {
   sourceFile: string;
   line: number;
@@ -42,6 +46,7 @@ function parseLocation(raw: string): {
   return undefined;
 }
 
+/** Remove the optional separator between a diagnostic prefix and its message. */
 function stripLeadingSeparator(text: string): string {
   let cursor = 0;
   while (rawWhitespace(text[cursor])) cursor += 1;
@@ -53,10 +58,12 @@ function stripLeadingSeparator(text: string): string {
   return text;
 }
 
+/** Return whether a character is whitespace accepted in compiler output. */
 function rawWhitespace(char: string | undefined): boolean {
   return char === " " || char === "\t" || char === "\n" || char === "\r";
 }
 
+/** Extract an optional bracketed diagnostic code from a message. */
 function parseCodeLabel(message: string): { code?: string; message: string } {
   if (!message.startsWith("[")) return { message };
   const closing = message.indexOf("]");
@@ -67,6 +74,7 @@ function parseCodeLabel(message: string): { code?: string; message: string } {
   };
 }
 
+/** Classify a diagnostic message, defaulting located messages to errors. */
 function severityFor(text: string, hasLocation: boolean): {
   severity: DiagnosticSeverity;
   message: string;

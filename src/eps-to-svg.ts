@@ -7,6 +7,7 @@ import { PostScriptTokenizer } from "./eps-tokenizer.js";
 import { SvgWriter } from "./eps-svg-writer.js";
 import type { SvgAccessibility, SvgFontMap } from "./types.js";
 
+/** Numeric grammar accepted in EPS bounding-box comments. */
 const BOUNDING_BOX_NUMBER = "[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?";
 
 /** Options for the in-process EPS/PS-to-SVG converter. */

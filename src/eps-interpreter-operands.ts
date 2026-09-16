@@ -1,8 +1,10 @@
 import type { Matrix } from "./eps-graphics.js";
 import type { Dictionary, Operand } from "./eps-interpreter-types.js";
 
+/** Matches the numeric token forms emitted by Asymptote's EPS writer. */
 export const NUMBER_RE = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
+/** Decode PostScript parenthesized-string escapes, including octal bytes. */
 export function unescapePostScriptString(token: string): string {
   const body = token.slice(1, -1);
   let result = "";
@@ -38,20 +40,24 @@ export function unescapePostScriptString(token: string): string {
   return result;
 }
 
+/** Convert a string to Unicode code points for spacing operators. */
 export function textChars(text: string): number[] {
   return Array.from(text, (char) => char.codePointAt(0) ?? 0);
 }
 
+/** Narrow an operand to a PostScript dictionary. */
 export function isDictionary(value: Operand | undefined): value is Dictionary {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
+/** Return numeric array operands, or null for mixed/non-array values. */
 export function numbers(value: Operand | undefined): number[] | null {
   return Array.isArray(value) && value.every((item) => typeof item === "number")
     ? value as number[]
     : null;
 }
 
+/** Convert a six-number operand into an affine matrix. */
 export function matrixFromOperand(value: Operand | undefined): Matrix | null {
   if (!Array.isArray(value) || value.length !== 6 || !value.every((item) => typeof item === "number")) {
     return null;
@@ -59,10 +65,12 @@ export function matrixFromOperand(value: Operand | undefined): Matrix | null {
   return { a: value[0], b: value[1], c: value[2], d: value[3], e: value[4], f: value[5] };
 }
 
+/** Type guard for a nullable matrix value. */
 export function isMatrix(value: Matrix | null): value is Matrix {
   return value !== null;
 }
 
+/** Narrow an operand to a six-number matrix array. */
 export function isMatrixArray(value: Operand | undefined): value is Operand[] {
   return Array.isArray(value) && value.length === 6 && value.every((item) => typeof item === "number");
 }

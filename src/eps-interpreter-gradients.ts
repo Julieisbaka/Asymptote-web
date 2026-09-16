@@ -2,6 +2,7 @@ import { toColor, type Gradient } from "./eps-graphics.js";
 import { isDictionary, numbers } from "./eps-interpreter-operands.js";
 import type { Operand, ParsedStop } from "./eps-interpreter-types.js";
 
+/** Return the component count for a supported PostScript color space. */
 export function colorComponentCount(value: Operand | undefined): number | null {
   const name = typeof value === "string"
     ? value
@@ -16,6 +17,7 @@ export function colorComponentCount(value: Operand | undefined): number | null {
   }
 }
 
+/** Parse a supported shading color into a normalized gradient stop. */
 function colorStop(value: number[], colorSpace?: Operand): ParsedStop | null {
   const components = colorComponentCount(colorSpace);
   if (components === 1 && value.length >= 1) {
@@ -35,6 +37,7 @@ function colorStop(value: number[], colorSpace?: Operand): ParsedStop | null {
   return null;
 }
 
+/** Parse flat or C0/C1 gradient stop representations. */
 export function parseStops(
   value: Operand | undefined,
   c1?: Operand,
@@ -70,6 +73,7 @@ export function parseStops(
   return null;
 }
 
+/** Convert a supported PostScript shading dictionary to a gradient. */
 export function gradientFromValue(value: Operand | undefined): Gradient | null {
   if (!isDictionary(value)) return null;
   if (value.Shading !== undefined) return gradientFromValue(value.Shading);
@@ -84,6 +88,7 @@ export function gradientFromValue(value: Operand | undefined): Gradient | null {
     : { kind: "radial", x1: coords[0], y1: coords[1], r1: coords[2], x2: coords[3], y2: coords[4], r2: coords[5], stops };
 }
 
+/** Describe why an unsupported shading dictionary was skipped. */
 export function unsupportedShadingMessage(value: Operand | undefined): string | null {
   if (!isDictionary(value)) return null;
   const type = value.ShadingType;

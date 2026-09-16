@@ -1,7 +1,10 @@
 import type { AsymptoteEngine, RenderOptions, RenderResult } from "./types.js";
 
+/** MIME type returned by browser PDF Blob helpers. */
 const PDF_MIME_TYPE = "application/pdf";
+/** Default raster scale used by SVG-to-PDF conversion. */
 const DEFAULT_SCALE = 2;
+/** Default canvas background used when rasterizing SVG content. */
 const DEFAULT_BACKGROUND = "white";
 
 export interface PdfTextRun {
@@ -112,18 +115,21 @@ interface PdfObject {
   body: string | Uint8Array;
 }
 
+/** Require a finite positive PDF dimension or scale. */
 function assertFinitePositive(value: number, name: string): void {
   if (!Number.isFinite(value) || value <= 0) {
     throw new RangeError(`asymptote-web/pdf: ${name} must be a positive finite number`);
   }
 }
 
+/** Reject raster dimensions whose multiplication by scale overflows. */
 function assertFiniteRasterSize(value: number, name: string): void {
   if (!Number.isFinite(value)) {
     throw new RangeError(`asymptote-web/pdf: ${name} multiplied by scale must be finite`);
   }
 }
 
+/** Parse a positive SVG length, ignoring percentages. */
 function parseLength(value: string | null): number | undefined {
   if (!value || value.endsWith("%")) return undefined;
   const match = /^\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)(?:px|pt|pc|mm|cm|in)?\s*$/i.exec(value);
@@ -132,6 +138,7 @@ function parseLength(value: string | null): number | undefined {
   return Number.isFinite(number) && number > 0 ? number : undefined;
 }
 
+/** Read SVG dimensions and viewBox coordinates for PDF placement. */
 function svgDimensions(svg: string): SvgDimensions {
   const tag = /<svg\b[^>]*>/i.exec(svg)?.[0] ?? "";
   const width = parseLength(/\bwidth=["']([^"']+)["']/i.exec(tag)?.[1] ?? null);
@@ -153,6 +160,7 @@ function svgDimensions(svg: string): SvgDimensions {
   };
 }
 
+/** Expand a margin specification into four validated sides. */
 function resolveMargin(margin: PdfMargin | undefined): ResolvedMargin {
   if (margin === undefined) return { top: 0, right: 0, bottom: 0, left: 0 };
   if (typeof margin === "number") {
@@ -175,10 +183,12 @@ function resolveMargin(margin: PdfMargin | undefined): ResolvedMargin {
   return resolved;
 }
 
+/** Return whether any page margin is non-zero. */
 function hasMargin(margin: ResolvedMargin): boolean {
   return margin.top > 0 || margin.right > 0 || margin.bottom > 0 || margin.left > 0;
 }
 
+/** Wrap SVG content in a translated, margin-expanded viewport. */
 function expandSvgViewport(svg: string, dimensions: SvgDimensions, margin: ResolvedMargin): string {
   if (!hasMargin(margin)) return svg;
   const open = /<svg\b[^>]*>/i.exec(svg);
@@ -192,6 +202,7 @@ function expandSvgViewport(svg: string, dimensions: SvgDimensions, margin: Resol
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${pdfNumber(pageWidth)}" height="${pdfNumber(pageHeight)}" viewBox="0 0 ${pdfNumber(pageWidth)} ${pdfNumber(pageHeight)}"><g transform="translate(${pdfNumber(translateX)} ${pdfNumber(translateY)})">${inner}</g></svg>`;
 }
 
+/** Shift text-layer coordinates to account for SVG bounds and margins. */
 function shiftTextRuns(
   runs: readonly PdfTextRun[],
   dimensions: SvgDimensions,
@@ -204,6 +215,7 @@ function shiftTextRuns(
   }));
 }
 
+/** Extract a rotation angle from an SVG transform attribute. */
 function transformRotation(transform: string | null): number | undefined {
   if (!transform) return undefined;
   const rotate = /rotate\(\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)\b/i.exec(transform);
@@ -217,6 +229,7 @@ function transformRotation(transform: string | null): number | undefined {
   return undefined;
 }
 
+/** Extract selectable text runs from SVG text elements when DOMParser exists. */
 function extractSvgTextRuns(svg: string): PdfTextRun[] {
   if (typeof DOMParser === "undefined") return [];
   const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
@@ -242,6 +255,7 @@ function extractSvgTextRuns(svg: string): PdfTextRun[] {
   return runs;
 }
 
+/** Read a Blob as a data URL for browser image loading. */
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -251,6 +265,7 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
+/** Load an image element and reject on browser decoding failure. */
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -260,6 +275,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+/** Convert a canvas to JPEG bytes through the browser canvas API. */
 function canvasToBlob(canvas: HTMLCanvasElement, quality?: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -269,6 +285,7 @@ function canvasToBlob(canvas: HTMLCanvasElement, quality?: number): Promise<Blob
   });
 }
 
+/** Rasterize SVG markup into JPEG bytes for PDF embedding. */
 async function rasterizeSvgToJpeg(
   svg: string,
   width: number,
@@ -295,14 +312,17 @@ async function rasterizeSvgToJpeg(
   return new Uint8Array(await (await canvasToBlob(canvas, quality)).arrayBuffer());
 }
 
+/** Create a UTF-8 text encoder for PDF serialization. */
 function encoder(): TextEncoder {
   return new TextEncoder();
 }
 
+/** Encode a string as UTF-8 bytes. */
 function utf8(value: string): Uint8Array {
   return encoder().encode(value);
 }
 
+/** Concatenate byte chunks into one contiguous array. */
 function concat(chunks: readonly Uint8Array[]): Uint8Array {
   const length = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
   const output = new Uint8Array(length);
@@ -314,11 +334,13 @@ function concat(chunks: readonly Uint8Array[]): Uint8Array {
   return output;
 }
 
+/** Format a finite PDF number with bounded decimal precision. */
 function pdfNumber(value: number): string {
   if (!Number.isFinite(value)) return "0";
   return value.toFixed(4).replace(/(?:\.0+|(?:(\.\d*?)0+))$/, "$1");
 }
 
+/** Map a CSS font-family hint to one of the PDF Base 14 fonts. */
 function pdfName(value: string): "F1" | "F2" | "F3" {
   const normalized = value.toLowerCase();
   if (normalized.includes("courier") || normalized.includes("mono")) return "F3";
@@ -327,6 +349,7 @@ function pdfName(value: string): "F1" | "F2" | "F3" {
   return "F1";
 }
 
+/** Encode metadata text as a PDF UTF-16BE hexadecimal string. */
 function hexUtf16(value: string): string {
   const bytes = [0xfe, 0xff];
   for (let index = 0; index < value.length; index += 1) {
@@ -336,6 +359,7 @@ function hexUtf16(value: string): string {
   return bytes.map((byte) => byte.toString(16).padStart(2, "0").toUpperCase()).join("");
 }
 
+/** Escape a text run as a PDF literal string. */
 function pdfLiteralText(value: string): string {
   let output = "";
   for (const char of value) {
@@ -349,10 +373,12 @@ function pdfLiteralText(value: string): string {
   return `(${output})`;
 }
 
+/** Convert a typed byte view into a Blob-compatible ArrayBuffer part. */
 function blobPart(bytes: Uint8Array): BlobPart {
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
 }
 
+/** Parse common CSS hex and rgb() colors into normalized RGB components. */
 function rgb(color: string | undefined): [number, number, number] {
   if (!color || color === "currentColor" || color === "none") return [0, 0, 0];
   const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color.trim());
@@ -369,6 +395,7 @@ function rgb(color: string | undefined): [number, number, number] {
   return [0, 0, 0];
 }
 
+/** Generate PDF text operators for selectable or visible text runs. */
 function textOperators(
   runs: readonly PdfTextRun[],
   pageWidth: number,
@@ -403,11 +430,13 @@ function textOperators(
   }).join("\n");
 }
 
+/** Return whether a visible text run needs an opacity graphics state. */
 function needsTextOpacity(run: PdfTextRun, textMode: "invisible" | "visible" | "none"): boolean {
   return textMode === "visible" && run.opacity !== undefined &&
     Number.isFinite(run.opacity) && run.opacity !== 1;
 }
 
+/** Encode optional PDF document metadata as an indirect object body. */
 function metadataObject(metadata: PdfMetadata): string | undefined {
   const entries = [
     ["Title", metadata.title],
@@ -420,6 +449,7 @@ function metadataObject(metadata: PdfMetadata): string | undefined {
   return `<< ${entries.map(([key, value]) => `/${key} <${hexUtf16(value)}>`).join(" ")} >>`;
 }
 
+/** Serialize numbered PDF objects, cross-reference data, and trailer metadata. */
 function buildPdf(objects: PdfObject[], rootObjectId: number, infoObjectId?: number): Uint8Array {
   const chunks: Uint8Array[] = [utf8("%PDF-1.7\n%\xE2\xE3\xCF\xD3\n")];
   const offsets = [0];

@@ -31,6 +31,7 @@ import { PostScriptTokenizer } from "./eps-tokenizer.js";
 // call stack; caught and turned into a warning in `run()`.
 class EpsNestingLimitError extends Error { }
 
+/** Interpret the constrained PostScript subset emitted by Asymptote. */
 export class PostScriptInterpreter {
   private static readonly MAX_NESTING_DEPTH = 64;
   private nestingDepth = 0;
@@ -60,6 +61,7 @@ export class PostScriptInterpreter {
     private readonly writer: SvgWriter
   ) { }
 
+  /** Consume all tokens and emit supported operations to the SVG writer. */
   run(): void {
     try {
       for (let tok = this.tokens.next(); tok !== null; tok = this.tokens.next()) {
@@ -97,6 +99,7 @@ export class PostScriptInterpreter {
     }
   }
 
+  /** Return non-fatal conversion warnings collected during interpretation. */
   getWarnings(): string[] {
     return [...this.warnings];
   }

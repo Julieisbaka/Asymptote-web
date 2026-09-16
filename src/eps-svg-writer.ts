@@ -4,13 +4,17 @@ import type { Dictionary, Operand } from "./eps-interpreter-types.js";
 
 let accessibilityId = 0;
 
+/** SVG stroke-linecap names indexed by PostScript numeric values. */
 const LINECAP = ["butt", "round", "square"];
+/** SVG stroke-linejoin names indexed by PostScript numeric values. */
 const LINEJOIN = ["miter", "round", "bevel"];
 
+/** Format opacity as a compact valid SVG number. */
 function formatOpacity(value: number): string {
   return Math.max(0, Math.min(1, value)).toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
 }
 
+/** Escape text and attribute content for XML serialization. */
 function escapeXml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -20,6 +24,7 @@ function escapeXml(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
+/** Encode UTF-8 text as base64 without overflowing the argument stack. */
 function encodeBase64(value: string): string {
   if (typeof btoa !== "function" || typeof TextEncoder === "undefined") return "";
   const bytes = new TextEncoder().encode(value);
@@ -98,20 +103,24 @@ const FONT_FAMILY_RULES: readonly FontFamilyRule[] = [
   },
 ];
 
+/** Normalize a PostScript font name for alias matching. */
 function normalizeFontName(font: string): string {
   return font.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+/** Remove common PostScript suffixes before font alias matching. */
 function normalizeFontAlias(font: string): string {
   return normalizeFontName(font).replace(/(?:ps|mt|std|pro)/g, "");
 }
 
+/** Find a standard CSS family for a normalized PostScript font name. */
 function knownFontFamily(normalized: string): string | undefined {
   return FONT_FAMILY_RULES.find((rule) =>
     rule.aliases.some((alias) => normalized.startsWith(alias))
   )?.family;
 }
 
+/** Infer a CSS font weight from a normalized font name. */
 function inferWeight(normalized: string): string | undefined {
   if (/(thin|hairline)/.test(normalized)) return "100";
   if (/(extralight|ultralight)/.test(normalized)) return "200";
@@ -125,12 +134,14 @@ function inferWeight(normalized: string): string | undefined {
   return undefined;
 }
 
+/** Infer a CSS font style from a normalized font name. */
 function inferStyle(normalized: string): string | undefined {
   if (/oblique/.test(normalized)) return "oblique";
   if (/italic/.test(normalized)) return "italic";
   return undefined;
 }
 
+/** Infer a CSS font stretch from a normalized font name. */
 function inferStretch(normalized: string): string | undefined {
   if (/(ultracondensed|extracondensed)/.test(normalized)) return "extra-condensed";
   if (/(semicondensed|condensed|narrow)/.test(normalized)) return "condensed";
@@ -139,6 +150,7 @@ function inferStretch(normalized: string): string | undefined {
   return undefined;
 }
 
+/** Select a generic CSS fallback for an unknown font family. */
 function inferGenericFallback(normalized: string): string {
   if (/(mono|courier|code|typewriter|console)/.test(normalized)) return "monospace";
   if (/(script|chancery)/.test(normalized)) return "cursive";
@@ -147,6 +159,7 @@ function inferGenericFallback(normalized: string): string {
   return "sans-serif";
 }
 
+/** Validate and normalize a caller-provided font descriptor. */
 function normalizeDescriptor(value: unknown): SvgFontDescriptorNormalized | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const descriptor = value as SvgFontDescriptor;
@@ -171,6 +184,7 @@ function normalizeDescriptor(value: unknown): SvgFontDescriptorNormalized | null
   };
 }
 
+/** Resolve an exact or normalized custom font mapping. */
 function resolveCustomFont(font: string, customFonts: SvgFontMap): string | SvgFontDescriptor | undefined {
   if (Object.prototype.hasOwnProperty.call(customFonts, font)) return customFonts[font];
   const normalized = normalizeFontName(font);
@@ -186,6 +200,7 @@ function resolveCustomFont(font: string, customFonts: SvgFontMap): string | SvgF
 }
 
 
+/** Convert a PostScript font name and mapping into CSS font attributes. */
 function toCssFont(
   font: string,
   customFonts: SvgFontMap,
@@ -226,6 +241,7 @@ function toCssFont(
   return inferred;
 }
 
+/** Serialize a nested operand for native-label data attributes. */
 function operandToDataString(value: Operand): string {
   if (typeof value === "number") return Number.isFinite(value) ? String(value) : "0";
   if (typeof value === "string") return value;

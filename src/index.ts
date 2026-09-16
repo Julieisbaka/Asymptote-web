@@ -92,6 +92,7 @@ export function getAssetUrls(baseUrl?: string): AssetUrls {
   };
 }
 
+/** Update an existing SVG root while preserving its DOM identity. */
 function updateSvgElement(target: Element, svgText: string): boolean {
   const current = target.firstElementChild;
   if (!current || current.tagName.toLowerCase() !== "svg") return false;
@@ -112,6 +113,7 @@ function updateSvgElement(target: Element, svgText: string): boolean {
   return true;
 }
 
+/** Mount an SVG after allowing a trusted callback to customize it. */
 function mountUnsafeSvg(
   target: Element,
   svgText: string,
@@ -127,10 +129,12 @@ function mountUnsafeSvg(
   target.replaceChildren(svg);
 }
 
+/** Resolve a selector or return an already-resolved DOM target. */
 function resolveTarget(target: string | Element): Element | null {
   return typeof target === "string" ? document.querySelector(target) : target;
 }
 
+/** Return the direct mounted SVG child, if present. */
 function getUnsafeSvg(target: string | Element): SVGSVGElement | null {
   const element = resolveTarget(target)?.firstElementChild;
   return element?.tagName.toLowerCase() === "svg"
@@ -138,6 +142,7 @@ function getUnsafeSvg(target: string | Element): SVGSVGElement | null {
     : null;
 }
 
+/** Return the direct mounted WebGL iframe child, if present. */
 function getUnsafeWebGLIframe(target: string | Element): HTMLIFrameElement | null {
   const element = resolveTarget(target)?.firstElementChild;
   return element?.tagName.toLowerCase() === "iframe"
@@ -145,6 +150,7 @@ function getUnsafeWebGLIframe(target: string | Element): HTMLIFrameElement | nul
     : null;
 }
 
+/** Return the MIME type associated with a render result format. */
 function outputMimeType(format: RenderResult["format"]): string {
   switch (format) {
     case "svg":
@@ -157,10 +163,12 @@ function outputMimeType(format: RenderResult["format"]): string {
   }
 }
 
+/** Return the default downloaded filename for a render format. */
 function defaultFilename(format: RenderResult["format"]): string {
   return `asymptote.${format === "webgl" ? "html" : format}`;
 }
 
+/** Inject scroll containment, reduced-motion styles, and zoom priming scripts. */
 function containWebGLScroll(
   html: string,
   containScroll = true,
@@ -190,6 +198,7 @@ function containWebGLScroll(
     : withGuard;
 }
 
+/** Wait for an iframe to load, fail, or exceed its configured timeout. */
 function waitForIframeDocument(iframe: HTMLIFrameElement, timeoutMs = 15000): Promise<Document> {
   if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
     return Promise.reject(new TypeError("asymptote-web: WebGL iframe timeout must be a non-negative finite number"));
@@ -224,6 +233,7 @@ function waitForIframeDocument(iframe: HTMLIFrameElement, timeoutMs = 15000): Pr
   });
 }
 
+/** Create a sandboxed iframe for generated WebGL HTML. */
 function createWebGLIframe(
   html: string,
   renderOptions: RenderOptions
@@ -261,6 +271,7 @@ function createWebGLIframe(
   return iframe;
 }
 
+/** Add screen-space text labels to a loaded WebGL viewer document. */
 function addWebGLLabels(doc: Document, labels: readonly WebGLLabel[]): void {
   if (labels.length === 0) return;
   const body = doc.body;

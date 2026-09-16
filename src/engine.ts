@@ -43,7 +43,9 @@ type ModuleFactory = (opts?: Partial<EmscriptenModule>) => Promise<EmscriptenMod
 // Module-level singleton so the WASM binary is only loaded once per page.
 // ---------------------------------------------------------------------------
 
+/** Cached module initialization promises keyed by glue and WASM URLs. */
 const _modulePromises = new Map<string, Promise<EmscriptenModule>>();
+/** Serialized render queues keyed by the corresponding runtime configuration. */
 const _renderQueues = new Map<string, Promise<void>>();
 
 /**
@@ -51,12 +53,14 @@ const _renderQueues = new Map<string, Promise<void>>();
  * published dist/. Kept dynamic: asymptote.js is a separately published
  * runtime asset next to the wrapper and is not part of the Vite bundle.
  */
+/** Resolve the Emscripten glue asset URL for a runtime configuration. */
 function getGlueUrl(options: CreateOptions = {}): string {
   return options.glueUrl
     ? new URL(options.glueUrl, import.meta.url).href
     : new URL(["./asymptote", ".js"].join(""), import.meta.url).href;
 }
 
+/** Build the cache and queue key for a runtime configuration. */
 function getModuleCacheKey(options: CreateOptions): string {
   const glueUrl = getGlueUrl(options);
   const wasmUrl = options.wasmUrl ?? new URL("asymptote.wasm", glueUrl).href;
@@ -66,6 +70,7 @@ function getModuleCacheKey(options: CreateOptions): string {
 /**
  * Load (or return the cached) Emscripten module.
  */
+/** Load or reuse the Emscripten module for the requested asset configuration. */
 async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
   const glueUrl = getGlueUrl(options);
   const wasmUrl = options.wasmUrl ?? new URL("asymptote.wasm", glueUrl).href;
@@ -112,8 +117,10 @@ export async function preloadModule(options: CreateOptions): Promise<void> {
 // Core render logic
 // ---------------------------------------------------------------------------
 
+/** Root directory used for isolated per-render files in MEMFS. */
 const RENDER_ROOT = "/tmp/asymptote-web";
 let renderCounter = 0;
+/** Append a task to the queue for one runtime without blocking other runtimes. */
 function enqueueRender<T>(cacheKey: string, task: () => Promise<T>): Promise<T> {
   const queue = _renderQueues.get(cacheKey) ?? Promise.resolve();
   const result = queue.then(task);
@@ -121,10 +128,12 @@ function enqueueRender<T>(cacheKey: string, task: () => Promise<T>): Promise<T> 
   return result;
 }
 
+/** Create the standard cancellation error for queued renders. */
 function abortError(): DOMException {
   return new DOMException("The render was aborted", "AbortError");
 }
 
+/** Validate render options before a request enters the serialized queue. */
 function validateRenderOptions(renderOptions: RenderOptions): void {
   if (renderOptions.devicePixelRatio !== undefined &&
     (!Number.isFinite(renderOptions.devicePixelRatio) || renderOptions.devicePixelRatio <= 0)) {
@@ -139,6 +148,7 @@ function validateRenderOptions(renderOptions: RenderOptions): void {
   }
 }
 
+/** Create all missing directories in the runtime's virtual filesystem. */
 function ensureDirectory(mod: EmscriptenModule, path: string): void {
   const parts = path.split("/").filter(Boolean);
   let current = "";
@@ -148,6 +158,7 @@ function ensureDirectory(mod: EmscriptenModule, path: string): void {
   }
 }
 
+/** Resolve and validate a caller-provided path inside a render directory. */
 function virtualFilePath(renderDir: string, relativePath: string): string {
   const normalized = relativePath.replace(/\\/g, "/");
   if (!normalized || normalized.startsWith("/") || /^[A-Za-z]:/.test(normalized)) {
@@ -160,6 +171,7 @@ function virtualFilePath(renderDir: string, relativePath: string): string {
   return `${renderDir}/${parts.join("/")}`;
 }
 
+/** Recursively remove a render directory from MEMFS on a best-effort basis. */
 function removeTree(mod: EmscriptenModule, path: string): void {
   try {
     for (const entry of mod.FS.readdir(path)) {
@@ -171,6 +183,7 @@ function removeTree(mod: EmscriptenModule, path: string): void {
   }
 }
 
+/** Replace internal virtual source paths with caller-facing diagnostic paths. */
 function remapDiagnosticSources(
   diagnostics: CompilerDiagnostic[],
   renderDir: string,
@@ -190,6 +203,7 @@ function remapDiagnosticSources(
   });
 }
 
+/** Translate typed WebGL options into Asymptote command-line flags. */
 function getWebGLFlags(renderOptions: RenderOptions): string[] {
   const flags: string[] = [];
 
@@ -206,6 +220,7 @@ function getWebGLFlags(renderOptions: RenderOptions): string[] {
   return flags;
 }
 
+/** Determine the effective output format, honoring later format flags. */
 function getOutputFormat(
   renderOptions: RenderOptions,
   flags: string[]

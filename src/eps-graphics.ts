@@ -28,8 +28,10 @@ export interface RadialGradient {
 
 export type Gradient = LinearGradient | RadialGradient;
 
+/** The identity affine transform used as the initial graphics state. */
 export const IDENTITY: Matrix = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
 
+/** Compose two affine transforms in PostScript order. */
 export function compose(m1: Matrix, m2: Matrix): Matrix {
   return {
     a: m1.a * m2.a + m1.c * m2.b,
@@ -58,6 +60,7 @@ export interface GraphicsState {
   clipId: string | null;
 }
 
+/** Clone graphics state, including mutable dash and gradient data. */
 export function cloneState(s: GraphicsState): GraphicsState {
   return {
     ...s,
@@ -66,6 +69,7 @@ export function cloneState(s: GraphicsState): GraphicsState {
   };
 }
 
+/** Convert normalized gray, RGB, or CMYK components to an SVG RGB value. */
 export function toColor(nums: number[]): string {
   const clamp = (value: number): number => Math.max(0, Math.min(255, Number.isFinite(value) ? value : 0));
   if (nums.length === 1) {
@@ -86,6 +90,7 @@ export function toColor(nums: number[]): string {
   return "black";
 }
 
+/** Convert normalized HSB components to an SVG RGB value. */
 export function hsbToColor(hue: number, saturation: number, brightness: number): string {
   const h = ((hue % 1) + 1) % 1;
   const s = Math.max(0, Math.min(1, saturation));

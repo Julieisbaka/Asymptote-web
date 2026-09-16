@@ -6,6 +6,7 @@ export class PostScriptTokenizer {
 
   constructor(private readonly source: string) { }
 
+  /** Return the next token, skipping whitespace, comments, and definitions. */
   next(): string | null {
     while (this.index < this.source.length) {
       this.skipIgnored();
@@ -36,6 +37,7 @@ export class PostScriptTokenizer {
     return null;
   }
 
+  /** Skip whitespace, comments, and procedure definitions. */
   private skipIgnored(): void {
     while (this.index < this.source.length) {
       const char = this.source[this.index];
@@ -53,6 +55,7 @@ export class PostScriptTokenizer {
     }
   }
 
+  /** Skip a complete `/name { ... } bind def` procedure definition. */
   private skipProcedureDefinition(): boolean {
     const start = this.index;
     let nameEnd = start + 1;
@@ -109,6 +112,7 @@ export class PostScriptTokenizer {
     return true;
   }
 
+  /** Read a balanced PostScript parenthesized string token. */
   private readString(): string {
     const start = this.index;
     let depth = 0;
