@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.4-dev
+## 0.2.4 (In development)
 
 - Isolated cached WebAssembly runtimes by glue and WASM asset URLs so separate engine configurations do not reuse the wrong module.
 - Added early validation for invalid WebGL render options, including device-pixel ratio, camera position, and iframe timeout values.
