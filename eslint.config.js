@@ -16,7 +16,11 @@ export default defineConfig(
       "@stylistic/brace-style": ["warn", "1tbs", { allowSingleLine: true }],
       "@stylistic/comma-dangle": ["warn", "always-multiline"],
       "@stylistic/keyword-spacing": "warn",
-      "@stylistic/quotes": ["warn", "double", { avoidEscape: true, allowTemplateLiterals: "always" }],
+      "@stylistic/quotes": [
+        "warn",
+        "double",
+        { avoidEscape: true, allowTemplateLiterals: "always" },
+      ],
       "@stylistic/semi": ["warn", "always"],
       "@stylistic/space-before-function-paren": [
         "warn",

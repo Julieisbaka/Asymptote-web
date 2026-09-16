@@ -44,9 +44,11 @@ performing a formatting-only change.
 - Use descriptive errors with the `asymptote-web:` prefix for public runtime
   failures.
 
-ESLint enforces indentation, braces, quotes, semicolons, spacing, type-only
-imports, and unused-variable rules. A leading underscore is allowed for an
-intentionally unused parameter or local variable.
+ESLint reports indentation, braces, quotes, semicolons, spacing, and type-only
+import conventions as warnings, so style drift does not block a build. Unused
+variables remain errors because they can indicate broken or incomplete code. A
+leading underscore is allowed for an intentionally unused parameter or local
+variable.
 
 ## Tests
 
