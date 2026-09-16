@@ -2,6 +2,11 @@
 
 ## 0.3.0 (In development)
 
+- Added the dependency-free `asymptote-web/utils` subpath with
+  `parseCompilerDiagnostics()`, affine matrix helpers, and normalized gray,
+  RGB, CMYK, and HSB color conversion helpers. The subpath includes its own
+  `utils.d.ts` declarations and does not initialize the WebAssembly runtime.
+
 ## 0.2.4
 
 - Isolated cached WebAssembly runtimes by glue and WASM asset URLs so separate engine configurations do not reuse the wrong module.
