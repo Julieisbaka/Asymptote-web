@@ -163,7 +163,7 @@ const svg = epsToSvg(eps, {
     MyPostScriptFont: "My Web Font, sans-serif",
   },
 });
-``` 
+```
 
 The fonts must already be installed or loaded by the host page, for example
 with `@font-face`. The converter recognizes common PostScript/Base 35 aliases

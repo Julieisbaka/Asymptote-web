@@ -179,7 +179,7 @@ Without these headers, single-threaded mode is used automatically, which is fine
 - Browser builds report `convert()` and `animate()` as unavailable instead of attempting to launch ImageMagick or an external viewer.
 - Browser-provided imports and assets can be mounted with the `render()` `files` option; host filesystem paths are not accessible.
 - Explicit `texsize()` calls use approximate native metrics, while `texpath()` reports unavailable because TeX shaping is not bundled.
-- PDF output is deliberately stubbed in browser WebAssembly and reports a clear error because Ghostscript is not bundled; use SVG, EPS, PS, or WebGL instead.
+- Native Asymptote PDF output (`format: "pdf"`) is unavailable in browser WebAssembly because Ghostscript is not bundled. For browser PDF export, use the optional `asymptote-web/pdf` subpath; it produces a JPEG-rasterized PDF with an optional selectable text layer, not native vector PDF output.
 - Trusted pre-rendered LaTeX SVG can be inserted with the opt-in `asy.unsafe.mount()` DOM hook.
 - WebGL supports basic camera-facing screen-space labels through `webglLabels`; world-coordinate labels require `asy.unsafe.mountWebGL()` customization.
 

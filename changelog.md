@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Codebase quality improvements
+
 ## 0.2.0
 
 - Added optional browser-generated PDF export through `asymptote-web/pdf`, keeping PDF helpers out of the main bundle while supporting raster-backed PDFs with selectable/searchable text labels.
