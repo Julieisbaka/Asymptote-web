@@ -105,10 +105,6 @@ RUN emconfigure ./configure \
     --disable-vulkan \
     --disable-gc \
     --disable-lsp \
-    --without-readline \
-    --without-fftw \
-    --without-gsl \
-    --without-sigsegv \
     CXXFLAGS="-O2 -flto -DNO_PARALLEL -DBLOCKING_SLEEP -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -Ibackports/glm-headers" \
     LDFLAGS="-flto -sUSE_ZLIB=1 -fexceptions -sDISABLE_EXCEPTION_CATCHING=0" \
     && emmake make asy -j$(nproc) \
