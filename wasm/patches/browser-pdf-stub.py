@@ -13,7 +13,7 @@ PATH = "/src/asymptote/picture.cc"
 MARKER = "int picture::epstopdf(const string& epsname, const string& pdfname)"
 
 
-def replace_function(content, marker, replacement):
+def replace_function(content: str, marker: str, replacement: str) -> str:
     start = content.find(marker)
     if start < 0:
         sys.exit(f"browser-pdf-stub.py: could not find {marker}()")

@@ -12,7 +12,7 @@ PATH = "/src/asymptote/runlabel.in"
 MARKER = "patharray *_strokepath(path g, pen p=CURRENTPEN)"
 
 
-def replace_function(content, marker, replacement):
+def replace_function(content: str, marker: str, replacement: str) -> str:
     start = content.find(marker)
     if start < 0:
         sys.exit(f"browser-strokepath.py: could not find {marker}()")

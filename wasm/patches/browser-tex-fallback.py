@@ -12,7 +12,7 @@ import sys
 PATH = "/src/asymptote/runlabel.in"
 
 
-def replace_function(content, marker, replacement):
+def replace_function(content: str, marker: str, replacement: str) -> str:
     start = content.find(marker)
     if start < 0:
         sys.exit(f"browser-tex-fallback.py: could not find {marker}()")

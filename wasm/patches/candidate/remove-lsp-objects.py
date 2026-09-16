@@ -11,9 +11,7 @@ import sys
 
 MAKEFILE_PATH = "/src/asymptote/Makefile.in"
 CONFIGURE_PATH = "/src/asymptote/configure"
-OBJECTS = (
-    "lspserv",
-)
+OBJECTS = ("lspserv",)
 
 
 def ensure_present(path: str, needle: str, label: str) -> None:
@@ -31,15 +29,22 @@ def strip_lsp_from_makefile(content: str) -> str:
         raise ValueError("COREFILES not found")
 
     corefiles = match.group(0)
-    missing = [name for name in OBJECTS if not re.search(rf"\b{re.escape(name)}\b", corefiles)]
+    missing = [
+        name for name in OBJECTS if not re.search(rf"\b{re.escape(name)}\b", corefiles)
+    ]
     if missing:
-        raise ValueError("missing expected LSP objects in COREFILES: " + ", ".join(missing))
+        raise ValueError(
+            "missing expected LSP objects in COREFILES: " + ", ".join(missing)
+        )
 
-    prefix, body = re.match(r"(COREFILES\s*=\s*)(.*)", corefiles, re.DOTALL).groups()
+    assignment = re.match(r"(COREFILES\s*=\s*)(.*)", corefiles, re.DOTALL)
+    if assignment is None:
+        raise ValueError("invalid COREFILES assignment")
+    prefix, body = assignment.groups()
     tokens = body.replace("\\\r\n", " ").replace("\\\n", " ").split()
     filtered = [token for token in tokens if token not in OBJECTS]
     replacement = prefix + " ".join(filtered) + "\n"
-    content = content[:match.start()] + replacement + content[match.end():]
+    content = content[: match.start()] + replacement + content[match.end() :]
 
     return content
 
@@ -59,7 +64,9 @@ def strip_lsp_hooks(content: str) -> str:
 
 
 def validate_no_lsp(content: str, path: str) -> None:
-    remaining = [name for name in OBJECTS if re.search(rf"\b{re.escape(name)}\b", content)]
+    remaining = [
+        name for name in OBJECTS if re.search(rf"\b{re.escape(name)}\b", content)
+    ]
     if remaining:
         raise ValueError(f"LSP objects still present in {path}: {', '.join(remaining)}")
     return
@@ -82,4 +89,6 @@ for path in (MAKEFILE_PATH, CONFIGURE_PATH):
 with open(MAKEFILE_PATH, "r", encoding="utf-8") as stream:
     makefile = stream.read()
 if any(token in makefile for token in OBJECTS):
-    sys.exit("remove-lsp-objects.py: final COREFILES check failed; LSP objects remain present")
+    sys.exit(
+        "remove-lsp-objects.py: final COREFILES check failed; LSP objects remain present"
+    )
