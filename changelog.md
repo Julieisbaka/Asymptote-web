@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.3.0 (In development)
+
 ## 0.2.4
 
 - Isolated cached WebAssembly runtimes by glue and WASM asset URLs so separate engine configurations do not reuse the wrong module.
