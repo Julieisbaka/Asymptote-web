@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.2
+## 0.2.2 (In development)
 
 ## 0.2.1
 
