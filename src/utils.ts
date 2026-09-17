@@ -1,10 +1,5 @@
 import type { CompilerDiagnostic, DiagnosticSeverity } from "./types.js";
 
-/** Recognizes severity prefixes emitted by the Asymptote compiler. */
-const SEVERITY_PATTERN = /^(warning|error|runtime)\b\s*:?[ \t]*(.*)$/i;
-/** Recognizes informational diagnostic prefixes. */
-const INFO_PATTERN = /^(info|note)\s*:(.*)$/i;
-
 /** Return whether a character is an ASCII decimal digit. */
 function isDigit(char: string | undefined): boolean {
   return char !== undefined && char >= "0" && char <= "9";
@@ -65,6 +60,17 @@ function rawWhitespace(char: string | undefined): boolean {
   return char === " " || char === "\t" || char === "\n" || char === "\r";
 }
 
+/** Return whether a character counts as a JavaScript-style word character. */
+function wordChar(char: string | undefined): boolean {
+  return (
+    char !== undefined &&
+    ((char >= "a" && char <= "z") ||
+      (char >= "A" && char <= "Z") ||
+      (char >= "0" && char <= "9") ||
+      char === "_")
+  );
+}
+
 /** Extract an optional bracketed diagnostic code from a message. */
 function parseCodeLabel(message: string): { code?: string; message: string } {
   if (!message.startsWith("[")) return { message };
@@ -76,6 +82,27 @@ function parseCodeLabel(message: string): { code?: string; message: string } {
   };
 }
 
+/** Parse a leading diagnostic label without using a backtracking regexp. */
+function parseSeverityLabel(text: string): { label: string; message: string } | undefined {
+  const labels = ["warning", "error", "runtime", "info", "note"] as const;
+  for (const label of labels) {
+    if (text.slice(0, label.length).toLowerCase() !== label) continue;
+    const next = text[label.length];
+    if (wordChar(next)) continue;
+    let cursor = label.length;
+    while (text[cursor] === " " || text[cursor] === "\t") cursor += 1;
+    const sawColon = text[cursor] === ":";
+    if (sawColon) {
+      cursor += 1;
+      while (text[cursor] === " " || text[cursor] === "\t") cursor += 1;
+    } else if (label === "info" || label === "note") {
+      continue;
+    }
+    return { label, message: text.slice(cursor) };
+  }
+  return undefined;
+}
+
 /** Classify a diagnostic message, defaulting located messages to errors. */
 function severityFor(
   text: string,
@@ -84,15 +111,15 @@ function severityFor(
   severity: DiagnosticSeverity;
   message: string;
 } {
-  const match = text.match(SEVERITY_PATTERN) ?? text.match(INFO_PATTERN);
-  if (!match) {
+  const classified = parseSeverityLabel(text);
+  if (!classified) {
     return {
       severity: hasLocation ? "error" : "info",
       message: text.trim(),
     };
   }
 
-  const label = match[1].toLowerCase();
+  const label = classified.label;
   return {
     severity:
       label === "warning"
@@ -100,7 +127,7 @@ function severityFor(
         : label === "error" || label === "runtime" || (label === "note" && hasLocation)
           ? "error"
           : "info",
-    message: match[2].trim(),
+    message: classified.message.trim(),
   };
 }
 
