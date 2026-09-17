@@ -23,8 +23,8 @@ import {
   unsupportedShadingMessage,
 } from "./eps-interpreter-gradients.js";
 import type { Dictionary, Operand } from "./eps-interpreter-types.js";
-import { SvgWriter } from "./eps-svg-writer.js";
-import { PostScriptTokenizer } from "./eps-tokenizer.js";
+import type { SvgWriter } from "./eps-svg-writer.js";
+import type { PostScriptTokenizer } from "./eps-tokenizer.js";
 
 // Thrown internally when nested array/dictionary literals go deeper than
 // MAX_NESTING_DEPTH, so malformed or adversarial input can't exhaust the
@@ -343,9 +343,9 @@ export class PostScriptInterpreter {
         const arr = this.stack.pop();
         this.state.dasharray = Array.isArray(arr)
           ? arr.filter(
-              (value): value is number =>
-                typeof value === "number" && Number.isFinite(value) && value >= 0,
-            )
+            (value): value is number =>
+              typeof value === "number" && Number.isFinite(value) && value >= 0,
+          )
           : [];
         this.state.dashoffset = typeof offset === "number" && Number.isFinite(offset) ? offset : 0;
         break;
@@ -501,15 +501,15 @@ export class PostScriptInterpreter {
     return kind === "linear"
       ? { kind, x1: values[0], y1: values[1], x2: values[2], y2: values[3], stops }
       : {
-          kind,
-          x1: values[0],
-          y1: values[1],
-          r1: values[2],
-          x2: values[3],
-          y2: values[4],
-          r2: values[5],
-          stops,
-        };
+        kind,
+        x1: values[0],
+        y1: values[1],
+        r1: values[2],
+        x2: values[3],
+        y2: values[4],
+        r2: values[5],
+        stops,
+      };
   }
 
   private appendTangentArc(x1: number, y1: number, x2: number, y2: number, radius: number): void {

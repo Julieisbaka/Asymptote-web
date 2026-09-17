@@ -37,11 +37,11 @@ export interface PdfMetadata {
 export type PdfMargin =
   | number
   | {
-      top?: number;
-      right?: number;
-      bottom?: number;
-      left?: number;
-    };
+    top?: number;
+    right?: number;
+    bottom?: number;
+    left?: number;
+  };
 
 export interface PdfOptions extends PdfMetadata {
   /** PDF page width. Defaults to the SVG width or viewBox width. */
@@ -401,9 +401,9 @@ function rgb(color: string | undefined): [number, number, number] {
     const value =
       hex[1].length === 3
         ? hex[1]
-            .split("")
-            .map((char) => char + char)
-            .join("")
+          .split("")
+          .map((char) => char + char)
+          .join("")
         : hex[1];
     return [0, 2, 4].map(
       (offset) => Number.parseInt(value.slice(offset, offset + 2), 16) / 255,
