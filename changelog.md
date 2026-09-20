@@ -2,6 +2,7 @@
 
 ## 0.3.0 (In development)
 
+- Bump asymptote to 3.15
 - Added the dependency-free `asymptote-web/utils` subpath with
   `parseCompilerDiagnostics()`, affine matrix helpers, and normalized gray,
   RGB, CMYK, and HSB color conversion helpers. The subpath includes its own

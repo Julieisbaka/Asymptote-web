@@ -56,7 +56,8 @@ def strip_lsp_from_configure(content: str) -> str:
 
 
 def strip_lsp_hooks(content: str) -> str:
-    # In Asymptote 3.14, `symbolmaps`, `lspdec`, `lspexp`, `lspfundec`, and
+    # In current upstream releases, `symbolmaps`, `lspdec`, `lspexp`,
+    # `lspfundec`, and
     # `lspstm` are not standalone server code: they provide AST symbol-map
     # definitions that are referenced by core classes even with --disable-lsp.
     # The LSP include path must therefore remain. Only `lspserv` is pruned.
