@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
-import { unlink, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import test, { after, beforeEach } from "node:test";
 
-const gluePath = new URL("../dist/asymptote.js", import.meta.url);
-const customGluePath = new URL("../dist/asymptote-custom.js", import.meta.url);
+const testDirectory = await mkdtemp(join(tmpdir(), "asymptote-web-api-test-"));
+const gluePath = pathToFileURL(join(testDirectory, "asymptote.js"));
+const customGluePath = pathToFileURL(join(testDirectory, "asymptote-custom.js"));
 const glueSource = `
 const state = globalThis.__asymptoteWebTestState ??= {
   calls: [],
@@ -82,7 +86,7 @@ export default async function factory(options = {}) {
       const output = format === "html"
         ? "<!doctype html><html><head></head><body><canvas id=\\\"Asymptote\\\"></canvas></body></html>"
         : format === "eps"
-          ? "%!PS-Adobe-3.0 EPSF-3.0\\n%%BoundingBox: 0 0 100 100\\nnewpath 0 0 moveto 10 10 lineto stroke\\n"
+          ? "%!PS-Adobe-3.0 EPSF-3.0\\n%%BoundingBox: 0 0 100 100\\nnewpath 0 0 moveto 10 10 lineto stroke\\n/Helvetica findfont 12 scalefont setfont 5 10 moveto (mapped) show\\n"
           : "%!PS-Adobe-3.0\\n%%BoundingBox: 0 0 100 100\\n" + format;
       FS.writeFile(outputPrefix + "." + format, output);
       return 0;
@@ -106,6 +110,8 @@ globalThis.__asymptoteWebTestState = {
 const { AsymptoteError, createAsymptote, getAssetUrls, parseCompilerDiagnostics } =
   await import("../dist/asymptote-web.js");
 const state = globalThis.__asymptoteWebTestState;
+const createTestAsymptote = (options = {}) =>
+  createAsymptote({ glueUrl: gluePath.href, ...options });
 
 test("resolves runtime asset URLs", () => {
   const defaults = getAssetUrls();
@@ -120,8 +126,7 @@ test("resolves runtime asset URLs", () => {
 });
 
 after(async () => {
-  await unlink(gluePath).catch(() => {});
-  await unlink(customGluePath).catch(() => {});
+  await rm(testDirectory, { recursive: true, force: true });
   delete globalThis.__asymptoteWebTestState;
 });
 
@@ -133,14 +138,14 @@ beforeEach(() => {
 });
 
 test("retries module initialization after a failed factory", async () => {
-  await assert.rejects(() => createAsymptote(), /fake module load failure/);
+  await assert.rejects(() => createTestAsymptote(), /fake module load failure/);
   const asy = await createAsymptote({ glueUrl: customGluePath.href });
   assert.equal(await asy.version(), "Asymptote test version");
   assert.equal(state.factoryCalls, 2);
 });
 
 test("does not reuse a module loaded with different asset URLs", async () => {
-  await createAsymptote();
+  await createTestAsymptote();
   const factoryCalls = state.factoryCalls;
   await createAsymptote({
     glueUrl: customGluePath.href,
@@ -151,7 +156,7 @@ test("does not reuse a module loaded with different asset URLs", async () => {
 });
 
 test("renders SVG and reports compiler/converter warnings", async () => {
-  const asy = await createAsymptote();
+  const asy = await createTestAsymptote();
   state.stderr.push(
     "Warning: compiler warning",
     ": warning [unbounded]: x scaling in picture unbounded",
@@ -262,7 +267,7 @@ test("parses source locations and diagnostic severities", () => {
 });
 
 test("maps virtual diagnostic paths to friendly source filenames", async () => {
-  const asy = await createAsymptote();
+  const asy = await createTestAsymptote();
   state.stderr.push("{{INPUT}}: 3.5: error: bad source");
   const result = await asy.render("bad", { sourceFile: "diagram.asy" });
 
@@ -270,7 +275,7 @@ test("maps virtual diagnostic paths to friendly source filenames", async () => {
 });
 
 test("preserves format flag precedence and WebGL options", async () => {
-  const asy = await createAsymptote();
+  const asy = await createTestAsymptote();
   await asy.render("one", { format: "svg", flags: ["--format=ps"] });
   const psCall = state.calls.at(-1).args;
   assert.equal(psCall.at(-1).includes("input.asy"), true);
@@ -296,7 +301,7 @@ test("preserves format flag precedence and WebGL options", async () => {
 });
 
 test("rejects invalid numeric render options before invoking Asymptote", async () => {
-  const asy = await createAsymptote();
+  const asy = await createTestAsymptote();
   const callsBefore = state.calls.length;
   await assert.rejects(() => asy.render("invalid", { devicePixelRatio: 0 }), /devicePixelRatio/);
   await assert.rejects(
@@ -308,7 +313,7 @@ test("rejects invalid numeric render options before invoking Asymptote", async (
 });
 
 test("supports raw output, blobs, batches, and isolated files", async () => {
-  const asy = await createAsymptote();
+  const asy = await createTestAsymptote();
   const raw = await asy.render("raw", { raw: true });
   assert.equal(raw.format, "eps");
   assert.match(raw.output, /^%!PS/);
@@ -328,7 +333,7 @@ test("supports raw output, blobs, batches, and isolated files", async () => {
 });
 
 test("rejects unsafe virtual file paths and supports abort", async () => {
-  const asy = await createAsymptote();
+  const asy = await createTestAsymptote();
   await assert.rejects(() => asy.render("bad", { files: { "../escape.asy": "nope" } }), TypeError);
   const callsBeforeAbort = state.calls.length;
   const controller = new AbortController();
@@ -341,7 +346,7 @@ test("rejects unsafe virtual file paths and supports abort", async () => {
 });
 
 test("serializes concurrent renders and exposes AsymptoteError", async () => {
-  const asy = await createAsymptote();
+  const asy = await createTestAsymptote();
   const results = await Promise.all([asy.render("queued-one"), asy.render("queued-two")]);
   assert.equal(results.length, 2);
   assert.deepEqual(
@@ -368,4 +373,48 @@ test("serializes concurrent renders and exposes AsymptoteError", async () => {
       return true;
     },
   );
+});
+
+test("reports a nonzero version exit without marking the WASM module crashed", async () => {
+  const asy = await createTestAsymptote();
+  const factoryCalls = state.factoryCalls;
+  state.versionExitCode = 4;
+
+  await assert.rejects(
+    () => asy.version(),
+    (error) => {
+      assert.ok(error instanceof AsymptoteError);
+      assert.equal(error.exitCode, 4);
+      assert.match(error.message, /exit code 4/);
+      assert.doesNotMatch(error.message, /crashed/);
+      return true;
+    },
+  );
+
+  state.versionExitCode = 0;
+  assert.equal(await asy.version(), "Asymptote test version");
+  assert.equal(state.factoryCalls, factoryCalls);
+});
+
+test("passes svgFonts to engine EPS-to-SVG conversion", async () => {
+  const asy = await createTestAsymptote();
+  const result = await asy.render("font mapping", {
+    svgFonts: { Helvetica: "Inter, sans-serif" },
+  });
+
+  assert.match(result.output, /font-family="Inter, sans-serif"/);
+});
+
+test("keeps the wrapper output path authoritative over user -o flags", async () => {
+  const asy = await createTestAsymptote();
+  const result = await asy.render("isolated output", {
+    raw: true,
+    flags: ["-o", "/tmp/user-output"],
+  });
+
+  assert.equal(result.format, "eps");
+  assert.match(result.output, /^%!PS-Adobe-3\.0 EPSF-3\.0/);
+  const args = state.calls.at(-1).args;
+  assert.equal(args.at(-3), "-o");
+  assert.match(args.at(-2), /\/tmp\/asymptote-web\/render-\d+\/output$/);
 });

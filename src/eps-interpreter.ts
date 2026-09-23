@@ -31,6 +31,11 @@ import { PostScriptTokenizer } from "./eps-tokenizer.js";
 // call stack; caught and turned into a warning in `run()`.
 class EpsNestingLimitError extends Error {}
 
+interface SavedGraphicsState {
+  state: GraphicsState;
+  colorComponentCount: number | null;
+}
+
 /** Interpret the constrained PostScript subset emitted by Asymptote. */
 export class PostScriptInterpreter {
   private static readonly MAX_NESTING_DEPTH = 64;
@@ -51,7 +56,7 @@ export class PostScriptInterpreter {
     dashoffset: 0,
     clipId: null,
   };
-  private readonly stateStack: GraphicsState[] = [];
+  private readonly stateStack: SavedGraphicsState[] = [];
   private readonly stack: Operand[] = [];
   private readonly warnings: string[] = [];
   private colorComponentCount: number | null = null;
@@ -174,11 +179,28 @@ export class PostScriptInterpreter {
         this.writer.closePath();
         break;
       case "gsave":
-        this.stateStack.push(cloneState(this.state));
+        this.stateStack.push({
+          state: cloneState(this.state),
+          colorComponentCount: this.colorComponentCount,
+        });
         break;
-      case "grestore":
-        this.state = this.stateStack.pop() ?? this.state;
+      case "grestore": {
+        const saved = this.stateStack.pop();
+        if (saved) {
+          this.state = saved.state;
+          this.colorComponentCount = saved.colorComponentCount;
+        }
         break;
+      }
+      case "grestoreall": {
+        const saved = this.stateStack[0];
+        if (saved) {
+          this.state = saved.state;
+          this.colorComponentCount = saved.colorComponentCount;
+          this.stateStack.length = 0;
+        }
+        break;
+      }
       case "translate": {
         const [tx, ty] = this.popN(2);
         this.state.ctm = compose(this.state.ctm, { a: 1, b: 0, c: 0, d: 1, e: tx, f: ty });
@@ -420,7 +442,6 @@ export class PostScriptInterpreter {
         if (!this.writer.endNativeLabel()) this.warn("ignored unmatched native-label end marker");
         break;
       case "showpage":
-      case "grestoreall":
         break;
       default:
         this.warn(`ignored unsupported operator '${tok}'`);

@@ -329,9 +329,6 @@ async function runAsymptoteUnsafe(
     const args = [
       "-f",
       asyFormat,
-      // Asymptote appends the format extension to the -o prefix itself.
-      "-o",
-      outputPrefix,
       // No LaTeX toolchain is available in WASM, and using it would spawn
       // external processes (fork) that WASM can't do — force native labels.
       "-tex",
@@ -341,6 +338,10 @@ async function runAsymptoteUnsafe(
       ...(format === "webgl" && renderOptions.offline ? ["-offline"] : []),
       ...(format === "webgl" ? getWebGLFlags(renderOptions) : []),
       ...extraFlags,
+      // Asymptote appends the format extension to this prefix. Keep it after
+      // extra flags so output-name options cannot override the isolated path.
+      "-o",
+      outputPrefix,
       inputFile,
     ];
 
@@ -384,6 +385,7 @@ async function runAsymptoteUnsafe(
       format === "svg" && !skipConversion
         ? epsToSvgWithWarnings(rawOutput, {
             precision: renderOptions.svgPrecision,
+            fonts: renderOptions.svgFonts,
             accessibility: renderOptions.accessibility,
           })
         : { svg: rawOutput, warnings: [] };
@@ -426,18 +428,9 @@ export function getAsymptoteVersion(createOptions: CreateOptions): Promise<strin
     const origPrintErr = mod.printErr;
     mod.print = (text: string) => output.push(text);
     mod.printErr = (text: string) => errors.push(text);
+    let exitCode: number;
     try {
-      const exitCode = mod.callMain(["--version"]);
-      if (exitCode !== 0) {
-        const stderr = errors.join("\n");
-        throw new AsymptoteError(
-          `Unable to read Asymptote version (exit code ${exitCode})`,
-          exitCode,
-          stderr,
-          parseCompilerDiagnostics(stderr),
-        );
-      }
-      return [...output, ...errors].join("\n").trim();
+      exitCode = mod.callMain(["--version"]);
     } catch (error) {
       _modulePromises.delete(getModuleCacheKey(createOptions));
       const reason = error instanceof Error ? error.message : String(error);
@@ -451,5 +444,15 @@ export function getAsymptoteVersion(createOptions: CreateOptions): Promise<strin
       mod.print = origPrint;
       mod.printErr = origPrintErr;
     }
+    if (exitCode !== 0) {
+      const stderr = errors.join("\n");
+      throw new AsymptoteError(
+        `Unable to read Asymptote version (exit code ${exitCode})`,
+        exitCode,
+        stderr,
+        parseCompilerDiagnostics(stderr),
+      );
+    }
+    return [...output, ...errors].join("\n").trim();
   });
 }

@@ -114,6 +114,40 @@ test("restores currentpoint to the subpath start after closepath", () => {
   assert.match(svg, /M10,90 L20,90 L20,80 Z L15,90/);
 });
 
+test("restores graphics state fields after grestore", () => {
+  const svg = convert(
+    "1 0 0 setrgbcolor 0.25 setalpha 1 setlinewidth [2 3] 0 setdash " +
+      "gsave 2 2 scale 0 0 1 setrgbcolor 0.75 setalpha 4 setlinewidth [9] 0 setdash " +
+      "newpath 0 0 moveto 10 0 lineto stroke grestore " +
+      "newpath 0 0 moveto 10 0 lineto stroke",
+  );
+  const paths = [...svg.matchAll(/<path d="([^"]+)"[^>]*\/>/g)];
+
+  assert.equal(paths.length, 2);
+  assert.match(paths[0][0], /d="M0,100 L20,100"/);
+  assert.match(paths[0][0], /stroke="rgb\(0,0,255\)" stroke-width="4"/);
+  assert.match(paths[0][0], /stroke-dasharray="9"/);
+  assert.match(paths[0][0], /opacity="0\.75"/);
+  assert.match(paths[1][0], /d="M0,100 L10,100"/);
+  assert.match(paths[1][0], /stroke="rgb\(255,0,0\)" stroke-width="1"/);
+  assert.match(paths[1][0], /stroke-dasharray="2,3"/);
+  assert.match(paths[1][0], /opacity="0\.25"/);
+});
+
+test("restores color-space state and unwinds nested saves with grestoreall", () => {
+  const svg = convert(
+    "1 0 0 setrgbcolor gsave /DeviceGray setcolorspace 0.5 setcolor grestore " +
+      "0 1 0 setcolor newpath 0 0 moveto 10 0 lineto stroke " +
+      "gsave 1 setgray gsave 0 setgray grestoreall " +
+      "newpath 10 10 moveto 20 10 lineto stroke",
+  );
+  const paths = [...svg.matchAll(/<path d="([^"]+)"[^>]*\/>/g)];
+
+  assert.equal(paths.length, 2);
+  assert.match(paths[0][0], /stroke="rgb\(0,255,0\)"/);
+  assert.match(paths[1][0], /stroke="rgb\(0,255,0\)"/);
+});
+
 test("clears the current path after painting", () => {
   const svg = convert("newpath 0 0 moveto 10 0 lineto stroke 20 20 moveto 30 20 lineto stroke");
 

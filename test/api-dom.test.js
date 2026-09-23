@@ -1,8 +1,12 @@
 import assert from "node:assert/strict";
-import { unlink, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import test, { after, before, beforeEach } from "node:test";
 
-const gluePath = new URL("../dist/asymptote.js", import.meta.url);
+const testDirectory = await mkdtemp(join(tmpdir(), "asymptote-web-dom-test-"));
+const gluePath = pathToFileURL(join(testDirectory, "asymptote.js"));
 await writeFile(
   gluePath,
   `
@@ -209,7 +213,7 @@ globalThis.__asymptoteDomState = { output: "normal", calls: [], loadIframe: true
 
 const { createAsymptote } = await import("../dist/asymptote-web.js");
 const state = globalThis.__asymptoteDomState;
-const asy = await createAsymptote();
+const asy = await createAsymptote({ glueUrl: gluePath.href });
 
 before(() => {
   document.nodes.clear();
@@ -231,7 +235,7 @@ after(async () => {
   globalThis.HTMLIFrameElement = originalIframeElement;
   globalThis.URL = OriginalURL;
   delete globalThis.__asymptoteDomState;
-  await unlink(gluePath).catch(() => {});
+  await rm(testDirectory, { recursive: true, force: true });
 });
 
 test("mounts SVG output and reuses an existing SVG", async () => {
