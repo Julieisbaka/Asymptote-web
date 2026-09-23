@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 (In development)
+## 0.3.0
 
 - Added the dependency-free `asymptote-web/utils` subpath with
   `parseCompilerDiagnostics()`, affine matrix helpers, and normalized gray,
