@@ -2,6 +2,10 @@
 
 ## 0.3.1 - In development
 
+- Fixed nonzero `version()` exits being misreported as WASM crashes, applied svgFonts to engine SVG renders, and ensured user output flags cannot redirect the wrapper away from its isolated render file.
+- Corrected EPS grestore/grestoreall restoration, including color-space state, and added targeted EPS graphics-state and PDF sizing/text-placement regression tests.
+- Isolated API test WASM fixtures in temporary directories so tests no longer overwrite or delete `dist/asymptote.js`.
+
 ## 0.3.0
 
 - Added the dependency-free `asymptote-web/utils` subpath with
