@@ -63,3 +63,48 @@ test("parses compiler diagnostics from the utility bundle", () => {
     ],
   );
 });
+
+test("preserves diagnostic severity parsing across rewritten branches", () => {
+  assert.deepEqual(
+    parseCompilerDiagnostics(
+      [
+        "ERROR  : [syntax] exploded",
+        "RuNtImE failed without colon",
+        "note: background detail",
+        "diagram.asy: 7.9: NoTe : located detail",
+        "warningly not a warning",
+      ].join("\n"),
+    ),
+    [
+      {
+        severity: "error",
+        code: "syntax",
+        message: "exploded",
+        raw: "ERROR  : [syntax] exploded",
+      },
+      {
+        severity: "error",
+        message: "failed without colon",
+        raw: "RuNtImE failed without colon",
+      },
+      {
+        severity: "info",
+        message: "background detail",
+        raw: "note: background detail",
+      },
+      {
+        severity: "error",
+        message: "located detail",
+        sourceFile: "diagram.asy",
+        line: 7,
+        column: 9,
+        raw: "diagram.asy: 7.9: NoTe : located detail",
+      },
+      {
+        severity: "info",
+        message: "warningly not a warning",
+        raw: "warningly not a warning",
+      },
+    ],
+  );
+});

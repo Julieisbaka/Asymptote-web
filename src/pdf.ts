@@ -131,14 +131,48 @@ function assertFiniteRasterSize(value: number, name: string): void {
   }
 }
 
+/** Return whether a string is a simple decimal number accepted in SVG lengths. */
+function isSvgNumber(value: string): boolean {
+  let cursor = 0;
+  if (value[cursor] === "+" || value[cursor] === "-") cursor += 1;
+
+  const integerStart = cursor;
+  while (value[cursor] !== undefined && value[cursor] >= "0" && value[cursor] <= "9") cursor += 1;
+  const hasIntegerDigits = cursor > integerStart;
+
+  let hasFractionDigits = false;
+  if (value[cursor] === ".") {
+    cursor += 1;
+    const fractionStart = cursor;
+    while (value[cursor] !== undefined && value[cursor] >= "0" && value[cursor] <= "9") cursor += 1;
+    hasFractionDigits = cursor > fractionStart;
+  }
+
+  if (!hasIntegerDigits && !hasFractionDigits) return false;
+
+  if (value[cursor] === "e" || value[cursor] === "E") {
+    cursor += 1;
+    if (value[cursor] === "+" || value[cursor] === "-") cursor += 1;
+    const exponentStart = cursor;
+    while (value[cursor] !== undefined && value[cursor] >= "0" && value[cursor] <= "9") cursor += 1;
+    if (cursor === exponentStart) return false;
+  }
+
+  return cursor === value.length;
+}
+
 /** Parse a positive SVG length, ignoring percentages. */
 function parseLength(value: string | null): number | undefined {
-  if (!value || value.endsWith("%")) return undefined;
-  const match = /^\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)(?:px|pt|pc|mm|cm|in)?\s*$/i.exec(
-    value,
-  );
-  if (!match) return undefined;
-  const number = Number(match[1]);
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.endsWith("%")) return undefined;
+
+  const lower = trimmed.toLowerCase();
+  const units = ["px", "pt", "pc", "mm", "cm", "in"] as const;
+  const numeric = units.find((unit) => lower.endsWith(unit)) ? trimmed.slice(0, -2) : trimmed;
+  if (!isSvgNumber(numeric)) return undefined;
+
+  const number = Number(numeric);
   return Number.isFinite(number) && number > 0 ? number : undefined;
 }
 
@@ -147,10 +181,8 @@ function svgDimensions(svg: string): SvgDimensions {
   const tag = /<svg\b[^>]*>/i.exec(svg)?.[0] ?? "";
   const width = parseLength(/\bwidth=["']([^"']+)["']/i.exec(tag)?.[1] ?? null);
   const height = parseLength(/\bheight=["']([^"']+)["']/i.exec(tag)?.[1] ?? null);
-  const viewBox = /\bviewBox=["']\s*([^"']+?)\s*["']/i
-    .exec(tag)?.[1]
-    ?.split(/[\s,]+/)
-    .map(Number);
+  const viewBoxText = /\bviewBox=["']([^"']*)["']/i.exec(tag)?.[1]?.trim();
+  const viewBox = viewBoxText ? viewBoxText.split(/[\s,]+/).map(Number) : undefined;
   const viewBoxWidth =
     viewBox?.length === 4 && Number.isFinite(viewBox[2]) && viewBox[2] > 0 ? viewBox[2] : undefined;
   const viewBoxHeight =

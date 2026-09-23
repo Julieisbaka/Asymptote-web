@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-const { imageToPdfBytes, imagesToPdfBytes } = await import("../dist/pdf.js");
+const { imageToPdfBytes, imagesToPdfBytes, svgToPdfBytes } = await import("../dist/pdf.js");
 
 // Minimal 1x1 white JPEG.
 const jpeg = Uint8Array.from([
@@ -19,6 +19,83 @@ const jpeg = Uint8Array.from([
 
 function latin1(bytes) {
   return Buffer.from(bytes).toString("latin1");
+}
+
+function mediaBox(pdfText) {
+  const match = /\/MediaBox \[0 0 ([^\s]+) ([^\]]+)\]/.exec(pdfText);
+  assert.ok(match, "expected a PDF MediaBox");
+  return [Number(match[1]), Number(match[2])];
+}
+
+async function withMockSvgEnvironment(run) {
+  const originalDocument = globalThis.document;
+  const originalFileReader = globalThis.FileReader;
+  const originalImage = globalThis.Image;
+
+  class MockFileReader {
+    constructor() {
+      this.result = null;
+      this.error = null;
+      this.listeners = { load: [], error: [] };
+    }
+
+    addEventListener(type, listener) {
+      this.listeners[type]?.push(listener);
+    }
+
+    readAsDataURL(blob) {
+      blob
+        .arrayBuffer()
+        .then((buffer) => {
+          this.result = `data:${blob.type};base64,${Buffer.from(buffer).toString("base64")}`;
+          for (const listener of this.listeners.load) listener();
+        })
+        .catch((error) => {
+          this.error = error;
+          for (const listener of this.listeners.error) listener();
+        });
+    }
+  }
+
+  class MockImage {
+    set src(_value) {
+      queueMicrotask(() => this.onload?.());
+    }
+  }
+
+  globalThis.document = {
+    createElement(tag) {
+      assert.equal(tag, "canvas");
+      return {
+        width: 0,
+        height: 0,
+        getContext(kind) {
+          assert.equal(kind, "2d");
+          return {
+            fillStyle: "",
+            fillRect() {},
+            drawImage() {},
+          };
+        },
+        toBlob(callback) {
+          callback(new Blob([jpeg], { type: "image/jpeg" }));
+        },
+      };
+    },
+  };
+  globalThis.FileReader = MockFileReader;
+  globalThis.Image = MockImage;
+
+  try {
+    return await run();
+  } finally {
+    if (originalDocument === undefined) delete globalThis.document;
+    else globalThis.document = originalDocument;
+    if (originalFileReader === undefined) delete globalThis.FileReader;
+    else globalThis.FileReader = originalFileReader;
+    if (originalImage === undefined) delete globalThis.Image;
+    else globalThis.Image = originalImage;
+  }
 }
 
 test("imageToPdfBytes embeds a JPEG image and selectable text layer", () => {
@@ -109,4 +186,48 @@ test("svgToPdfBytes rejects raster dimension multiplication overflow", async () 
       ),
     /multiplied by scale must be finite/,
   );
+});
+
+test("svgToPdfBytes accepts supported SVG length forms", async () => {
+  await withMockSvgEnvironment(async () => {
+    for (const [width, expectedWidth] of [
+      ["+12.5px", 12.5],
+      [".5cm", 0.5],
+      ["3.", 3],
+      ["1E2pt", 100],
+      ["2e+1IN", 20],
+    ]) {
+      const pdf = latin1(await svgToPdfBytes(`<svg width="${width}" height="7"></svg>`));
+      assert.deepEqual(mediaBox(pdf), [expectedWidth, 7]);
+    }
+  });
+});
+
+test("svgToPdfBytes rejects malformed, percentage, non-positive, and non-finite SVG lengths", async () => {
+  await withMockSvgEnvironment(async () => {
+    for (const width of ["1e", "1.2.3", "50%", "0", "-1", "1e309"]) {
+      const pdf = latin1(await svgToPdfBytes(`<svg width="${width}" height="7"></svg>`));
+      assert.deepEqual(mediaBox(pdf), [100, 7]);
+    }
+  });
+});
+
+test("svgToPdfBytes falls back to viewBox dimensions for whitespace- and comma-delimited values", async () => {
+  await withMockSvgEnvironment(async () => {
+    const whitespace = latin1(await svgToPdfBytes('<svg viewBox="10 20 30 40"></svg>'));
+    assert.deepEqual(mediaBox(whitespace), [30, 40]);
+
+    const comma = latin1(await svgToPdfBytes('<svg viewBox="10,20,30,40"></svg>'));
+    assert.deepEqual(mediaBox(comma), [30, 40]);
+  });
+});
+
+test("svgToPdfBytes falls back to default dimensions for empty or malformed viewBox attributes", async () => {
+  await withMockSvgEnvironment(async () => {
+    const empty = latin1(await svgToPdfBytes('<svg viewBox=""></svg>'));
+    assert.deepEqual(mediaBox(empty), [100, 100]);
+
+    const malformed = latin1(await svgToPdfBytes('<svg viewBox="0 0 30"></svg>'));
+    assert.deepEqual(mediaBox(malformed), [100, 100]);
+  });
 });
