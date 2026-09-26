@@ -54,7 +54,7 @@ export default createAsymptoteModule;
 await mkdir(dist, { recursive: true });
 await Promise.all([
   writeFile(join(dist, "asset-url.d.ts"), assetUrlDeclaration, "utf8"),
-  writeFile(join(dist, "asymptote-js.d.ts"), asymptoteJsDeclaration, "utf8"),
+  writeFile(join(dist, "asymptote-js.d.ts"), asymptoteJsDeclaration, "utf8")
 ]);
 
 console.log("Wrote package subpath declaration files.");

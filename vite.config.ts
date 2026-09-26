@@ -5,7 +5,7 @@ import { defineConfig, type Plugin } from "vite";
 
 const crossOriginIsolationHeaders = {
   "Cross-Origin-Opener-Policy": "same-origin",
-  "Cross-Origin-Embedder-Policy": "require-corp",
+  "Cross-Origin-Embedder-Policy": "require-corp"
 };
 
 // The Emscripten glue (dist/asymptote.js) and the bundled WebGL viewer
@@ -31,14 +31,14 @@ function serveEmscriptenGlueRaw(): Plugin {
           res.statusCode = 503;
           res.setHeader("Content-Type", "text/plain; charset=utf-8");
           res.end(
-            `Missing dist/${match[1]}.js. Run the WASM build before starting the dev server.\n`,
+            `Missing dist/${match[1]}.js. Run the WASM build before starting the dev server.\n`
           );
           return;
         }
         res.setHeader("Content-Type", "text/javascript");
         createReadStream(filePath).pipe(res);
       });
-    },
+    }
   };
 }
 
@@ -49,11 +49,11 @@ function cleanReleaseSourceMap(debugBuild: boolean): Plugin {
       if (!debugBuild) {
         const mapPath = resolve(
           fileURLToPath(new URL(".", import.meta.url)),
-          "dist/asymptote-web.js.map",
+          "dist/asymptote-web.js.map"
         );
         if (existsSync(mapPath)) unlinkSync(mapPath);
       }
-    },
+    }
   };
 }
 
@@ -66,18 +66,18 @@ export default defineConfig({
       entry: {
         "asymptote-web": "src/index.ts",
         pdf: "src/pdf.ts",
-        utils: "src/utils.ts",
+        utils: "src/utils.ts"
       },
       name: "AsymptoteWeb",
-      formats: ["es"],
+      formats: ["es"]
     },
     rollupOptions: {
       // Do not bundle the Emscripten glue — it is a peer asset loaded at runtime.
       external: ["./asymptote.js"],
       output: {
         // Preserve the WASM binary next to the JS bundle in dist/
-        assetFileNames: "[name][extname]",
-      },
+        assetFileNames: "[name][extname]"
+      }
     },
     // Release builds prioritize package and transfer size. Set ASY_DEBUG=1
     // when a readable wrapper and source map are needed for debugging.
@@ -86,13 +86,13 @@ export default defineConfig({
     // The WASM build writes asymptote.js, asymptote.wasm, asy.data, and
     // asygl.js into dist separately. Preserve those files when rebuilding the
     // TypeScript wrapper.
-    emptyOutDir: false,
+    emptyOutDir: false
   },
   server: {
     headers: crossOriginIsolationHeaders,
-    open: "/examples/index.html",
+    open: "/examples/index.html"
   },
   preview: {
-    headers: crossOriginIsolationHeaders,
-  },
+    headers: crossOriginIsolationHeaders
+  }
 });

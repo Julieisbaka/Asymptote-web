@@ -20,8 +20,8 @@ test("adds accessible SVG metadata when requested", () => {
   const svg = convert("newpath 0 0 moveto 10 10 lineto stroke", {
     accessibility: {
       title: "Diagonal line",
-      description: "A line from the lower-left to the upper-right.",
-    },
+      description: "A line from the lower-left to the upper-right."
+    }
   });
 
   assert.match(svg, /role="img"/);
@@ -30,13 +30,13 @@ test("adds accessible SVG metadata when requested", () => {
   assert.match(svg, /<title id="asy-title-\d+">Diagonal line<\/title>/);
   assert.match(
     svg,
-    /<desc id="asy-description-\d+">A line from the lower-left to the upper-right\.<\/desc>/,
+    /<desc id="asy-description-\d+">A line from the lower-left to the upper-right\.<\/desc>/
   );
 });
 
 test("accepts scientific-notation coordinates emitted by Asymptote", () => {
   const result = epsToSvgWithWarnings(
-    header + "newpath 10 20 moveto 4.78047431e-15 30 lineto stroke",
+    header + "newpath 10 20 moveto 4.78047431e-15 30 lineto stroke"
   );
 
   assert.match(result.svg, /<path d="M10,80 L0,70/);
@@ -53,7 +53,7 @@ test("prefers HiRes bounding boxes while accepting all numeric forms", () => {
   const svg = epsToSvg(
     "%!PS-Adobe-3.0 EPSF-3.0\n" +
       "%%BoundingBox: 0 0 10 10\n" +
-      "%%HiResBoundingBox: -1. 2.5 .5 1e2\n",
+      "%%HiResBoundingBox: -1. 2.5 .5 1e2\n"
   );
 
   assert.match(svg, /width="1\.5" height="97\.5"/);
@@ -75,7 +75,7 @@ test("accepts signed, trailing-decimal, leading-decimal, and exponent tokens", (
 test("normalizes invalid dimensions and tiny negative coordinates", () => {
   const svg = epsToSvg(
     "%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 10 20 0 0\n" +
-      "newpath -4e-15 0 moveto 1 1 lineto stroke",
+      "newpath -4e-15 0 moveto 1 1 lineto stroke"
   );
 
   assert.match(svg, /width="100" height="100"/);
@@ -93,7 +93,7 @@ test("converts arc and arcn into cubic SVG curves", () => {
 test("supports relative curves and tangent arcs", () => {
   const svg = convert(
     "newpath 10 10 moveto 5 0 5 5 0 5 rcurveto stroke " +
-      "newpath 10 50 moveto 20 50 20 70 5 arct stroke",
+      "newpath 10 50 moveto 20 50 20 70 5 arct stroke"
   );
 
   assert.equal((svg.match(/<path /g) ?? []).length, 2);
@@ -108,7 +108,7 @@ test("keeps relative paths in user space under transforms", () => {
 
 test("restores currentpoint to the subpath start after closepath", () => {
   const svg = convert(
-    "newpath 10 10 moveto 20 10 lineto 20 20 lineto closepath 5 0 rlineto stroke",
+    "newpath 10 10 moveto 20 10 lineto 20 20 lineto closepath 5 0 rlineto stroke"
   );
 
   assert.match(svg, /M10,90 L20,90 L20,80 Z L15,90/);
@@ -119,7 +119,7 @@ test("restores graphics state fields after grestore", () => {
     "1 0 0 setrgbcolor 0.25 setalpha 1 setlinewidth [2 3] 0 setdash " +
       "gsave 2 2 scale 0 0 1 setrgbcolor 0.75 setalpha 4 setlinewidth [9] 0 setdash " +
       "newpath 0 0 moveto 10 0 lineto stroke grestore " +
-      "newpath 0 0 moveto 10 0 lineto stroke",
+      "newpath 0 0 moveto 10 0 lineto stroke"
   );
   const paths = [...svg.matchAll(/<path d="([^"]+)"[^>]*\/>/g)];
 
@@ -139,7 +139,7 @@ test("restores color-space state and unwinds nested saves with grestoreall", () 
     "1 0 0 setrgbcolor gsave /DeviceGray setcolorspace 0.5 setcolor grestore " +
       "0 1 0 setcolor newpath 0 0 moveto 10 0 lineto stroke " +
       "gsave 1 setgray gsave 0 setgray grestoreall " +
-      "newpath 10 10 moveto 20 10 lineto stroke",
+      "newpath 10 10 moveto 20 10 lineto stroke"
   );
   const paths = [...svg.matchAll(/<path d="([^"]+)"[^>]*\/>/g)];
 
@@ -160,7 +160,7 @@ test("intersects successive clipping paths", () => {
   const svg = convert(
     "newpath 0 0 moveto 50 0 lineto 50 100 lineto 0 100 lineto closepath clip " +
       "newpath 0 50 moveto 100 50 lineto 100 100 lineto 0 100 lineto closepath clip " +
-      "newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath fill",
+      "newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath fill"
   );
 
   assert.match(svg, /<clipPath id="asy-clip-2"><g clip-path="url\(#asy-clip-1\)">/);
@@ -170,7 +170,7 @@ test("intersects successive clipping paths", () => {
 test("supports concat and setmatrix", () => {
   const svg = convert(
     "[1 0 0 1 10 20] concat newpath 0 0 moveto 10 0 lineto stroke " +
-      "[1 0 0 1 30 40] setmatrix newpath 0 0 moveto 10 0 lineto stroke",
+      "[1 0 0 1 30 40] setmatrix newpath 0 0 moveto 10 0 lineto stroke"
   );
 
   assert.match(svg, /M10,80 L20,80/);
@@ -188,7 +188,7 @@ test("allows custom CSS font mappings", () => {
   const svg = convert(
     "/Helvetica findfont 12 scalefont setfont 10 20 moveto (custom) show " +
       "/MyFont findfont 12 scalefont setfont 10 30 moveto (mapped) show",
-    { fonts: { Helvetica: "Inter, sans-serif", MyFont: "My Web Font" } },
+    { fonts: { Helvetica: "Inter, sans-serif", MyFont: "My Web Font" } }
   );
 
   assert.match(svg, /font-family="Inter, sans-serif"/);
@@ -199,7 +199,7 @@ test("deduplicates identical gradient definitions", () => {
   const svg = convert(
     "0 0 100 0 [0 1 0 0 1 0 0 1] setlineargradient " +
       "newpath 0 0 moveto 100 0 lineto 100 100 lineto closepath fill " +
-      "newpath 10 10 moveto 90 10 lineto 90 90 lineto closepath fill",
+      "newpath 10 10 moveto 90 10 lineto 90 90 lineto closepath fill"
   );
 
   assert.equal((svg.match(/<linearGradient/g) ?? []).length, 1);
@@ -210,7 +210,7 @@ test("uses an affine SVG gradient transform", () => {
   const svg = convert(
     "2 0.5 scale 30 rotate " +
       "0 0 100 0 [0 1 0 0 1 0 0 1] setlineargradient " +
-      "newpath 0 0 moveto 100 0 lineto 100 100 lineto closepath fill",
+      "newpath 0 0 moveto 100 0 lineto 100 100 lineto closepath fill"
   );
 
   assert.match(svg, /gradientTransform="matrix\([^\)]*\)"/);
@@ -220,7 +220,7 @@ test("uses an affine SVG gradient transform", () => {
 test("preserves radial gradients and opacity", () => {
   const svg = convert(
     "50 50 0 50 50 50 [0 1 1 1 1 0 0 0] setradialgradient " +
-      "0.5 setopacityalpha newpath 0 0 moveto 100 0 lineto 100 100 lineto closepath fill",
+      "0.5 setopacityalpha newpath 0 0 moveto 100 0 lineto 100 100 lineto closepath fill"
   );
 
   assert.match(svg, /<radialGradient/);
@@ -231,11 +231,11 @@ test("preserves radial gradients and opacity", () => {
 test("converts grayscale and CMYK shading stops", () => {
   const grayscale = convert(
     "newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath " +
-      "<< /ShadingType 2 /Coords [0 0 100 0] /ColorSpace /DeviceGray /C0 [0] /C1 [1] >> shfill",
+      "<< /ShadingType 2 /Coords [0 0 100 0] /ColorSpace /DeviceGray /C0 [0] /C1 [1] >> shfill"
   );
   const cmyk = convert(
     "newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath " +
-      "<< /ShadingType 2 /Coords [0 0 100 0] /ColorSpace /DeviceCMYK /C0 [0 1 1 0] /C1 [1 0 1 0] >> shfill",
+      "<< /ShadingType 2 /Coords [0 0 100 0] /ColorSpace /DeviceCMYK /C0 [0 1 1 0] /C1 [1 0 1 0] >> shfill"
   );
 
   assert.match(grayscale, /stop-color="rgb\(0,0,0\)"/);
@@ -253,7 +253,7 @@ test("does not erase unrelated operands for unknown setcolor", () => {
 test("ignores braces inside procedure strings and comments", () => {
   const svg = convert(
     "/foo { (text containing } (nested) brace) % comment with } brace\n } bind def " +
-      "newpath 0 0 moveto 10 0 lineto stroke",
+      "newpath 0 0 moveto 10 0 lineto stroke"
   );
 
   assert.match(svg, /<path d="M0,100 L10,100/);
@@ -268,7 +268,7 @@ test("converts HSB colors to RGB", () => {
 
 test("clamps colors and opacity to valid SVG values", () => {
   const svg = convert(
-    "2 setgray -1 0 3 setrgbcolor -1 setopacityalpha " + "newpath 0 0 moveto 10 0 lineto stroke",
+    "2 setgray -1 0 3 setrgbcolor -1 setopacityalpha " + "newpath 0 0 moveto 10 0 lineto stroke"
   );
 
   assert.match(svg, /stroke="rgb\(0,0,255\)"/);
@@ -299,23 +299,23 @@ test("maps styled and symbolic PostScript fonts", () => {
       "/TimesNewRomanPS-BoldItalicMT findfont 12 scalefont setfont 30 20 moveto (c) show " +
       "/CourierNewPS-ItalicMT findfont 12 scalefont setfont 40 20 moveto (d) show " +
       "/Palatino-Bold findfont 12 scalefont setfont 50 20 moveto (e) show " +
-      "/AvantGarde-BookOblique findfont 12 scalefont setfont 60 20 moveto (f) show",
+      "/AvantGarde-BookOblique findfont 12 scalefont setfont 60 20 moveto (f) show"
   );
 
   assert.match(
     svg,
-    /font-family="Arial, sans-serif"[^>]*font-weight="700"[^>]*font-style="oblique"/,
+    /font-family="Arial, sans-serif"[^>]*font-weight="700"[^>]*font-style="oblique"/
   );
   assert.match(svg, /font-family="Symbol, serif"/);
   assert.match(
     svg,
-    /font-family="Times New Roman, serif"[^>]*font-weight="700"[^>]*font-style="italic"/,
+    /font-family="Times New Roman, serif"[^>]*font-weight="700"[^>]*font-style="italic"/
   );
   assert.match(svg, /font-family="Courier New, monospace"[^>]*font-style="italic"/);
   assert.match(svg, /font-family="Palatino Linotype, Palatino, serif"[^>]*font-weight="700"/);
   assert.match(
     svg,
-    /font-family="Avant Garde, Century Gothic, sans-serif"[^>]*font-style="oblique"/,
+    /font-family="Avant Garde, Century Gothic, sans-serif"[^>]*font-style="oblique"/
   );
 });
 
@@ -323,7 +323,7 @@ test("emits per-character spacing adjustments", () => {
   const svg = convert(
     "10 20 moveto 1 0 (AB) ashow " +
       "10 40 moveto 2 0 32 (A B) widthshow " +
-      "10 60 moveto 1 0 2 0 65 (AB) awidthshow",
+      "10 60 moveto 1 0 2 0 65 (AB) awidthshow"
   );
 
   assert.match(svg, /<tspan dx="1" dy="0">B<\/tspan>/);
@@ -338,7 +338,7 @@ test("reports unsupported content without stopping conversion", () => {
       "image " +
       "<< /ShadingType 4 /Coords [] >> shfill " +
       "futureoperator " +
-      "newpath 0 0 moveto 10 0 lineto stroke",
+      "newpath 0 0 moveto 10 0 lineto stroke"
   );
 
   assert.match(result.svg, /<path d="M0,100 L10,100/);
@@ -360,7 +360,7 @@ test("keeps psToSvg as the public alias", () => {
 test("native text patch includes lowercase glyphs and proportional advances", async () => {
   const patch = await readFile(
     new URL("../wasm/patches/native-text-font.py", import.meta.url),
-    "utf8",
+    "utf8"
   );
 
   assert.match(patch, /"a": strokes/);
@@ -377,18 +377,18 @@ test("supports rich custom font descriptors with inferred fallback styles", () =
       "/UnknownNarrowPS-BoldMT findfont 12 scalefont setfont 20 20 moveto (B) show",
     {
       fonts: {
-        Helvetica: { family: "Inter", fallbacks: ["Arial", "sans-serif"], weight: 500 },
-      },
-    },
+        Helvetica: { family: "Inter", fallbacks: ["Arial", "sans-serif"], weight: 500 }
+      }
+    }
   );
 
   assert.match(
     svg,
-    /font-family="Inter, Arial, sans-serif"[^>]*font-weight="500"[^>]*font-style="oblique"/,
+    /font-family="Inter, Arial, sans-serif"[^>]*font-weight="500"[^>]*font-style="oblique"/
   );
   assert.match(
     svg,
-    /font-family="UnknownNarrowPS-BoldMT, sans-serif"[^>]*font-weight="700"[^>]*font-stretch="condensed"/,
+    /font-family="UnknownNarrowPS-BoldMT, sans-serif"[^>]*font-weight="700"[^>]*font-stretch="condensed"/
   );
 });
 
@@ -397,7 +397,7 @@ test("reports unknown fonts once per font name", () => {
     header +
       "/MysterySans findfont 10 scalefont setfont 0 10 moveto (A) show " +
       "/MysterySans findfont 10 scalefont setfont 0 20 moveto (B) show " +
-      "/AnotherMystery findfont 10 scalefont setfont 0 30 moveto (C) show",
+      "/AnotherMystery findfont 10 scalefont setfont 0 30 moveto (C) show"
   );
 
   const warnings = result.warnings.filter((warning) => /unknown font/.test(warning));
@@ -409,9 +409,9 @@ test("warns for malformed custom font descriptors", () => {
     header + "/BadFont findfont 10 scalefont setfont 0 10 moveto (A) show",
     {
       fonts: {
-        BadFont: {},
-      },
-    },
+        BadFont: {}
+      }
+    }
   );
 
   assert.match(result.warnings.join("\n"), /malformed custom font descriptor/);
@@ -422,20 +422,20 @@ test("groups native-label paths and emits semantic metadata", () => {
     header +
       "<< /text (alpha) /font (Helvetica) /size 12 >> asy_label_begin " +
       "newpath 10 10 moveto 20 20 lineto stroke " +
-      "asy_label_end",
+      "asy_label_end"
   );
 
   assert.match(result.svg, /<g class="asy-native-label"[^>]*data-asy-label-text="alpha"[^>]*>/);
   assert.match(result.svg, /<g class="asy-native-label"[\s\S]*<path /);
   assert.match(
     result.svg,
-    /<text opacity="0" fill="none" stroke="none" aria-hidden="false">alpha<\/text>/,
+    /<text opacity="0" fill="none" stroke="none" aria-hidden="false">alpha<\/text>/
   );
 });
 
 test("warns on malformed or unmatched native-label markers", () => {
   const result = epsToSvgWithWarnings(
-    header + "(bad) asy_label_begin " + "newpath 0 0 moveto 10 0 lineto stroke " + "asy_label_end",
+    header + "(bad) asy_label_begin " + "newpath 0 0 moveto 10 0 lineto stroke " + "asy_label_end"
   );
 
   assert.match(result.warnings.join("\n"), /malformed native-label begin marker/);
@@ -445,7 +445,7 @@ test("warns on malformed or unmatched native-label markers", () => {
 test("native text patch decodes UTF-8 Greek and math aliases", async () => {
   const patch = await readFile(
     new URL("../wasm/patches/native-text-font.py", import.meta.url),
-    "utf8",
+    "utf8"
   );
 
   assert.match(patch, /unsigned int codepoint/);
@@ -457,7 +457,7 @@ test("native text patch decodes UTF-8 Greek and math aliases", async () => {
 test("browser TeX fallback includes descender depth", async () => {
   const patch = await readFile(
     new URL("../wasm/patches/browser-tex-fallback.py", import.meta.url),
-    "utf8",
+    "utf8"
   );
 
   assert.match(patch, /\(\*t\)\[2\]=0\.2\*fontsize/);
@@ -466,7 +466,7 @@ test("browser TeX fallback includes descender depth", async () => {
 test("native label metadata patch emits begin/end marker operators", async () => {
   const patch = await readFile(
     new URL("../wasm/patches/native-label-metadata.py", import.meta.url),
-    "utf8",
+    "utf8"
   );
 
   assert.match(patch, /asy_label_begin/);

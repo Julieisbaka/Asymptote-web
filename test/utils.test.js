@@ -5,7 +5,7 @@ import {
   composeMatrix,
   hsbToColor,
   identityMatrix,
-  parseCompilerDiagnostics,
+  parseCompilerDiagnostics
 } from "../dist/utils.js";
 
 const publicUtils = await import("asymptote-web/utils");
@@ -16,7 +16,7 @@ test("exports the utility API from the package subpath", () => {
     "identityMatrix",
     "composeMatrix",
     "colorFromComponents",
-    "hsbToColor",
+    "hsbToColor"
   ]) {
     assert.equal(typeof publicUtils[name], "function");
   }
@@ -27,7 +27,7 @@ test("creates and composes affine matrices in PostScript order", () => {
   assert.deepEqual(identityMatrix(), { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 });
   assert.deepEqual(
     composeMatrix({ a: 2, b: 0, c: 0, d: 3, e: 10, f: 20 }, { a: 1, b: 0, c: 0, d: 1, e: 4, f: 5 }),
-    { a: 2, b: 0, c: 0, d: 3, e: 18, f: 35 },
+    { a: 2, b: 0, c: 0, d: 3, e: 18, f: 35 }
   );
 });
 
@@ -57,9 +57,9 @@ test("parses compiler diagnostics from the utility bundle", () => {
         line: 4,
         column: 2,
         code: "scale",
-        raw: "example.asy: 4.2: warning [scale]: too large",
+        raw: "example.asy: 4.2: warning [scale]: too large"
       },
-      { severity: "info", message: "done", raw: "info: done" },
-    ],
+      { severity: "info", message: "done", raw: "info: done" }
+    ]
   );
 });

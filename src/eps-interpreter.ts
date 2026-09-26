@@ -5,7 +5,7 @@ import {
   IDENTITY,
   toColor,
   type Gradient,
-  type GraphicsState,
+  type GraphicsState
 } from "./eps-graphics.js";
 import {
   NUMBER_RE,
@@ -14,13 +14,13 @@ import {
   isMatrixArray,
   matrixFromOperand,
   textChars,
-  unescapePostScriptString,
+  unescapePostScriptString
 } from "./eps-interpreter-operands.js";
 import {
   colorComponentCount,
   gradientFromValue,
   parseStops,
-  unsupportedShadingMessage,
+  unsupportedShadingMessage
 } from "./eps-interpreter-gradients.js";
 import type { Dictionary, Operand } from "./eps-interpreter-types.js";
 import type { SvgWriter } from "./eps-svg-writer.js";
@@ -54,7 +54,7 @@ export class PostScriptInterpreter {
     miterlimit: 10,
     dasharray: [],
     dashoffset: 0,
-    clipId: null,
+    clipId: null
   };
   private readonly stateStack: SavedGraphicsState[] = [];
   private readonly stack: Operand[] = [];
@@ -63,7 +63,7 @@ export class PostScriptInterpreter {
 
   constructor(
     private readonly tokens: PostScriptTokenizer,
-    private readonly writer: SvgWriter,
+    private readonly writer: SvgWriter
   ) {}
 
   /** Consume all tokens and emit supported operations to the SVG writer. */
@@ -160,7 +160,7 @@ export class PostScriptInterpreter {
           point.x + dx1 + dx2,
           point.y + dy1 + dy2,
           point.x + dx1 + dx2 + dx3,
-          point.y + dy1 + dy2 + dy3,
+          point.y + dy1 + dy2 + dy3
         );
         break;
       }
@@ -181,7 +181,7 @@ export class PostScriptInterpreter {
       case "gsave":
         this.stateStack.push({
           state: cloneState(this.state),
-          colorComponentCount: this.colorComponentCount,
+          colorComponentCount: this.colorComponentCount
         });
         break;
       case "grestore": {
@@ -220,7 +220,7 @@ export class PostScriptInterpreter {
           c: -Math.sin(r),
           d: Math.cos(r),
           e: 0,
-          f: 0,
+          f: 0
         });
         break;
       }
@@ -316,7 +316,7 @@ export class PostScriptInterpreter {
           this.writer.show(
             this.state,
             text,
-            textChars(text).map(() => [ax, ay]),
+            textChars(text).map(() => [ax, ay])
           );
         break;
       }
@@ -328,7 +328,7 @@ export class PostScriptInterpreter {
           this.writer.show(
             this.state,
             text,
-            textChars(text).map((value) => (value === char ? [cx, cy] : [0, 0])),
+            textChars(text).map((value) => (value === char ? [cx, cy] : [0, 0]))
           );
         }
         break;
@@ -342,7 +342,7 @@ export class PostScriptInterpreter {
           this.writer.show(
             this.state,
             text,
-            textChars(text).map((value) => (value === char ? [ax + cx, ay + cy] : [ax, ay])),
+            textChars(text).map((value) => (value === char ? [ax + cx, ay + cy] : [ax, ay]))
           );
         }
         break;
@@ -365,9 +365,9 @@ export class PostScriptInterpreter {
         const arr = this.stack.pop();
         this.state.dasharray = Array.isArray(arr)
           ? arr.filter(
-            (value): value is number =>
-              typeof value === "number" && Number.isFinite(value) && value >= 0,
-          )
+              (value): value is number =>
+                typeof value === "number" && Number.isFinite(value) && value >= 0
+            )
           : [];
         this.state.dashoffset = typeof offset === "number" && Number.isFinite(offset) ? offset : 0;
         break;
@@ -522,15 +522,15 @@ export class PostScriptInterpreter {
     return kind === "linear"
       ? { kind, x1: values[0], y1: values[1], x2: values[2], y2: values[3], stops }
       : {
-        kind,
-        x1: values[0],
-        y1: values[1],
-        r1: values[2],
-        x2: values[3],
-        y2: values[4],
-        r2: values[5],
-        stops,
-      };
+          kind,
+          x1: values[0],
+          y1: values[1],
+          r1: values[2],
+          x2: values[3],
+          y2: values[4],
+          r2: values[5],
+          stops
+        };
   }
 
   private appendTangentArc(x1: number, y1: number, x2: number, y2: number, radius: number): void {
@@ -573,7 +573,7 @@ export class PostScriptInterpreter {
       radius,
       startAngle,
       endAngle,
-      u.x * v.y - u.y * v.x > 0,
+      u.x * v.y - u.y * v.x > 0
     );
   }
 }

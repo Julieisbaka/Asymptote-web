@@ -76,7 +76,7 @@ export function epsToSvgWithWarnings(eps: string, options: EpsToSvgOptions = {})
   };
   const bboxPattern = new RegExp(
     `%%(HiRes)?BoundingBox:\\s*(${BOUNDING_BOX_NUMBER})\\s+(${BOUNDING_BOX_NUMBER})\\s+(${BOUNDING_BOX_NUMBER})\\s+(${BOUNDING_BOX_NUMBER})`,
-    "g",
+    "g"
   );
   let hiresBoundingBox: RegExpExecArray | undefined;
   let boundingBox: RegExpExecArray | undefined;
@@ -100,12 +100,12 @@ export function epsToSvgWithWarnings(eps: string, options: EpsToSvgOptions = {})
     height,
     formatNumber,
     options.fonts,
-    options.accessibility,
+    options.accessibility
   );
   const interpreter = new PostScriptInterpreter(new PostScriptTokenizer(eps), writer);
   interpreter.run();
   return {
     svg: writer.serialize(),
-    warnings: [...interpreter.getWarnings(), ...writer.getWarnings()],
+    warnings: [...interpreter.getWarnings(), ...writer.getWarnings()]
   };
 }

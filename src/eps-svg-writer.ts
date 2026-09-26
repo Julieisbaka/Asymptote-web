@@ -3,7 +3,7 @@ import {
   type GraphicsState,
   type Gradient,
   type GradientStop,
-  type Matrix,
+  type Matrix
 } from "./eps-graphics.js";
 import type { SvgAccessibility, SvgFontDescriptor, SvgFontMap } from "./types.js";
 import type { Dictionary, Operand } from "./eps-interpreter-types.js";
@@ -65,48 +65,48 @@ interface FontFamilyRule {
 const FONT_FAMILY_RULES: readonly FontFamilyRule[] = [
   {
     aliases: ["helveticanarrow", "arialnarrow"],
-    family: "Arial Narrow, Arial, sans-serif",
+    family: "Arial Narrow, Arial, sans-serif"
   },
   {
     aliases: ["helveticaneue", "helvetica", "arial"],
-    family: "Arial, sans-serif",
+    family: "Arial, sans-serif"
   },
   {
     aliases: ["couriernew", "courier"],
-    family: "Courier New, monospace",
+    family: "Courier New, monospace"
   },
   {
     aliases: ["timesnewroman", "times"],
-    family: "Times New Roman, serif",
+    family: "Times New Roman, serif"
   },
   {
     aliases: ["palatinolinotype", "palatino"],
-    family: "Palatino Linotype, Palatino, serif",
+    family: "Palatino Linotype, Palatino, serif"
   },
   {
     aliases: ["bookmanoldstyle", "bookman"],
-    family: "Bookman Old Style, serif",
+    family: "Bookman Old Style, serif"
   },
   {
     aliases: ["newcenturyschlbk", "centuryschoolbook"],
-    family: "Century Schoolbook, serif",
+    family: "Century Schoolbook, serif"
   },
   {
     aliases: ["avantgarde"],
-    family: "Avant Garde, Century Gothic, sans-serif",
+    family: "Avant Garde, Century Gothic, sans-serif"
   },
   {
     aliases: ["zapfchancery"],
-    family: "Apple Chancery, Zapf Chancery, cursive",
+    family: "Apple Chancery, Zapf Chancery, cursive"
   },
   {
     aliases: ["zapfdingbats"],
-    family: "Zapf Dingbats, sans-serif",
+    family: "Zapf Dingbats, sans-serif"
   },
   {
     aliases: ["symbol"],
-    family: "Symbol, serif",
-  },
+    family: "Symbol, serif"
+  }
 ];
 
 /** Normalize a PostScript font name for alias matching. */
@@ -122,7 +122,7 @@ function normalizeFontAlias(font: string): string {
 /** Find a standard CSS family for a normalized PostScript font name. */
 function knownFontFamily(normalized: string): string | undefined {
   return FONT_FAMILY_RULES.find((rule) =>
-    rule.aliases.some((alias) => normalized.startsWith(alias)),
+    rule.aliases.some((alias) => normalized.startsWith(alias))
   )?.family;
 }
 
@@ -173,9 +173,8 @@ function normalizeDescriptor(value: unknown): SvgFontDescriptorNormalized | null
   const family = typeof descriptor.family === "string" ? descriptor.family.trim() : undefined;
   const fallbacks = Array.isArray(descriptor.fallbacks)
     ? descriptor.fallbacks.filter(
-      (fallback): fallback is string =>
-        typeof fallback === "string" && fallback.trim().length > 0,
-    )
+        (fallback): fallback is string => typeof fallback === "string" && fallback.trim().length > 0
+      )
     : undefined;
   const weight =
     typeof descriptor.weight === "number"
@@ -192,14 +191,14 @@ function normalizeDescriptor(value: unknown): SvgFontDescriptorNormalized | null
     fallbacks: fallbacks && fallbacks.length > 0 ? fallbacks : undefined,
     weight,
     style,
-    stretch,
+    stretch
   };
 }
 
 /** Resolve an exact or normalized custom font mapping. */
 function resolveCustomFont(
   font: string,
-  customFonts: SvgFontMap,
+  customFonts: SvgFontMap
 ): string | SvgFontDescriptor | undefined {
   if (Object.prototype.hasOwnProperty.call(customFonts, font)) return customFonts[font];
   const normalized = normalizeFontName(font);
@@ -222,7 +221,7 @@ function toCssFont(
   font: string,
   customFonts: SvgFontMap,
   warnUnknown: (fontName: string) => void,
-  warnMalformedDescriptor: (fontName: string) => void,
+  warnMalformedDescriptor: (fontName: string) => void
 ): CssFont {
   const normalized = normalizeFontAlias(font);
   const knownFamily = knownFontFamily(normalized);
@@ -230,7 +229,7 @@ function toCssFont(
     family: knownFamily ?? (font ? `${font}, ${inferGenericFallback(normalized)}` : "sans-serif"),
     weight: inferWeight(normalized),
     style: inferStyle(normalized),
-    stretch: inferStretch(normalized),
+    stretch: inferStretch(normalized)
   };
 
   const custom = resolveCustomFont(font, customFonts);
@@ -244,13 +243,13 @@ function toCssFont(
       return inferred;
     }
     const families = [descriptor.family, ...(descriptor.fallbacks ?? [])].filter(
-      (value): value is string => typeof value === "string" && value.trim().length > 0,
+      (value): value is string => typeof value === "string" && value.trim().length > 0
     );
     return {
       family: families.length > 0 ? families.join(", ") : inferred.family,
       weight: descriptor.weight ?? inferred.weight,
       style: descriptor.style ?? inferred.style,
-      stretch: descriptor.stretch ?? inferred.stretch,
+      stretch: descriptor.stretch ?? inferred.stretch
     };
   }
 
@@ -302,7 +301,7 @@ export class SvgWriter {
     private readonly height: number,
     private readonly formatNumber: (value: number) => string,
     private readonly customFonts: SvgFontMap = {},
-    private readonly accessibility: SvgAccessibility = {},
+    private readonly accessibility: SvgAccessibility = {}
   ) {}
 
   getWarnings(): string[] {
@@ -343,7 +342,7 @@ export class SvgWriter {
     const y = this.currentY - state.ctm.f;
     return {
       x: (state.ctm.d * x - state.ctm.c * y) / determinant,
-      y: (-state.ctm.b * x + state.ctm.a * y) / determinant,
+      y: (-state.ctm.b * x + state.ctm.a * y) / determinant
     };
   }
 
@@ -352,7 +351,7 @@ export class SvgWriter {
     this.currentX = a * x + c * y + e;
     this.currentY = b * x + d * y + f;
     this.pathParts.push(
-      `${op}${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`,
+      `${op}${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`
     );
     this.pathDirty = true;
     this.pathStarted = true;
@@ -370,7 +369,7 @@ export class SvgWriter {
     x2: number,
     y2: number,
     x: number,
-    y: number,
+    y: number
   ): void {
     const { a, b, c, d, e, f } = state.ctm;
     const ax1 = a * x1 + c * y1 + e;
@@ -382,7 +381,7 @@ export class SvgWriter {
     this.pathParts.push(
       `C${this.formatNumber(ax1 - this.llx)},${this.formatNumber(this.height - (ay1 - this.lly))} ` +
         `${this.formatNumber(ax2 - this.llx)},${this.formatNumber(this.height - (ay2 - this.lly))} ` +
-        `${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`,
+        `${this.formatNumber(this.currentX - this.llx)},${this.formatNumber(this.height - (this.currentY - this.lly))}`
     );
     this.pathDirty = true;
     this.pathStarted = true;
@@ -395,7 +394,7 @@ export class SvgWriter {
     radius: number,
     startDegrees: number,
     endDegrees: number,
-    counterClockwise: boolean,
+    counterClockwise: boolean
   ): void {
     if (radius < 0 || !Number.isFinite(radius)) return;
     const direction = counterClockwise ? 1 : -1;
@@ -422,11 +421,11 @@ export class SvgWriter {
       const p3 = { x: cx + radius * Math.cos(nextAngle), y: cy + radius * Math.sin(nextAngle) };
       const p1 = {
         x: p0.x - factor * radius * Math.sin(angle),
-        y: p0.y + factor * radius * Math.cos(angle),
+        y: p0.y + factor * radius * Math.cos(angle)
       };
       const p2 = {
         x: p3.x + factor * radius * Math.sin(nextAngle),
-        y: p3.y - factor * radius * Math.cos(nextAngle),
+        y: p3.y - factor * radius * Math.cos(nextAngle)
       };
       this.appendCurve(state, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
       angle = nextAngle;
@@ -447,7 +446,7 @@ export class SvgWriter {
     width: number,
     height: number,
     pixels: string,
-    imageMatrix: Matrix,
+    imageMatrix: Matrix
   ): boolean {
     if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0)
       return false;
@@ -467,7 +466,7 @@ export class SvgWriter {
         }
         if (gray !== 255) {
           rects.push(
-            `<rect x="${column}" y="${row}" width="${end - column}" height="1" fill="rgb(${gray},${gray},${gray})"/>`,
+            `<rect x="${column}" y="${row}" width="${end - column}" height="1" fill="rgb(${gray},${gray},${gray})"/>`
           );
         }
         column = end;
@@ -483,10 +482,10 @@ export class SvgWriter {
       c: transformed.c,
       d: -transformed.d,
       e: transformed.e - this.llx,
-      f: this.height + this.lly - transformed.f,
+      f: this.height + this.lly - transformed.f
     };
     this.pushElement(
-      `<image x="0" y="0" width="${width}" height="${height}" transform="matrix(${this.formatNumber(matrix.a)},${this.formatNumber(matrix.b)},${this.formatNumber(matrix.c)},${this.formatNumber(matrix.d)},${this.formatNumber(matrix.e)},${this.formatNumber(matrix.f)})" href="data:image/svg+xml;base64,${encoded}" opacity="${formatOpacity(state.opacity)}"/>`,
+      `<image x="0" y="0" width="${width}" height="${height}" transform="matrix(${this.formatNumber(matrix.a)},${this.formatNumber(matrix.b)},${this.formatNumber(matrix.c)},${this.formatNumber(matrix.d)},${this.formatNumber(matrix.e)},${this.formatNumber(matrix.f)})" href="data:image/svg+xml;base64,${encoded}" opacity="${formatOpacity(state.opacity)}"/>`
     );
     return true;
   }
@@ -517,7 +516,7 @@ export class SvgWriter {
       this.pushElement(
         `<path d="${d}" fill="none" stroke="${state.stroke}" stroke-width="${state.linewidth}" ` +
           `stroke-linecap="${LINECAP[state.linecap] ?? "butt"}" stroke-linejoin="${LINEJOIN[state.linejoin] ?? "miter"}" ` +
-          `stroke-miterlimit="${state.miterlimit}"${dash}${opacityAttr}${clipAttr}/>`,
+          `stroke-miterlimit="${state.miterlimit}"${dash}${opacityAttr}${clipAttr}/>`
       );
     } else {
       const rule = mode === "eofill" ? ' fill-rule="evenodd"' : "";
@@ -536,7 +535,7 @@ export class SvgWriter {
       state.fontFamily,
       this.customFonts,
       (fontName) => this.warnUnknownFont(fontName),
-      (fontName) => this.warnMalformedFontDescriptor(fontName),
+      (fontName) => this.warnMalformedFontDescriptor(fontName)
     );
     const transform =
       angle !== 0
@@ -551,18 +550,18 @@ export class SvgWriter {
       adjustments.length === 0
         ? escapeXml(text)
         : chars
-          .map((char, index) => {
-            if (index === 0) return `<tspan>${escapeXml(char)}</tspan>`;
-            const [dx, dy] = adjustments[index - 1] ?? [0, 0];
-            const tx = state.ctm.a * dx + state.ctm.c * dy;
-            const ty = -(state.ctm.b * dx + state.ctm.d * dy);
-            return `<tspan dx="${this.formatNumber(tx)}" dy="${this.formatNumber(ty)}">${escapeXml(char)}</tspan>`;
-          })
-          .join("");
+            .map((char, index) => {
+              if (index === 0) return `<tspan>${escapeXml(char)}</tspan>`;
+              const [dx, dy] = adjustments[index - 1] ?? [0, 0];
+              const tx = state.ctm.a * dx + state.ctm.c * dy;
+              const ty = -(state.ctm.b * dx + state.ctm.d * dy);
+              return `<tspan dx="${this.formatNumber(tx)}" dy="${this.formatNumber(ty)}">${escapeXml(char)}</tspan>`;
+            })
+            .join("");
     this.pushElement(
       `<text x="${this.formatNumber(x)}" y="${this.formatNumber(y)}" fill="${state.fill}" ` +
         `font-family="${escapeXml(font.family)}" font-size="${this.formatNumber(state.fontSize * scale)}"` +
-        `${weightAttr}${styleAttr}${stretchAttr}${transform}${opacityAttr}>${content}</text>`,
+        `${weightAttr}${styleAttr}${stretchAttr}${transform}${opacityAttr}>${content}</text>`
     );
     const advance = state.fontSize * 0.6 * chars.length;
     const extraX = adjustments.reduce((sum, value) => sum + value[0], 0);
@@ -635,11 +634,11 @@ export class SvgWriter {
     const accessibilityAttributes = [
       role ? ` role="${escapeXml(role)}"` : "",
       labelledBy ? ` aria-labelledby="${escapeXml(labelledBy)}"` : "",
-      describedBy ? ` aria-describedby="${escapeXml(describedBy)}"` : "",
+      describedBy ? ` aria-describedby="${escapeXml(describedBy)}"` : ""
     ].join("");
     const metadata = [
       title ? `<title id="${titleId}">${escapeXml(title)}</title>` : "",
-      description ? `<desc id="${descriptionId}">${escapeXml(description)}</desc>` : "",
+      description ? `<desc id="${descriptionId}">${escapeXml(description)}</desc>` : ""
     ].join("");
     return (
       `<svg xmlns="http://www.w3.org/2000/svg" width="${this.width}" height="${this.height}" ` +
@@ -668,7 +667,7 @@ export class SvgWriter {
         .filter(([name]) => name !== "kind" && name !== "stops")
         .flatMap(([, value]) => [String(value)]),
       ...transform.map(String),
-      ...gradient.stops.flatMap((stop) => [stop.offset, stop.color, stop.opacity].map(String)),
+      ...gradient.stops.flatMap((stop) => [stop.offset, stop.color, stop.opacity].map(String))
     ].join("|");
     const existingId = this.gradientIds.get(key);
     if (existingId) return `url(#${existingId})`;
@@ -679,7 +678,7 @@ export class SvgWriter {
       .map(
         (stop: GradientStop) =>
           `<stop offset="${formatOpacity(stop.offset)}" stop-color="${stop.color}"` +
-          `${stop.opacity < 1 ? ` stop-opacity="${formatOpacity(stop.opacity)}"` : ""}/>`,
+          `${stop.opacity < 1 ? ` stop-opacity="${formatOpacity(stop.opacity)}"` : ""}/>`
       )
       .join("");
     let definition: string;

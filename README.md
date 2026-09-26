@@ -32,7 +32,7 @@ runtime set to your application's public assets. If Vite prebundles the wrapper 
 
 ```ts
 const asy = await createAsymptote({
-  glueUrl: "/node_modules/asymptote-web/dist/asymptote.js",
+  glueUrl: "/node_modules/asymptote-web/dist/asymptote.js"
 });
 ```
 
@@ -88,7 +88,7 @@ await asy.mount(
   `
   size(100);
   filldraw(unitsquare, yellow, black);
-`,
+`
 );
 ```
 

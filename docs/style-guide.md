@@ -23,7 +23,7 @@ Prettier is authoritative for whitespace and layout:
 - Use two spaces, never tabs.
 - Use double quotes in JavaScript and TypeScript.
 - End statements with semicolons.
-- Use trailing commas in multiline lists, objects, and parameters.
+- Do not use trailing commas in lists, objects, or parameters.
 - Wrap lines at 100 columns where practical.
 - Use parentheses around arrow-function parameters.
 - Keep line endings as LF.

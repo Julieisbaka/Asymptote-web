@@ -50,7 +50,7 @@ export default async function factory() {
   return module;
 }
 `,
-  "utf8",
+  "utf8"
 );
 
 class FakeElement {
@@ -63,7 +63,7 @@ class FakeElement {
     this.style = {
       setProperty: (name, value) => {
         this.style[name] = value;
-      },
+      }
     };
     this.className = "";
     this.parentElement = null;
@@ -138,7 +138,7 @@ class FakeIframe extends FakeElement {
   removeEventListener(type, listener) {
     this.listeners.set(
       type,
-      (this.listeners.get(type) ?? []).filter((item) => item !== listener),
+      (this.listeners.get(type) ?? []).filter((item) => item !== listener)
     );
   }
   dispatch(type) {
@@ -198,7 +198,7 @@ globalThis.DOMParser = class {
     const parsed = new FakeDocument();
     parsed.documentElement = new FakeElement(
       value.trim().startsWith("<svg") ? "svg" : "parsererror",
-      parsed,
+      parsed
     );
     if (parsed.documentElement.tagName === "SVG") {
       parsed.documentElement.setAttribute("width", "100");
@@ -252,7 +252,7 @@ test("mounts SVG output and reuses an existing SVG", async () => {
   assert.equal(target.firstElementChild, oldSvg);
   assert.equal(
     target.firstElementChild.attributes.some((attribute) => attribute.name === "width"),
-    true,
+    true
   );
 });
 
@@ -260,7 +260,7 @@ test("reports mount target and format errors", async () => {
   await assert.rejects(() => asy.mount("#missing", "draw"), /mount target not found/);
   await assert.rejects(
     () => asy.mount(document.createElement("div"), "draw", { format: "eps" }),
-    /only supports SVG/,
+    /only supports SVG/
   );
 });
 
@@ -274,7 +274,7 @@ test("supports unsafe SVG customization", async () => {
   assert.equal(customized, true);
   assert.equal(
     target.firstElementChild.attributes.some((attribute) => attribute.name === "data-custom"),
-    true,
+    true
   );
 });
 
@@ -307,8 +307,8 @@ test("mounts WebGL and adds screen-space labels", async () => {
   const target = document.createElement("div");
   const result = await asy.mountWebGL(target, "three", {
     webglLabels: [
-      { text: "origin", x: 10, y: 20, className: "point", fontFamily: "Inter, sans-serif" },
-    ],
+      { text: "origin", x: 10, y: 20, className: "point", fontFamily: "Inter, sans-serif" }
+    ]
   });
   const iframe = target.firstElementChild;
   assert.equal(result.format, "webgl");
@@ -319,11 +319,11 @@ test("mounts WebGL and adds screen-space labels", async () => {
   assert.equal(iframe.style.border, "none");
   assert.equal(
     iframe.contentDocument.body.firstElementChild.getAttribute("aria-label"),
-    "Asymptote WebGL labels",
+    "Asymptote WebGL labels"
   );
   assert.equal(
     iframe.contentDocument.body.firstElementChild.firstElementChild.style.fontFamily,
-    "Inter, sans-serif",
+    "Inter, sans-serif"
   );
 
   await assert.rejects(() => asy.mountWebGL("#missing", "three"), /mountWebGL target not found/);
@@ -334,7 +334,7 @@ test("waits for public WebGL iframe loading without labels", async () => {
   state.loadIframe = false;
   await assert.rejects(
     () => asy.mountWebGL(target, "three", { webglIframeTimeoutMs: 0 }),
-    /timed out waiting for WebGL iframe/,
+    /timed out waiting for WebGL iframe/
   );
   assert.equal(target.children.length, 0);
 });
@@ -348,8 +348,8 @@ test("configures WebGL iframe styles and injected behavior", async () => {
       width: "640px",
       height: "480px",
       border: "1px solid red",
-      "background-color": "black",
-    },
+      "background-color": "black"
+    }
   });
   const iframe = target.firstElementChild;
   assert.equal(iframe.style.width, "640px");
@@ -378,7 +378,7 @@ test("rejects invalid WebGL iframe timeouts", async () => {
   const target = document.createElement("div");
   await assert.rejects(
     () => asy.unsafe.mountWebGL(target, "three", () => {}, { webglIframeTimeoutMs: -1 }),
-    /timeout must be a non-negative finite number/,
+    /timeout must be a non-negative finite number/
   );
   assert.equal(target.children.length, 0);
 });
@@ -390,9 +390,9 @@ test("cleans up public WebGL mounts when the iframe fails to load", async () => 
     () =>
       asy.mountWebGL(target, "three", {
         webglLabels: [{ text: "label", x: 0, y: 0 }],
-        webglIframeTimeoutMs: 0,
+        webglIframeTimeoutMs: 0
       }),
-    /timed out waiting for WebGL iframe/,
+    /timed out waiting for WebGL iframe/
   );
   assert.equal(target.children.length, 0);
 });
@@ -404,12 +404,12 @@ test("cleans up unsafe WebGL mounts when customization fails", async () => {
       asy.unsafe.mountWebGL(target, "three", async () => {
         throw new Error("customizer failed");
       }),
-    /customizer failed/,
+    /customizer failed/
   );
   assert.equal(target.children.length, 0);
 
   await assert.rejects(
     () => asy.unsafe.mountWebGL("#missing", "three", () => {}),
-    /mountWebGL target not found/,
+    /mountWebGL target not found/
   );
 });

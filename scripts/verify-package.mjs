@@ -15,7 +15,7 @@ const requiredFiles = [
   "dist/asymptote.js",
   "dist/asymptote.wasm",
   "dist/asy.data",
-  "dist/asygl.js",
+  "dist/asygl.js"
 ];
 
 const missing = [];

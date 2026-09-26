@@ -36,7 +36,7 @@ explicit `glueUrl` when needed:
 
 ```ts
 const asy = await createAsymptote({
-  glueUrl: "/node_modules/asymptote-web/dist/asymptote.js",
+  glueUrl: "/node_modules/asymptote-web/dist/asymptote.js"
 });
 ```
 

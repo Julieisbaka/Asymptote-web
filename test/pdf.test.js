@@ -14,7 +14,7 @@ const jpeg = Uint8Array.from([
   0x00, 0x01, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xc4, 0x00, 0x14, 0x10,
   0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00, 0xd2, 0xcf, 0x20, 0xff, 0xd9,
+  0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00, 0xd2, 0xcf, 0x20, 0xff, 0xd9
 ]);
 
 function latin1(bytes) {
@@ -31,8 +31,8 @@ test("imageToPdfBytes embeds a JPEG image and selectable text layer", () => {
     title: "PDF export smoke test",
     textRuns: [
       { text: "Selectable label", x: 10, y: 20, fontSize: 12, fontFamily: "Arial, sans-serif" },
-      { text: "Monospace", x: 10, y: 35, fontSize: 10, fontFamily: "Courier New, monospace" },
-    ],
+      { text: "Monospace", x: 10, y: 35, fontSize: 10, fontFamily: "Courier New, monospace" }
+    ]
   });
   const text = latin1(pdf);
 
@@ -57,7 +57,7 @@ test("imageToPdfBytes preserves visible text opacity", () => {
     imageWidth: 1,
     imageHeight: 1,
     textMode: "visible",
-    textRuns: [{ text: "Faded", x: 0, y: 1, opacity: 0.25 }],
+    textRuns: [{ text: "Faded", x: 0, y: 1, opacity: 0.25 }]
   });
   const text = latin1(pdf);
   assert.match(text, /\/ExtGState << \/GS0 \d+ 0 R >>/);
@@ -73,8 +73,8 @@ test("imageToPdfBytes keeps page sizing and text placement in PDF units", () => 
     pageHeight: 100,
     textRuns: [
       { text: "Scaled page", x: 25, y: 20 },
-      { text: "Rotated", x: 100, y: 80, rotate: 90 },
-    ],
+      { text: "Rotated", x: 100, y: 80, rotate: 90 }
+    ]
   });
   const text = latin1(pdf);
 
@@ -91,7 +91,7 @@ test("imagesToPdfBytes writes multiple images as separate PDF pages", () => {
         image: jpeg,
         imageWidth: 100,
         imageHeight: 50,
-        textRuns: [{ text: "First page", x: 5, y: 10 }],
+        textRuns: [{ text: "First page", x: 5, y: 10 }]
       },
       {
         image: jpeg,
@@ -100,10 +100,10 @@ test("imagesToPdfBytes writes multiple images as separate PDF pages", () => {
         pageWidth: 120,
         pageHeight: 120,
         textMode: "visible",
-        textRuns: [{ text: "Second page", x: 8, y: 16 }],
-      },
+        textRuns: [{ text: "Second page", x: 8, y: 16 }]
+      }
     ],
-    { title: "Two page PDF" },
+    { title: "Two page PDF" }
   );
   const text = latin1(pdf);
 
@@ -125,7 +125,7 @@ test("svgToPdfBytes applies viewBox offsets and margins to size and text placeme
     document: globalThis.document,
     DOMParser: globalThis.DOMParser,
     FileReader: globalThis.FileReader,
-    Image: globalThis.Image,
+    Image: globalThis.Image
   };
   let rasterizedSvg = "";
   const textNode = {
@@ -136,10 +136,10 @@ test("svgToPdfBytes applies viewBox offsets and margins to size and text placeme
           x: "30",
           y: "40",
           "font-size": "12",
-          "font-family": "Arial",
+          "font-family": "Arial"
         }[name] ?? null
       );
-    },
+    }
   };
 
   globalThis.DOMParser = class {
@@ -170,19 +170,19 @@ test("svgToPdfBytes applies viewBox offsets and margins to size and text placeme
         height: 0,
         getContext: () => ({
           fillRect() {},
-          drawImage() {},
+          drawImage() {}
         }),
         toBlob(callback) {
           callback(new Blob([jpeg], { type: "image/jpeg" }));
-        },
+        }
       };
-    },
+    }
   };
 
   try {
     const pdf = await svgToPdfBytes(
       '<svg width="100" height="50" viewBox="10 20 100 50"><text x="30" y="40">Offset label</text></svg>',
-      { scale: 2, margin: { top: 5, right: 10, bottom: 15, left: 20 } },
+      { scale: 2, margin: { top: 5, right: 10, bottom: 15, left: 20 } }
     );
     const text = latin1(pdf);
 
@@ -203,8 +203,8 @@ test("svgToPdfBytes rejects raster dimension multiplication overflow", async () 
   await assert.rejects(
     () =>
       import("../dist/pdf.js").then(({ svgToPdfBytes }) =>
-        svgToPdfBytes('<svg width="1e308" height="1" viewBox="0 0 1e308 1"></svg>', { scale: 2 }),
+        svgToPdfBytes('<svg width="1e308" height="1" viewBox="0 0 1e308 1"></svg>', { scale: 2 })
       ),
-    /multiplied by scale must be finite/,
+    /multiplied by scale must be finite/
   );
 });

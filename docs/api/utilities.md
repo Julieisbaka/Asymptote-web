@@ -9,7 +9,7 @@ import {
   composeMatrix,
   hsbToColor,
   identityMatrix,
-  parseCompilerDiagnostics,
+  parseCompilerDiagnostics
 } from "asymptote-web/utils";
 ```
 

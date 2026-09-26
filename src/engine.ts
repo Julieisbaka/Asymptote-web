@@ -12,7 +12,7 @@ import {
   type CompilerDiagnostic,
   type CreateOptions,
   type RenderOptions,
-  type RenderResult,
+  type RenderResult
 } from "./types.js";
 import { parseCompilerDiagnostics } from "./diagnostics.js";
 import { epsToSvgWithWarnings } from "./eps-to-svg.js";
@@ -80,7 +80,7 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
 
   const modulePromise = (async (): Promise<EmscriptenModule> => {
     const { default: factory }: { default: ModuleFactory } = await import(
-      /* @vite-ignore */ glueUrl,
+      /* @vite-ignore */ glueUrl
     );
 
     // Emscripten requests both the WASM binary and the preloaded standard
@@ -128,8 +128,8 @@ function enqueueRender<T>(cacheKey: string, task: () => Promise<T>): Promise<T> 
     cacheKey,
     result.then(
       () => undefined,
-      () => undefined,
-    ),
+      () => undefined
+    )
   );
   return result;
 }
@@ -177,7 +177,7 @@ function virtualFilePath(renderDir: string, relativePath: string): string {
   const parts = normalized.split("/");
   if (parts.some((part) => !part || part === "." || part === "..")) {
     throw new TypeError(
-      `Render file path must not contain empty, '.' or '..' segments: ${relativePath}`,
+      `Render file path must not contain empty, '.' or '..' segments: ${relativePath}`
     );
   }
   return `${renderDir}/${parts.join("/")}`;
@@ -200,7 +200,7 @@ function remapDiagnosticSources(
   diagnostics: CompilerDiagnostic[],
   renderDir: string,
   inputFile: string,
-  renderOptions: RenderOptions,
+  renderOptions: RenderOptions
 ): CompilerDiagnostic[] {
   return diagnostics.map((diagnostic) => {
     if (!diagnostic.sourceFile) return diagnostic;
@@ -235,7 +235,7 @@ function getWebGLFlags(renderOptions: RenderOptions): string[] {
 /** Determine the effective output format, honoring later format flags. */
 function getOutputFormat(
   renderOptions: RenderOptions,
-  flags: string[],
+  flags: string[]
 ): "svg" | "eps" | "ps" | "webgl" {
   // Asy processes flags from left to right, so a format in flags should take
   // precedence over the convenience option when both are supplied.
@@ -269,7 +269,7 @@ function getOutputFormat(
 export function runAsymptote(
   source: string,
   renderOptions: RenderOptions,
-  createOptions: CreateOptions,
+  createOptions: CreateOptions
 ): Promise<RenderResult> {
   validateRenderOptions(renderOptions);
   return enqueueRender(getModuleCacheKey(createOptions), async () => {
@@ -281,7 +281,7 @@ export function runAsymptote(
 async function runAsymptoteUnsafe(
   source: string,
   renderOptions: RenderOptions,
-  createOptions: CreateOptions,
+  createOptions: CreateOptions
 ): Promise<RenderResult> {
   const mod = await loadModule(createOptions);
   const renderDir = `${RENDER_ROOT}/render-${++renderCounter}`;
@@ -342,7 +342,7 @@ async function runAsymptoteUnsafe(
       // extra flags so output-name options cannot override the isolated path.
       "-o",
       outputPrefix,
-      inputFile,
+      inputFile
     ];
 
     let exitCode: number;
@@ -359,7 +359,7 @@ async function runAsymptoteUnsafe(
         `ASYMPTOTE ERROR: the WebAssembly module crashed while rendering (${reason}). It will be reinitialized on the next render.`,
         -1,
         stderrLines.join("\n"),
-        [],
+        []
       );
     }
     const stderr = stderrLines.join("\n");
@@ -367,7 +367,7 @@ async function runAsymptoteUnsafe(
       parseCompilerDiagnostics(stderr),
       renderDir,
       inputFile,
-      renderOptions,
+      renderOptions
     );
 
     if (exitCode !== 0) {
@@ -375,7 +375,7 @@ async function runAsymptoteUnsafe(
         `ASYMPTOTE ERROR: Asymptote exited with code ${exitCode}:\n${stderr}`,
         exitCode,
         stderr,
-        diagnostics,
+        diagnostics
       );
     }
 
@@ -384,10 +384,10 @@ async function runAsymptoteUnsafe(
     const conversion =
       format === "svg" && !skipConversion
         ? epsToSvgWithWarnings(rawOutput, {
-          precision: renderOptions.svgPrecision,
-          fonts: renderOptions.svgFonts,
-          accessibility: renderOptions.accessibility,
-        })
+            precision: renderOptions.svgPrecision,
+            fonts: renderOptions.svgFonts,
+            accessibility: renderOptions.accessibility
+          })
         : { svg: rawOutput, warnings: [] };
     const output = conversion.svg;
 
@@ -401,9 +401,9 @@ async function runAsymptoteUnsafe(
       svg: output,
       warnings: [
         ...stderrLines.filter((line) => /(?:^|\s)warning(?:\s|$)/i.test(line)),
-        ...conversion.warnings,
+        ...conversion.warnings
       ],
-      diagnostics,
+      diagnostics
     };
   } finally {
     mod.print = origPrint;
@@ -438,7 +438,7 @@ export function getAsymptoteVersion(createOptions: CreateOptions): Promise<strin
         `Unable to read Asymptote version: the WebAssembly module crashed (${reason}). It will be reinitialized on the next render.`,
         -1,
         errors.join("\n"),
-        parseCompilerDiagnostics(errors.join("\n")),
+        parseCompilerDiagnostics(errors.join("\n"))
       );
     } finally {
       mod.print = origPrint;
@@ -450,7 +450,7 @@ export function getAsymptoteVersion(createOptions: CreateOptions): Promise<strin
         `Unable to read Asymptote version (exit code ${exitCode})`,
         exitCode,
         stderr,
-        parseCompilerDiagnostics(stderr),
+        parseCompilerDiagnostics(stderr)
       );
     }
     return [...output, ...errors].join("\n").trim();

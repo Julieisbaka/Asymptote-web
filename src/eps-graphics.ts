@@ -3,7 +3,7 @@ import {
   composeMatrix,
   hsbToColor,
   identityMatrix,
-  type Matrix,
+  type Matrix
 } from "./utils.js";
 
 export type { Matrix } from "./utils.js";
@@ -66,7 +66,7 @@ export function cloneState(s: GraphicsState): GraphicsState {
     dasharray: [...s.dasharray],
     gradient: s.gradient
       ? { ...s.gradient, stops: s.gradient.stops.map((stop) => ({ ...stop })) }
-      : null,
+      : null
   };
 }
 
