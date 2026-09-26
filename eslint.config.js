@@ -12,7 +12,7 @@ export default defineConfig(
       "@stylistic": stylistic
     },
     rules: {
-      "@stylistic/indent": ["warn", 2, { SwitchCase: 1 }],
+      "@stylistic/indent": "off",
       "@stylistic/brace-style": ["warn", "1tbs", { allowSingleLine: true }],
       "@stylistic/comma-dangle": ["warn", "never"],
       "@stylistic/keyword-spacing": "warn",

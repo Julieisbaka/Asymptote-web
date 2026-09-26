@@ -44,11 +44,12 @@ performing a formatting-only change.
 - Use descriptive errors with the `asymptote-web:` prefix for public runtime
   failures.
 
-ESLint reports indentation, braces, quotes, semicolons, spacing, and type-only
-import conventions as warnings, so style drift does not block a build. Unused
-variables remain errors because they can indicate broken or incomplete code. A
-leading underscore is allowed for an intentionally unused parameter or local
-variable.
+ESLint reports braces, quotes, semicolons, spacing, and type-only import
+conventions as warnings, so style drift does not block a build. Prettier owns
+indentation because its TypeScript-aware layout can differ from ESLint's generic
+indentation rule. Unused variables remain errors because they can indicate
+broken or incomplete code. A leading underscore is allowed for an intentionally
+unused parameter or local variable.
 
 ## Tests
 
