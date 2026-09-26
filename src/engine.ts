@@ -80,7 +80,7 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
 
   const modulePromise = (async (): Promise<EmscriptenModule> => {
     const { default: factory }: { default: ModuleFactory } = await import(
-      /* @vite-ignore */ glueUrl
+      /* @vite-ignore */ glueUrl,
     );
 
     // Emscripten requests both the WASM binary and the preloaded standard
@@ -384,10 +384,10 @@ async function runAsymptoteUnsafe(
     const conversion =
       format === "svg" && !skipConversion
         ? epsToSvgWithWarnings(rawOutput, {
-            precision: renderOptions.svgPrecision,
-            fonts: renderOptions.svgFonts,
-            accessibility: renderOptions.accessibility,
-          })
+          precision: renderOptions.svgPrecision,
+          fonts: renderOptions.svgFonts,
+          accessibility: renderOptions.accessibility,
+        })
         : { svg: rawOutput, warnings: [] };
     const output = conversion.svg;
 

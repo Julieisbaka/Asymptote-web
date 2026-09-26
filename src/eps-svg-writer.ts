@@ -173,9 +173,9 @@ function normalizeDescriptor(value: unknown): SvgFontDescriptorNormalized | null
   const family = typeof descriptor.family === "string" ? descriptor.family.trim() : undefined;
   const fallbacks = Array.isArray(descriptor.fallbacks)
     ? descriptor.fallbacks.filter(
-        (fallback): fallback is string =>
-          typeof fallback === "string" && fallback.trim().length > 0,
-      )
+      (fallback): fallback is string =>
+        typeof fallback === "string" && fallback.trim().length > 0,
+    )
     : undefined;
   const weight =
     typeof descriptor.weight === "number"
@@ -551,14 +551,14 @@ export class SvgWriter {
       adjustments.length === 0
         ? escapeXml(text)
         : chars
-            .map((char, index) => {
-              if (index === 0) return `<tspan>${escapeXml(char)}</tspan>`;
-              const [dx, dy] = adjustments[index - 1] ?? [0, 0];
-              const tx = state.ctm.a * dx + state.ctm.c * dy;
-              const ty = -(state.ctm.b * dx + state.ctm.d * dy);
-              return `<tspan dx="${this.formatNumber(tx)}" dy="${this.formatNumber(ty)}">${escapeXml(char)}</tspan>`;
-            })
-            .join("");
+          .map((char, index) => {
+            if (index === 0) return `<tspan>${escapeXml(char)}</tspan>`;
+            const [dx, dy] = adjustments[index - 1] ?? [0, 0];
+            const tx = state.ctm.a * dx + state.ctm.c * dy;
+            const ty = -(state.ctm.b * dx + state.ctm.d * dy);
+            return `<tspan dx="${this.formatNumber(tx)}" dy="${this.formatNumber(ty)}">${escapeXml(char)}</tspan>`;
+          })
+          .join("");
     this.pushElement(
       `<text x="${this.formatNumber(x)}" y="${this.formatNumber(y)}" fill="${state.fill}" ` +
         `font-family="${escapeXml(font.family)}" font-size="${this.formatNumber(state.fontSize * scale)}"` +

@@ -13,11 +13,11 @@ function isDigit(char: string | undefined): boolean {
 /** Parse a source filename, line, and optional column from a diagnostic. */
 function parseLocation(raw: string):
   | {
-      sourceFile: string;
-      line: number;
-      column?: number;
-      message: string;
-    }
+    sourceFile: string;
+    line: number;
+    column?: number;
+    message: string;
+  }
   | undefined {
   for (let i = 0; i < raw.length; i += 1) {
     if (raw[i] !== ":") continue;

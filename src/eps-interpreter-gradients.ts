@@ -94,15 +94,15 @@ export function gradientFromValue(value: Operand | undefined): Gradient | null {
   return type === 2
     ? { kind: "linear", x1: coords[0], y1: coords[1], x2: coords[2], y2: coords[3], stops }
     : {
-        kind: "radial",
-        x1: coords[0],
-        y1: coords[1],
-        r1: coords[2],
-        x2: coords[3],
-        y2: coords[4],
-        r2: coords[5],
-        stops,
-      };
+      kind: "radial",
+      x1: coords[0],
+      y1: coords[1],
+      r1: coords[2],
+      x2: coords[3],
+      y2: coords[4],
+      r2: coords[5],
+      stops,
+    };
 }
 
 /** Describe why an unsupported shading dictionary was skipped. */
