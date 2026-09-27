@@ -1,10 +1,6 @@
 import { imageToPdfBytes } from "./pdf-images.js";
 import type { PdfMargin, PdfOptions, PdfTextRun } from "./pdf-types.js";
-import {
-  assertFinitePositive,
-  assertFiniteRasterSize,
-  pdfNumber
-} from "./pdf-writer.js";
+import { assertFinitePositive, assertFiniteRasterSize, pdfNumber } from "./pdf-writer.js";
 
 const PDF_MIME_TYPE = "application/pdf";
 const DEFAULT_SCALE = 2;
