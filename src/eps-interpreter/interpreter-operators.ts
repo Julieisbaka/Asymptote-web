@@ -1,124 +1,16 @@
-import {
-  cloneState,
-  compose,
-  hsbToColor,
-  IDENTITY,
-  toColor,
-  type Gradient,
-  type GraphicsState
-} from "./eps-graphics.js";
-import {
-  NUMBER_RE,
-  isDictionary,
-  isMatrix,
-  isMatrixArray,
-  matrixFromOperand,
-  textChars,
-  unescapePostScriptString
-} from "./eps-interpreter-operands.js";
-import {
-  colorComponentCount,
-  gradientFromValue,
-  parseStops,
-  unsupportedShadingMessage
-} from "./eps-interpreter-gradients.js";
-import type { Dictionary, Operand } from "./eps-interpreter-types.js";
-import type { SvgWriter } from "./eps-svg-writer.js";
-import type { PostScriptTokenizer } from "./eps-tokenizer.js";
+import { cloneState, compose, hsbToColor, toColor, type Gradient } from "../eps-graphics.js";
+import { isDictionary, isMatrix, isMatrixArray, matrixFromOperand, textChars } from "./operands.js";
+import { colorComponentCount, gradientFromValue, parseStops } from "./gradients.js";
+import { InterpreterState } from "./interpreter-state.js";
+import type { SvgWriter } from "../eps-svg-writer/writer.js";
 
-// Thrown internally when nested array/dictionary literals go deeper than
-// MAX_NESTING_DEPTH, so malformed or adversarial input can't exhaust the
-// call stack; caught and turned into a warning in `run()`.
-class EpsNestingLimitError extends Error {}
-
-interface SavedGraphicsState {
-  state: GraphicsState;
-  colorComponentCount: number | null;
-}
-
-/** Interpret the constrained PostScript subset emitted by Asymptote. */
-export class PostScriptInterpreter {
-  private static readonly MAX_NESTING_DEPTH = 64;
-  private nestingDepth = 0;
-  private state: GraphicsState = {
-    ctm: IDENTITY,
-    fill: "black",
-    gradient: null,
-    stroke: "black",
-    opacity: 1,
-    fontFamily: "sans-serif",
-    fontSize: 12,
-    linewidth: 1,
-    linecap: 0,
-    linejoin: 0,
-    miterlimit: 10,
-    dasharray: [],
-    dashoffset: 0,
-    clipId: null
-  };
-  private readonly stateStack: SavedGraphicsState[] = [];
-  private readonly stack: Operand[] = [];
-  private readonly warnings: string[] = [];
-  private colorComponentCount: number | null = null;
-
-  constructor(
-    private readonly tokens: PostScriptTokenizer,
-    private readonly writer: SvgWriter
-  ) {}
-
-  /** Consume all tokens and emit supported operations to the SVG writer. */
-  run(): void {
-    try {
-      for (let tok = this.tokens.next(); tok !== null; tok = this.tokens.next()) {
-        if (NUMBER_RE.test(tok)) {
-          this.stack.push(parseFloat(tok));
-          continue;
-        }
-        if (tok.startsWith("(") && tok.endsWith(")")) {
-          this.stack.push(unescapePostScriptString(tok));
-          continue;
-        }
-        if (tok === "[") {
-          this.stack.push(this.readArray());
-          continue;
-        }
-        if (tok === "<<") {
-          this.stack.push(this.readDictionary());
-          continue;
-        }
-        if (tok.startsWith("/")) {
-          this.stack.push(tok.slice(1));
-          continue;
-        }
-
-        this.dispatch(tok);
-      }
-    } catch (error) {
-      if (error instanceof EpsNestingLimitError) {
-        this.warn("stopped parsing: exceeded maximum nested array/dictionary depth");
-      } else if (error instanceof RangeError) {
-        this.warn("stopped parsing: input exceeded the interpreter's safe recursion depth");
-      } else {
-        throw error;
-      }
-    }
+/** Applies supported PostScript operators to the shared interpreter state. */
+export class PostScriptOperatorInterpreter extends InterpreterState {
+  constructor(writer: SvgWriter) {
+    super(writer);
   }
 
-  /** Return non-fatal conversion warnings collected during interpretation. */
-  getWarnings(): string[] {
-    return [...this.warnings];
-  }
-
-  private warn(message: string): void {
-    this.warnings.push(`EPS/PS: ${message}`);
-  }
-
-  private warnUnsupportedShading(value: Operand | undefined): void {
-    const message = unsupportedShadingMessage(value);
-    if (message) this.warn(message);
-  }
-
-  private dispatch(tok: string): void {
+  protected dispatch(tok: string): void {
     switch (tok) {
       case "newpath":
         this.writer.newPath();
@@ -298,12 +190,11 @@ export class PostScriptInterpreter {
         break;
       case "setopacityalpha":
       case "setalpha":
-      case "setopacity":
-        {
-          const opacity = this.popN(1)[0];
-          this.state.opacity = Number.isFinite(opacity) ? Math.max(0, Math.min(1, opacity)) : 0;
-        }
+      case "setopacity": {
+        const opacity = this.popN(1)[0];
+        this.state.opacity = Number.isFinite(opacity) ? Math.max(0, Math.min(1, opacity)) : 0;
         break;
+      }
       case "show": {
         const text = this.stack.pop();
         if (typeof text === "string") this.writer.show(this.state, text);
@@ -447,65 +338,6 @@ export class PostScriptInterpreter {
         this.warn(`ignored unsupported operator '${tok}'`);
         break;
     }
-  }
-
-  private popN(n: number): number[] {
-    const nums: number[] = [];
-    for (let i = 0; i < n; i += 1) {
-      const value = this.stack.pop();
-      nums.unshift(typeof value === "number" ? value : 0);
-    }
-    return nums;
-  }
-
-  private finiteNumber(value: number): number {
-    return Number.isFinite(value) ? value : 0;
-  }
-
-  private readArray(): Operand[] {
-    this.nestingDepth += 1;
-    if (this.nestingDepth > PostScriptInterpreter.MAX_NESTING_DEPTH)
-      throw new EpsNestingLimitError();
-    try {
-      const values: Operand[] = [];
-      for (
-        let token = this.tokens.next();
-        token !== null && token !== "]";
-        token = this.tokens.next()
-      ) {
-        values.push(this.readValue(token));
-      }
-      return values;
-    } finally {
-      this.nestingDepth -= 1;
-    }
-  }
-
-  private readDictionary(): Dictionary {
-    this.nestingDepth += 1;
-    if (this.nestingDepth > PostScriptInterpreter.MAX_NESTING_DEPTH)
-      throw new EpsNestingLimitError();
-    try {
-      const dictionary: Dictionary = {};
-      for (let token = this.tokens.next(); token !== null && token !== ">>";) {
-        const key = token.startsWith("/") ? token.slice(1) : token;
-        const valueToken = this.tokens.next();
-        if (valueToken === null) break;
-        dictionary[key] = this.readValue(valueToken);
-        token = this.tokens.next() ?? ">>";
-      }
-      return dictionary;
-    } finally {
-      this.nestingDepth -= 1;
-    }
-  }
-
-  private readValue(token: string): Operand {
-    if (token === "[") return this.readArray();
-    if (token === "<<") return this.readDictionary();
-    if (token.startsWith("(") && token.endsWith(")")) return unescapePostScriptString(token);
-    if (NUMBER_RE.test(token)) return parseFloat(token);
-    return token.startsWith("/") ? token.slice(1) : token;
   }
 
   private makeExplicitGradient(kind: "linear" | "radial"): Gradient | null {

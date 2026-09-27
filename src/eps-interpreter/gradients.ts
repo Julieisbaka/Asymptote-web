@@ -1,6 +1,6 @@
-import { toColor, type Gradient } from "./eps-graphics.js";
-import { isDictionary, numbers } from "./eps-interpreter-operands.js";
-import type { Operand, ParsedStop } from "./eps-interpreter-types.js";
+import { toColor, type Gradient } from "../eps-graphics.js";
+import { isDictionary, numbers } from "./operands.js";
+import type { Operand, ParsedStop } from "./interpreter-types.js";
 
 /** Return the component count for a supported PostScript color space. */
 export function colorComponentCount(value: Operand | undefined): number | null {

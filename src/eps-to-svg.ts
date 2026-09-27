@@ -2,9 +2,9 @@
  * eps-to-svg.ts — Public façade for converting constrained EPS/PS to SVG.
  */
 
-import { PostScriptInterpreter } from "./eps-interpreter.js";
-import { PostScriptTokenizer } from "./eps-tokenizer.js";
-import { SvgWriter } from "./eps-svg-writer.js";
+import { PostScriptInterpreter } from "./eps-interpreter/interpreter.js";
+import { PostScriptTokenizer } from "./eps-interpreter/tokenizer.js";
+import { SvgWriter } from "./eps-svg-writer/writer.js";
 import type { SvgAccessibility, SvgFontMap } from "./types.js";
 
 /** Numeric grammar accepted in EPS bounding-box comments. */
