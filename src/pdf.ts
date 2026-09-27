@@ -161,7 +161,7 @@ function parseLength(value: string | null): number | undefined {
   let numeric = trimmed;
   for (const unit of SVG_LENGTH_UNITS) {
     if (normalized.endsWith(unit)) {
-      numeric = trimmed.slice(0, -unit.length).trimEnd();
+      numeric = trimmed.slice(0, -unit.length);
       break;
     }
   }
