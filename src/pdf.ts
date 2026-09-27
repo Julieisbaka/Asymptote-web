@@ -6,6 +6,7 @@ const PDF_MIME_TYPE = "application/pdf";
 const DEFAULT_SCALE = 2;
 /** Default canvas background used when rasterizing SVG content. */
 const DEFAULT_BACKGROUND = "white";
+const SVG_LENGTH_UNITS = ["px", "pt", "pc", "mm", "cm", "in"] as const;
 
 export interface PdfTextRun {
   /** Text content to expose as real PDF text. */
@@ -131,14 +132,41 @@ function assertFiniteRasterSize(value: number, name: string): void {
   }
 }
 
+/** Accept signed integer/decimal SVG numbers with optional scientific notation (for example 12, 12., .5, 1e3). */
+function isSvgNumber(value: string): boolean {
+  const eIndex = value.search(/[eE]/);
+  let significand = value;
+  if (eIndex !== -1) {
+    if (value.slice(eIndex + 1).search(/[eE]/) !== -1) return false;
+    const exponent = value.slice(eIndex + 1);
+    if (!/^[+-]?\d+$/.test(exponent)) return false;
+    significand = value.slice(0, eIndex);
+  }
+  const signless = /^[+-]/.test(significand) ? significand.slice(1) : significand;
+  if (!signless) return false;
+  const parts = signless.split(".");
+  if (parts.length > 2) return false;
+  if (parts.length === 1) return /^\d+$/.test(parts[0]);
+  const [whole, fraction] = parts;
+  if (!whole && !fraction) return false;
+  return /^\d*$/.test(whole) && /^\d*$/.test(fraction) && (whole.length > 0 || fraction.length > 0);
+}
+
 /** Parse a positive SVG length, ignoring percentages. */
 function parseLength(value: string | null): number | undefined {
-  if (!value || value.endsWith("%")) return undefined;
-  const match = /^\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)(?:px|pt|pc|mm|cm|in)?\s*$/i.exec(
-    value
-  );
-  if (!match) return undefined;
-  const number = Number(match[1]);
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.endsWith("%")) return undefined;
+  const normalized = trimmed.toLowerCase();
+  let numeric = trimmed;
+  for (const unit of SVG_LENGTH_UNITS) {
+    if (normalized.endsWith(unit)) {
+      numeric = trimmed.slice(0, -unit.length).trimEnd();
+      break;
+    }
+  }
+  if (!numeric || !isSvgNumber(numeric)) return undefined;
+  const number = Number(numeric);
   return Number.isFinite(number) && number > 0 ? number : undefined;
 }
 
