@@ -2,6 +2,8 @@
 
 ## 0.3.2 - In development
 
+- Updated devdependencies
+
 ## 0.3.1
 
 - Fixed nonzero `version()` exits being misreported as WASM crashes, applied svgFonts to engine SVG renders, and ensured user output flags cannot redirect the wrapper away from its isolated render file.
