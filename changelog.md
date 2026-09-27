@@ -2,7 +2,7 @@
 
 ## 0.3.2 - In development
 
-- Updated devdependencies
+- Internal stuff
 
 ## 0.3.1
 
