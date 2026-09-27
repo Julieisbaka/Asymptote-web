@@ -37,7 +37,7 @@ function parseLocation(raw: string):
       sourceFile,
       line,
       ...(column !== undefined ? { column } : {}),
-      message: raw.slice(cursor + 1).trimStart(),
+      message: raw.slice(cursor + 1).trimStart()
     };
   }
   return undefined;
@@ -78,7 +78,7 @@ function parseCodeLabel(message: string): { code?: string; message: string } {
   if (closing <= 1) return { message };
   return {
     code: message.slice(1, closing),
-    message: message.slice(closing + 1).trimStart(),
+    message: message.slice(closing + 1).trimStart()
   };
 }
 
@@ -106,7 +106,7 @@ function parseSeverityLabel(text: string): { label: string; message: string } | 
 /** Classify a diagnostic message, defaulting located messages to errors. */
 function severityFor(
   text: string,
-  hasLocation: boolean,
+  hasLocation: boolean
 ): {
   severity: DiagnosticSeverity;
   message: string;
@@ -115,7 +115,7 @@ function severityFor(
   if (!classified) {
     return {
       severity: hasLocation ? "error" : "info",
-      message: text.trim(),
+      message: text.trim()
     };
   }
 
@@ -141,7 +141,7 @@ export function parseCompilerDiagnostics(stderr: string): CompilerDiagnostic[] {
       const location = parseLocation(raw);
       const classified = severityFor(
         stripLeadingSeparator(location?.message ?? raw),
-        Boolean(location),
+        Boolean(location)
       );
       const codeInfo = parseCodeLabel(classified.message);
 
@@ -152,7 +152,7 @@ export function parseCompilerDiagnostics(stderr: string): CompilerDiagnostic[] {
         ...(location?.line !== undefined ? { line: location.line } : {}),
         ...(location?.column !== undefined ? { column: location.column } : {}),
         ...(codeInfo.code ? { code: codeInfo.code } : {}),
-        raw,
+        raw
       };
     });
 }
@@ -173,7 +173,7 @@ export function composeMatrix(m1: Matrix, m2: Matrix): Matrix {
     c: m1.a * m2.c + m1.c * m2.d,
     d: m1.b * m2.c + m1.d * m2.d,
     e: m1.a * m2.e + m1.c * m2.f + m1.e,
-    f: m1.b * m2.e + m1.d * m2.f + m1.f,
+    f: m1.b * m2.e + m1.d * m2.f + m1.f
   };
 }
 
@@ -216,7 +216,7 @@ export function hsbToColor(hue: number, saturation: number, brightness: number):
     [p, v, t],
     [p, q, v],
     [t, p, v],
-    [v, p, q],
+    [v, p, q]
   ][index % 6];
   return `rgb(${rgb.map((value) => Math.round(value * 255)).join(",")})`;
 }

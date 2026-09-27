@@ -5,7 +5,7 @@ import {
   IDENTITY,
   toColor,
   type Gradient,
-  type GraphicsState,
+  type GraphicsState
 } from "./eps-graphics.js";
 import {
   NUMBER_RE,
@@ -14,22 +14,27 @@ import {
   isMatrixArray,
   matrixFromOperand,
   textChars,
-  unescapePostScriptString,
+  unescapePostScriptString
 } from "./eps-interpreter-operands.js";
 import {
   colorComponentCount,
   gradientFromValue,
   parseStops,
-  unsupportedShadingMessage,
+  unsupportedShadingMessage
 } from "./eps-interpreter-gradients.js";
 import type { Dictionary, Operand } from "./eps-interpreter-types.js";
-import { SvgWriter } from "./eps-svg-writer.js";
-import { PostScriptTokenizer } from "./eps-tokenizer.js";
+import type { SvgWriter } from "./eps-svg-writer.js";
+import type { PostScriptTokenizer } from "./eps-tokenizer.js";
 
 // Thrown internally when nested array/dictionary literals go deeper than
 // MAX_NESTING_DEPTH, so malformed or adversarial input can't exhaust the
 // call stack; caught and turned into a warning in `run()`.
 class EpsNestingLimitError extends Error {}
+
+interface SavedGraphicsState {
+  state: GraphicsState;
+  colorComponentCount: number | null;
+}
 
 /** Interpret the constrained PostScript subset emitted by Asymptote. */
 export class PostScriptInterpreter {
@@ -49,16 +54,16 @@ export class PostScriptInterpreter {
     miterlimit: 10,
     dasharray: [],
     dashoffset: 0,
-    clipId: null,
+    clipId: null
   };
-  private readonly stateStack: GraphicsState[] = [];
+  private readonly stateStack: SavedGraphicsState[] = [];
   private readonly stack: Operand[] = [];
   private readonly warnings: string[] = [];
   private colorComponentCount: number | null = null;
 
   constructor(
     private readonly tokens: PostScriptTokenizer,
-    private readonly writer: SvgWriter,
+    private readonly writer: SvgWriter
   ) {}
 
   /** Consume all tokens and emit supported operations to the SVG writer. */
@@ -155,7 +160,7 @@ export class PostScriptInterpreter {
           point.x + dx1 + dx2,
           point.y + dy1 + dy2,
           point.x + dx1 + dx2 + dx3,
-          point.y + dy1 + dy2 + dy3,
+          point.y + dy1 + dy2 + dy3
         );
         break;
       }
@@ -174,11 +179,28 @@ export class PostScriptInterpreter {
         this.writer.closePath();
         break;
       case "gsave":
-        this.stateStack.push(cloneState(this.state));
+        this.stateStack.push({
+          state: cloneState(this.state),
+          colorComponentCount: this.colorComponentCount
+        });
         break;
-      case "grestore":
-        this.state = this.stateStack.pop() ?? this.state;
+      case "grestore": {
+        const saved = this.stateStack.pop();
+        if (saved) {
+          this.state = saved.state;
+          this.colorComponentCount = saved.colorComponentCount;
+        }
         break;
+      }
+      case "grestoreall": {
+        const saved = this.stateStack[0];
+        if (saved) {
+          this.state = saved.state;
+          this.colorComponentCount = saved.colorComponentCount;
+          this.stateStack.length = 0;
+        }
+        break;
+      }
       case "translate": {
         const [tx, ty] = this.popN(2);
         this.state.ctm = compose(this.state.ctm, { a: 1, b: 0, c: 0, d: 1, e: tx, f: ty });
@@ -198,7 +220,7 @@ export class PostScriptInterpreter {
           c: -Math.sin(r),
           d: Math.cos(r),
           e: 0,
-          f: 0,
+          f: 0
         });
         break;
       }
@@ -294,7 +316,7 @@ export class PostScriptInterpreter {
           this.writer.show(
             this.state,
             text,
-            textChars(text).map(() => [ax, ay]),
+            textChars(text).map(() => [ax, ay])
           );
         break;
       }
@@ -306,7 +328,7 @@ export class PostScriptInterpreter {
           this.writer.show(
             this.state,
             text,
-            textChars(text).map((value) => (value === char ? [cx, cy] : [0, 0])),
+            textChars(text).map((value) => (value === char ? [cx, cy] : [0, 0]))
           );
         }
         break;
@@ -320,7 +342,7 @@ export class PostScriptInterpreter {
           this.writer.show(
             this.state,
             text,
-            textChars(text).map((value) => (value === char ? [ax + cx, ay + cy] : [ax, ay])),
+            textChars(text).map((value) => (value === char ? [ax + cx, ay + cy] : [ax, ay]))
           );
         }
         break;
@@ -344,7 +366,7 @@ export class PostScriptInterpreter {
         this.state.dasharray = Array.isArray(arr)
           ? arr.filter(
               (value): value is number =>
-                typeof value === "number" && Number.isFinite(value) && value >= 0,
+                typeof value === "number" && Number.isFinite(value) && value >= 0
             )
           : [];
         this.state.dashoffset = typeof offset === "number" && Number.isFinite(offset) ? offset : 0;
@@ -420,7 +442,6 @@ export class PostScriptInterpreter {
         if (!this.writer.endNativeLabel()) this.warn("ignored unmatched native-label end marker");
         break;
       case "showpage":
-      case "grestoreall":
         break;
       default:
         this.warn(`ignored unsupported operator '${tok}'`);
@@ -508,7 +529,7 @@ export class PostScriptInterpreter {
           x2: values[3],
           y2: values[4],
           r2: values[5],
-          stops,
+          stops
         };
   }
 
@@ -552,7 +573,7 @@ export class PostScriptInterpreter {
       radius,
       startAngle,
       endAngle,
-      u.x * v.y - u.y * v.x > 0,
+      u.x * v.y - u.y * v.x > 0
     );
   }
 }

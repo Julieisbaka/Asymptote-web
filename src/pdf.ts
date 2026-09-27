@@ -191,7 +191,7 @@ function svgDimensions(svg: string): SvgDimensions {
     minX: viewBox?.length === 4 && Number.isFinite(viewBox[0]) ? viewBox[0] : 0,
     minY: viewBox?.length === 4 && Number.isFinite(viewBox[1]) ? viewBox[1] : 0,
     width: width ?? viewBoxWidth ?? 100,
-    height: height ?? viewBoxHeight ?? 100,
+    height: height ?? viewBoxHeight ?? 100
   };
 }
 
@@ -208,12 +208,12 @@ function resolveMargin(margin: PdfMargin | undefined): ResolvedMargin {
     top: margin.top ?? 0,
     right: margin.right ?? 0,
     bottom: margin.bottom ?? 0,
-    left: margin.left ?? 0,
+    left: margin.left ?? 0
   };
   for (const [name, value] of Object.entries(resolved)) {
     if (!Number.isFinite(value) || value < 0) {
       throw new RangeError(
-        `asymptote-web/pdf: margin.${name} must be a non-negative finite number`,
+        `asymptote-web/pdf: margin.${name} must be a non-negative finite number`
       );
     }
   }
@@ -243,12 +243,12 @@ function expandSvgViewport(svg: string, dimensions: SvgDimensions, margin: Resol
 function shiftTextRuns(
   runs: readonly PdfTextRun[],
   dimensions: SvgDimensions,
-  margin: ResolvedMargin,
+  margin: ResolvedMargin
 ): PdfTextRun[] {
   return runs.map((run) => ({
     ...run,
     x: run.x - dimensions.minX + margin.left,
-    y: run.y - dimensions.minY + margin.top,
+    y: run.y - dimensions.minY + margin.top
   }));
 }
 
@@ -287,7 +287,7 @@ function extractSvgTextRuns(svg: string): PdfTextRun[] {
       fontFamily: node.getAttribute("font-family") ?? undefined,
       color: node.getAttribute("fill") ?? undefined,
       opacity: Number.parseFloat(node.getAttribute("opacity") ?? "1"),
-      rotate: transformRotation(node.getAttribute("transform")),
+      rotate: transformRotation(node.getAttribute("transform"))
     });
   }
   return runs;
@@ -299,7 +299,7 @@ function blobToDataUrl(blob: Blob): Promise<string> {
     const reader = new FileReader();
     reader.addEventListener("load", () => resolve(String(reader.result)));
     reader.addEventListener("error", () =>
-      reject(reader.error ?? new Error("asymptote-web/pdf: failed to read SVG blob")),
+      reject(reader.error ?? new Error("asymptote-web/pdf: failed to read SVG blob"))
     );
     reader.readAsDataURL(blob);
   });
@@ -324,7 +324,7 @@ function canvasToBlob(canvas: HTMLCanvasElement, quality?: number): Promise<Blob
         else reject(new Error("asymptote-web/pdf: canvas did not produce a JPEG blob"));
       },
       "image/jpeg",
-      quality,
+      quality
     );
   });
 }
@@ -336,7 +336,7 @@ async function rasterizeSvgToJpeg(
   height: number,
   scale: number,
   background: string | null,
-  quality?: number,
+  quality?: number
 ): Promise<Uint8Array> {
   if (typeof document === "undefined") {
     throw new Error("asymptote-web/pdf: SVG rasterization requires browser DOM and canvas APIs");
@@ -438,11 +438,11 @@ function rgb(color: string | undefined): [number, number, number] {
             .join("")
         : hex[1];
     return [0, 2, 4].map(
-      (offset) => Number.parseInt(value.slice(offset, offset + 2), 16) / 255,
+      (offset) => Number.parseInt(value.slice(offset, offset + 2), 16) / 255
     ) as [number, number, number];
   }
   const fn = /^rgb\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*\)$/i.exec(
-    color.trim(),
+    color.trim()
   );
   if (fn) {
     return [Number(fn[1]) / 255, Number(fn[2]) / 255, Number(fn[3]) / 255];
@@ -458,7 +458,7 @@ function textOperators(
   sourceWidth: number,
   sourceHeight: number,
   textMode: "invisible" | "visible" | "none",
-  gstateIds: readonly (number | undefined)[] = [],
+  gstateIds: readonly (number | undefined)[] = []
 ): string {
   if (textMode === "none" || runs.length === 0) return "";
   const scaleX = pageWidth / sourceWidth;
@@ -481,7 +481,7 @@ function textOperators(
         `${pdfNumber(r)} ${pdfNumber(g)} ${pdfNumber(b)} rg`,
         `${pdfNumber(cos)} ${pdfNumber(sin)} ${pdfNumber(-sin)} ${pdfNumber(cos)} ${pdfNumber(x)} ${pdfNumber(y)} Tm`,
         `${pdfLiteralText(run.text)} Tj`,
-        "ET",
+        "ET"
       ].join("\n");
     })
     .join("\n");
@@ -504,9 +504,9 @@ function metadataObject(metadata: PdfMetadata): string | undefined {
     ["Author", metadata.author],
     ["Subject", metadata.subject],
     ["Keywords", metadata.keywords],
-    ["Creator", metadata.creator ?? "asymptote-web/pdf"],
+    ["Creator", metadata.creator ?? "asymptote-web/pdf"]
   ].filter(
-    (entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0,
+    (entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0
   );
   if (entries.length === 0) return undefined;
   return `<< ${entries.map(([key, value]) => `/${key} <${hexUtf16(value)}>`).join(" ")} >>`;
@@ -542,7 +542,7 @@ function buildPdf(objects: PdfObject[], rootObjectId: number, infoObjectId?: num
  */
 export function imagesToPdfBytes(
   pages: readonly PdfImagePage[],
-  options: ImagesToPdfOptions = {},
+  options: ImagesToPdfOptions = {}
 ): Uint8Array {
   if (pages.length === 0)
     throw new TypeError("asymptote-web/pdf: at least one image page is required");
@@ -551,7 +551,7 @@ export function imagesToPdfBytes(
   const pageTextModes = pages.map((page) => page.textMode ?? options.textMode ?? "invisible");
   const gstateCounts = pages.map(
     (page, index) =>
-      (page.textRuns ?? []).filter((run) => needsTextOpacity(run, pageTextModes[index])).length,
+      (page.textRuns ?? []).filter((run) => needsTextOpacity(run, pageTextModes[index])).length
   );
   const gstateStartId = fontObjectId + 3;
   const gstateCount = gstateCounts.reduce((sum, count) => sum + count, 0);
@@ -577,7 +577,7 @@ export function imagesToPdfBytes(
     const gstateOffset = gstateCounts.slice(0, index).reduce((sum, count) => sum + count, 0);
     let nextGstate = gstateOffset;
     const gstateIds = (page.textRuns ?? []).map((run) =>
-      needsTextOpacity(run, pageTextModes[index]) ? gstateStartId + nextGstate++ : undefined,
+      needsTextOpacity(run, pageTextModes[index]) ? gstateStartId + nextGstate++ : undefined
     );
     const gstates = gstateIds.some((id) => id !== undefined)
       ? ` /ExtGState << ${gstateIds.flatMap((id, runIndex) => (id === undefined ? [] : [`/GS${runIndex} ${id} 0 R`])).join(" ")} >>`
@@ -590,7 +590,7 @@ export function imagesToPdfBytes(
       pageWidth,
       pageHeight,
       pageTextModes[index],
-      gstateIds,
+      gstateIds
     );
     const imageName = `Im${index}`;
     const content = `q\n${pdfNumber(pageWidth)} 0 0 ${pdfNumber(pageHeight)} 0 0 cm\n/${imageName} Do\nQ\n${text}`;
@@ -599,37 +599,37 @@ export function imagesToPdfBytes(
     objects.push(
       {
         id: pageObjectId,
-        body: `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pdfNumber(pageWidth)} ${pdfNumber(pageHeight)}] /Resources << /XObject << /${imageName} ${imageObjectId} 0 R >> /Font << /F1 ${fontObjectId} 0 R /F2 ${fontObjectId + 1} 0 R /F3 ${fontObjectId + 2} 0 R >>${gstates} >> /Contents ${contentObjectId} 0 R >>`,
+        body: `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pdfNumber(pageWidth)} ${pdfNumber(pageHeight)}] /Resources << /XObject << /${imageName} ${imageObjectId} 0 R >> /Font << /F1 ${fontObjectId} 0 R /F2 ${fontObjectId + 1} 0 R /F3 ${fontObjectId + 2} 0 R >>${gstates} >> /Contents ${contentObjectId} 0 R >>`
       },
       {
         id: imageObjectId,
         body: concat([
           utf8(
-            `<< /Type /XObject /Subtype /Image /Width ${Math.round(page.imageWidth)} /Height ${Math.round(page.imageHeight)} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${page.image.length} >>\nstream\n`,
+            `<< /Type /XObject /Subtype /Image /Width ${Math.round(page.imageWidth)} /Height ${Math.round(page.imageHeight)} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${page.image.length} >>\nstream\n`
           ),
           page.image,
-          utf8("\nendstream"),
-        ]),
+          utf8("\nendstream")
+        ])
       },
       {
         id: contentObjectId,
         body: concat([
           utf8(`<< /Length ${contentBytes.length} >>\nstream\n`),
           contentBytes,
-          utf8("\nendstream"),
-        ]),
-      },
+          utf8("\nendstream")
+        ])
+      }
     );
   }
 
   objects.splice(1, 0, {
     id: 2,
-    body: `<< /Type /Pages /Kids [${pageObjects.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageObjects.length} >>`,
+    body: `<< /Type /Pages /Kids [${pageObjects.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageObjects.length} >>`
   });
   objects.push(
     { id: fontObjectId, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>" },
     { id: fontObjectId + 1, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>" },
-    { id: fontObjectId + 2, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>" },
+    { id: fontObjectId + 2, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>" }
   );
   for (let index = 0; index < pages.length; index += 1) {
     let nextGstate = gstateCounts.slice(0, index).reduce((sum, count) => sum + count, 0);
@@ -638,7 +638,7 @@ export function imagesToPdfBytes(
       const opacity = Math.max(0, Math.min(1, run.opacity ?? 1));
       objects.push({
         id: gstateStartId + nextGstate++,
-        body: `<< /Type /ExtGState /ca ${pdfNumber(opacity)} /CA ${pdfNumber(opacity)} >>`,
+        body: `<< /Type /ExtGState /ca ${pdfNumber(opacity)} /CA ${pdfNumber(opacity)} >>`
       });
     }
   }
@@ -662,10 +662,10 @@ export function imageToPdfBytes(image: Uint8Array, options: ImageToPdfOptions): 
         pageWidth: options.pageWidth,
         pageHeight: options.pageHeight,
         textMode: options.textMode,
-        textRuns: options.textRuns,
-      },
+        textRuns: options.textRuns
+      }
     ],
-    options,
+    options
   );
 }
 
@@ -686,7 +686,7 @@ export async function svgToPdfBytes(svg: string, options: PdfOptions = {}): Prom
   const rasterSvg = expandSvgViewport(
     svg,
     { ...dimensions, width: contentWidth, height: contentHeight },
-    margin,
+    margin
   );
   const textRuns = shiftTextRuns(options.textRuns ?? extractSvgTextRuns(svg), dimensions, margin);
   const image = await rasterizeSvgToJpeg(
@@ -695,7 +695,7 @@ export async function svgToPdfBytes(svg: string, options: PdfOptions = {}): Prom
     height,
     scale,
     options.background === undefined ? DEFAULT_BACKGROUND : options.background,
-    options.quality,
+    options.quality
   );
   return imageToPdfBytes(image, {
     ...options,
@@ -703,7 +703,7 @@ export async function svgToPdfBytes(svg: string, options: PdfOptions = {}): Prom
     imageHeight: Math.round(height * scale),
     pageWidth: width,
     pageHeight: height,
-    textRuns,
+    textRuns
   });
 }
 
@@ -716,7 +716,7 @@ export async function svgToPdfBlob(svg: string, options: PdfOptions = {}): Promi
 export async function renderToPdfBlob(
   engine: AsymptoteEngine,
   source: string,
-  options: RenderToPdfOptions = {},
+  options: RenderToPdfOptions = {}
 ): Promise<Blob> {
   const result = await engine.render(source, { ...options.render, format: "svg" });
   return svgToPdfBlob(result.svg, options);
@@ -727,7 +727,7 @@ export async function downloadPdf(
   engine: AsymptoteEngine,
   source: string,
   filename = "asymptote.pdf",
-  options: RenderToPdfOptions = {},
+  options: RenderToPdfOptions = {}
 ): Promise<RenderResult> {
   const result = await engine.render(source, { ...options.render, format: "svg" });
   const blob = await svgToPdfBlob(result.svg, options);

@@ -239,7 +239,7 @@ draw(shift(2,0,0)*unitcube, red);
           for (const [b, s] of [
             [btn, status],
             [pdfBtn, status],
-            [btn3d, status3d],
+            [btn3d, status3d]
           ]) {
             s.textContent = "Ready";
             s.className = "status info";
@@ -270,7 +270,7 @@ draw(shift(2,0,0)*unitcube, red);
         const height = Number.parseFloat(svg.getAttribute("height") || "150");
         return {
           width: Number.isFinite(width) ? width : 150,
-          height: Number.isFinite(height) ? height : 150,
+          height: Number.isFinite(height) ? height : 150
         };
       }
 
@@ -292,8 +292,8 @@ draw(shift(2,0,0)*unitcube, red);
               y: height + 28,
               fontSize: Math.max(12, Math.min(24, width / 16)),
               fontFamily: "Helvetica, Arial, sans-serif",
-              color: "#0000ff",
-            },
+              color: "#0000ff"
+            }
           };
         }
 
@@ -313,13 +313,13 @@ draw(shift(2,0,0)*unitcube, red);
               x1: next.x,
               y1: next.y,
               x2: next.x + next.width,
-              y2: next.y + next.height,
+              y2: next.y + next.height
             };
           return {
             x1: Math.min(box.x1, next.x),
             y1: Math.min(box.y1, next.y),
             x2: Math.max(box.x2, next.x + next.width),
-            y2: Math.max(box.y2, next.y + next.height),
+            y2: Math.max(box.y2, next.y + next.height)
           };
         }, null);
         for (const path of mountedLabelPaths) path.remove();
@@ -336,8 +336,8 @@ draw(shift(2,0,0)*unitcube, red);
               y: height + 28,
               fontSize: Math.max(12, Math.min(24, width / 16)),
               fontFamily: "Helvetica, Arial, sans-serif",
-              color: "#0000ff",
-            },
+              color: "#0000ff"
+            }
           };
         }
 
@@ -350,8 +350,8 @@ draw(shift(2,0,0)*unitcube, red);
             y: bounds.y2,
             fontSize: labelHeight / 0.72,
             fontFamily: "Helvetica, Arial, sans-serif",
-            color: "#0000ff",
-          },
+            color: "#0000ff"
+          }
         };
       }
 
@@ -416,14 +416,14 @@ draw(shift(2,0,0)*unitcube, red);
           const { svgToPdfBlob } = await import("../dist/pdf.js");
           const [previewResult, pdfBackgroundResult] = await Promise.all([
             asy.render(source),
-            asy.render(pdfBackgroundSource(source)),
+            asy.render(pdfBackgroundSource(source))
           ]);
           const pdfSource = demoPdfSource(previewResult.svg, pdfBackgroundResult.svg);
           const pdf = await svgToPdfBlob(pdfSource.svg, {
             title: "Asymptote Web demo export",
             scale: 3,
             textMode: "visible",
-            textRuns: [pdfSource.textRun],
+            textRuns: [pdfSource.textRun]
           });
           downloadBlob(pdf, "asymptote-web-demo.pdf");
           output.innerHTML = previewResult.svg;

@@ -41,7 +41,7 @@ function colorStop(value: number[], colorSpace?: Operand): ParsedStop | null {
       return {
         offset: 0,
         color: toColor(value.slice(0, 3)),
-        opacity: Math.max(0, Math.min(1, value[3])),
+        opacity: Math.max(0, Math.min(1, value[3]))
       };
   }
   return null;
@@ -52,7 +52,7 @@ export function parseStops(
   value: Operand | undefined,
   c1?: Operand,
   c2?: Operand,
-  colorSpace?: Operand,
+  colorSpace?: Operand
 ): ParsedStop[] | null {
   const flat = numbers(value);
   const components = colorComponentCount(colorSpace) ?? 3;
@@ -101,7 +101,7 @@ export function gradientFromValue(value: Operand | undefined): Gradient | null {
         x2: coords[3],
         y2: coords[4],
         r2: coords[5],
-        stops,
+        stops
       };
 }
 

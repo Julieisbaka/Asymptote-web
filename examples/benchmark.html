@@ -195,7 +195,7 @@ label("sin(x) exp(-x/8)", (12, 0.8), blue);
           medianMs: median(durations),
           minMs: Math.min(...durations),
           maxMs: Math.max(...durations),
-          totalMs: durations.reduce((sum, value) => sum + value, 0),
+          totalMs: durations.reduce((sum, value) => sum + value, 0)
         };
         lastReport = reportWithStats;
 
@@ -207,7 +207,7 @@ label("sin(x) exp(-x/8)", (12, 0.8), blue);
         addMetric("Total", formatMs(reportWithStats.totalMs));
         addMetric(
           "Memory delta",
-          report.memoryDeltaBytes === null ? "Unavailable" : formatBytes(report.memoryDeltaBytes),
+          report.memoryDeltaBytes === null ? "Unavailable" : formatBytes(report.memoryDeltaBytes)
         );
 
         resultsBody.replaceChildren();
@@ -246,7 +246,7 @@ label("sin(x) exp(-x/8)", (12, 0.8), blue);
             iteration,
             durationMs,
             heapUsedBytes: heapBytes(),
-            outputBytes,
+            outputBytes
           });
         }
 
@@ -262,7 +262,7 @@ label("sin(x) exp(-x/8)", (12, 0.8), blue);
           heapAfterBytes: heapAfter,
           memoryDeltaBytes:
             heapBefore === null || heapAfter === null ? null : heapAfter - heapBefore,
-          samples,
+          samples
         });
         status.textContent = `Complete: ${ITERATIONS} measured renders.`;
         runButton.disabled = false;
@@ -279,7 +279,7 @@ label("sin(x) exp(-x/8)", (12, 0.8), blue);
       downloadButton.addEventListener("click", () => {
         if (!lastReport) return;
         const blob = new Blob([JSON.stringify(lastReport, null, 2)], {
-          type: "application/json",
+          type: "application/json"
         });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");

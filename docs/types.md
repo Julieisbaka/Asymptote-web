@@ -153,7 +153,7 @@ needed with Vite unless `asymptote-web` is excluded from `optimizeDeps`.
 type UnsafeSvgCustomizer = (svg: SVGSVGElement) => void;
 type UnsafeWebGLCustomizer = (
   iframe: HTMLIFrameElement,
-  document: Document,
+  document: Document
 ) => void | Promise<void>;
 ```
 
@@ -173,7 +173,7 @@ interface AsymptoteEngine {
   mountWebGL(
     target: string | Element,
     source: string,
-    options?: Omit<RenderOptions, "format">,
+    options?: Omit<RenderOptions, "format">
   ): Promise<RenderResult>;
   readonly unsafe: {
     getSvg(target: string | Element): SVGSVGElement | null;
@@ -182,13 +182,13 @@ interface AsymptoteEngine {
       target: string | Element,
       source: string,
       customize: UnsafeSvgCustomizer,
-      options?: RenderOptions,
+      options?: RenderOptions
     ): Promise<RenderResult>;
     mountWebGL(
       target: string | Element,
       source: string,
       customize: UnsafeWebGLCustomizer,
-      options?: Omit<RenderOptions, "format">,
+      options?: Omit<RenderOptions, "format">
     ): Promise<RenderResult>;
   };
 }
@@ -279,7 +279,7 @@ Key functions:
 function renderToPdfBlob(
   engine: AsymptoteEngine,
   source: string,
-  options?: RenderToPdfOptions,
+  options?: RenderToPdfOptions
 ): Promise<Blob>;
 
 function svgToPdfBlob(svg: string, options?: PdfOptions): Promise<Blob>;
@@ -288,7 +288,7 @@ function downloadPdf(
   engine: AsymptoteEngine,
   source: string,
   filename?: string,
-  options?: RenderToPdfOptions,
+  options?: RenderToPdfOptions
 ): Promise<RenderResult>;
 
 function imagesToPdfBytes(pages: readonly PdfImagePage[], options?: ImagesToPdfOptions): Uint8Array;

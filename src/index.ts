@@ -27,7 +27,7 @@ import {
   type RenderResult,
   type WebGLLabel,
   type UnsafeSvgCustomizer,
-  type UnsafeWebGLCustomizer,
+  type UnsafeWebGLCustomizer
 } from "./types.js";
 
 export type { EpsToSvgOptions, EpsToSvgResult } from "./eps-to-svg.js";
@@ -47,7 +47,7 @@ export type {
   SvgFontMap,
   WebGLLabel,
   UnsafeSvgCustomizer,
-  UnsafeWebGLCustomizer,
+  UnsafeWebGLCustomizer
 } from "./types.js";
 
 /**
@@ -88,7 +88,7 @@ export function getAssetUrls(baseUrl?: string): AssetUrls {
   return {
     glueUrl: new URL("asymptote.js", base).href,
     wasmUrl: new URL("asymptote.wasm", base).href,
-    asyglUrl: new URL("asygl.js", base).href,
+    asyglUrl: new URL("asygl.js", base).href
   };
 }
 
@@ -108,7 +108,7 @@ function updateSvgElement(target: Element, svgText: string): boolean {
     current.setAttribute(attribute.name, attribute.value);
   }
   current.replaceChildren(
-    ...Array.from(next.childNodes).map((node) => document.importNode(node, true)),
+    ...Array.from(next.childNodes).map((node) => document.importNode(node, true))
   );
   return true;
 }
@@ -165,7 +165,7 @@ function containWebGLScroll(
   html: string,
   containScroll = true,
   primeZoom = true,
-  reducedMotion = false,
+  reducedMotion = false
 ): string {
   const guard = `<script>(function(){function stop(event){event.preventDefault()}document.addEventListener("wheel",stop,{capture:true,passive:false});document.addEventListener("touchmove",stop,{capture:true,passive:false})})()</script>`;
   const prime = `<script>(function(){var attempts=0;function prime(){var canvas=document.getElementById("Asymptote");if(!canvas||!canvas.onmousedown){if(++attempts<120)setTimeout(prime,16);return}canvas.dispatchEvent(new MouseEvent("mousedown",{bubbles:true,clientX:0,clientY:0}));canvas.dispatchEvent(new MouseEvent("mouseup",{bubbles:true}))}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",prime,{once:true});else prime()})()</script>`;
@@ -194,7 +194,7 @@ function containWebGLScroll(
 function waitForIframeDocument(iframe: HTMLIFrameElement, timeoutMs = 15000): Promise<Document> {
   if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
     return Promise.reject(
-      new TypeError("asymptote-web: WebGL iframe timeout must be a non-negative finite number"),
+      new TypeError("asymptote-web: WebGL iframe timeout must be a non-negative finite number")
     );
   }
   return new Promise((resolve, reject) => {
@@ -249,13 +249,13 @@ function createWebGLIframe(html: string, renderOptions: RenderOptions): HTMLIFra
     html,
     renderOptions.containWebGLScroll !== false,
     renderOptions.primeWebGLZoom !== false && !reducedMotion,
-    reducedMotion,
+    reducedMotion
   );
   const styles = {
     border: "none",
     width: "100%",
     height: "100%",
-    ...renderOptions.webglIframeStyles,
+    ...renderOptions.webglIframeStyles
   };
   for (const [property, value] of Object.entries(styles)) {
     iframe.style.setProperty(property, value);
@@ -323,7 +323,7 @@ export async function createAsymptote(options: CreateOptions = {}): Promise<Asym
 
     async renderBatch(
       sources: readonly string[],
-      renderOptions: RenderOptions = {},
+      renderOptions: RenderOptions = {}
     ): Promise<RenderResult[]> {
       const results: RenderResult[] = [];
       for (let index = 0; index < sources.length; index += 1) {
@@ -341,7 +341,7 @@ export async function createAsymptote(options: CreateOptions = {}): Promise<Asym
     async download(
       source: string,
       filename?: string,
-      renderOptions: RenderOptions = {},
+      renderOptions: RenderOptions = {}
     ): Promise<RenderResult> {
       const result = await runAsymptote(source, renderOptions, resolvedOptions);
       const blob = new Blob([result.output], { type: outputMimeType(result.format) });
@@ -359,7 +359,7 @@ export async function createAsymptote(options: CreateOptions = {}): Promise<Asym
     async mount(
       target: string | Element,
       source: string,
-      renderOptions: RenderOptions = {},
+      renderOptions: RenderOptions = {}
     ): Promise<RenderResult> {
       const result = await runAsymptote(source, renderOptions, resolvedOptions);
 
@@ -390,7 +390,7 @@ export async function createAsymptote(options: CreateOptions = {}): Promise<Asym
         target: string | Element,
         source: string,
         customize: UnsafeSvgCustomizer,
-        renderOptions: RenderOptions = {},
+        renderOptions: RenderOptions = {}
       ): Promise<RenderResult> {
         const result = await runAsymptote(source, renderOptions, resolvedOptions);
         if (result.format !== "svg") {
@@ -407,12 +407,12 @@ export async function createAsymptote(options: CreateOptions = {}): Promise<Asym
         target: string | Element,
         source: string,
         customize: UnsafeWebGLCustomizer,
-        renderOptions: Omit<RenderOptions, "format"> = {},
+        renderOptions: Omit<RenderOptions, "format"> = {}
       ): Promise<RenderResult> {
         const result = await runAsymptote(
           source,
           { ...renderOptions, format: "webgl" },
-          resolvedOptions,
+          resolvedOptions
         );
         const el = typeof target === "string" ? document.querySelector(target) : target;
         if (!el) {
@@ -428,18 +428,18 @@ export async function createAsymptote(options: CreateOptions = {}): Promise<Asym
           throw error;
         }
         return result;
-      },
+      }
     },
 
     async mountWebGL(
       target: string | Element,
       source: string,
-      renderOptions: RenderOptions = {},
+      renderOptions: RenderOptions = {}
     ): Promise<RenderResult> {
       const result = await runAsymptote(
         source,
         { ...renderOptions, format: "webgl" },
-        resolvedOptions,
+        resolvedOptions
       );
 
       const el = typeof target === "string" ? document.querySelector(target) : target;
@@ -463,7 +463,7 @@ export async function createAsymptote(options: CreateOptions = {}): Promise<Asym
       }
 
       return result;
-    },
+    }
   };
 
   return engine;

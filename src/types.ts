@@ -256,7 +256,7 @@ export type UnsafeSvgCustomizer = (svg: SVGSVGElement) => void;
 /** **WARNING: unsafe API.** Direct access to the generated WebGL iframe. */
 export type UnsafeWebGLCustomizer = (
   iframe: HTMLIFrameElement,
-  document: Document,
+  document: Document
 ) => void | Promise<void>;
 
 /**
@@ -344,13 +344,13 @@ ull`
       target: string | Element,
       source: string,
       customize: UnsafeSvgCustomizer,
-      options?: RenderOptions,
+      options?: RenderOptions
     ): Promise<RenderResult>;
     mountWebGL(
       target: string | Element,
       source: string,
       customize: UnsafeWebGLCustomizer,
-      options?: Omit<RenderOptions, "format">,
+      options?: Omit<RenderOptions, "format">
     ): Promise<RenderResult>;
   };
 
@@ -372,7 +372,7 @@ ull`
   mountWebGL(
     target: string | Element,
     source: string,
-    options?: Omit<RenderOptions, "format">,
+    options?: Omit<RenderOptions, "format">
   ): Promise<RenderResult>;
 }
 
@@ -389,7 +389,7 @@ export class AsymptoteError extends Error {
     message: string,
     exitCode: number,
     stderr: string,
-    diagnostics: CompilerDiagnostic[] = [],
+    diagnostics: CompilerDiagnostic[] = []
   ) {
     super(message);
     this.name = "AsymptoteError";
