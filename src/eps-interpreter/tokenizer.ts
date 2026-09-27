@@ -1,6 +1,4 @@
-/**
- * Streaming tokenizer for the constrained PostScript emitted by Asymptote.
- */
+/** Streaming tokenizer for the constrained PostScript emitted by Asymptote. */
 export class PostScriptTokenizer {
   private index = 0;
 

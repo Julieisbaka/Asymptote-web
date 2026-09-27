@@ -1,5 +1,5 @@
-import type { Matrix } from "./eps-graphics.js";
-import type { Dictionary, Operand } from "./eps-interpreter-types.js";
+import type { Matrix } from "../eps-graphics.js";
+import type { Dictionary, Operand } from "./interpreter-types.js";
 
 /** Matches the numeric token forms emitted by Asymptote's EPS writer. */
 export const NUMBER_RE = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;

@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.3.2 - In development
+## 0.3.2
+
+- Internal stuff
 
 ## 0.3.1
 

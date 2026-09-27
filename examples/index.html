@@ -50,6 +50,41 @@
         gap: 0.5rem;
       }
 
+      .example-picker {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .example-picker-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .example-picker-row label {
+        flex: 0 0 100%;
+      }
+
+      .example-picker select {
+        flex: 1 1 12rem;
+        min-width: 0;
+        padding: 0.55rem 0.65rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #fff;
+        color: #222;
+        font: inherit;
+      }
+
+      .example-description {
+        color: #64748b;
+        font-size: 0.82rem;
+        line-height: 1.45;
+        min-height: 2.4em;
+      }
+
       label {
         font-weight: 600;
         font-size: 0.9rem;
@@ -152,6 +187,22 @@
     <div class="layout">
       <div class="panel">
         <label for="source">Asymptote source</label>
+        <div class="example-picker">
+          <div class="example-picker-row">
+            <label for="example-select">2D examples</label>
+            <select id="example-select">
+              <option value="pentagram">Pentagram &amp; PDF text</option>
+              <option value="damped-wave">Damped wave plot</option>
+              <option value="lissajous">Lissajous curve</option>
+            </select>
+            <button id="load-example-btn" class="render-btn secondary" type="button">
+              Load example
+            </button>
+          </div>
+          <p id="example-description" class="example-description" aria-live="polite">
+            A filled star with a selectable-text label for trying the optional PDF export.
+          </p>
+        </div>
         <textarea id="source" spellcheck="false">
 size(150);
 
@@ -189,6 +240,22 @@ label("Selectable PDF text", (0,-1.35), blue);
     <div class="layout">
       <div class="panel">
         <label for="source3d">Asymptote source (3D)</label>
+        <div class="example-picker">
+          <div class="example-picker-row">
+            <label for="example3d-select">3D examples</label>
+            <select id="example3d-select">
+              <option value="sphere-cube">Sphere &amp; cube</option>
+              <option value="solid-assembly">Transformed solids</option>
+              <option value="orbital-scene">Orbital arrangement</option>
+            </select>
+            <button id="load3d-example-btn" class="render-btn secondary" type="button">
+              Load example
+            </button>
+          </div>
+          <p id="example3d-description" class="example-description" aria-live="polite">
+            A sphere and cube establish the basics of the interactive 3D viewer.
+          </p>
+        </div>
         <textarea id="source3d" spellcheck="false">
 import three;
 currentprojection=orthographic(5,4,2);
@@ -230,6 +297,141 @@ draw(shift(2,0,0)*unitcube, red);
       const btn3d = document.getElementById("render3d-btn");
       const status3d = document.getElementById("status3d");
       const output3d = document.getElementById("output3d-panel");
+      const exampleSelect = document.getElementById("example-select");
+      const exampleDescription = document.getElementById("example-description");
+      const example3dSelect = document.getElementById("example3d-select");
+      const example3dDescription = document.getElementById("example3d-description");
+
+      const examples2d = {
+        pentagram: {
+          description:
+            "A filled star with a selectable-text label for trying the optional PDF export.",
+          source: `size(150);
+
+// Draw a coloured pentagram
+int n = 5;
+real r = 1;
+pair[] pts;
+for (int k = 0; k < n; ++k)
+  pts.push(r * dir(90 + 360 * k / n));
+
+path star;
+for (int k = 0; k < n; ++k)
+  star = star -- pts[(2*k) % n];
+star = star -- cycle;
+
+filldraw(star, yellow, black+1.5);
+label("Selectable PDF text", (0,-1.35), blue);
+`
+        },
+        "damped-wave": {
+          description:
+            "A sampled function plot with a grid, baseline, marked integer samples, and an annotation. Try changing the decay rate or frequency.",
+          source: `size(220);
+import graph;
+import math;
+
+real f(real x) { return sin(x) * exp(-x / 8); }
+
+add(shift(0, -1) * grid(18, 2, gray + 0.4bp));
+draw(graph(f, 0, 18, n=500), blue + 1.5bp);
+draw((0, 0)--(18, 0), black + 0.8bp);
+for (int i = 0; i <= 18; ++i) {
+  draw((i, -0.05)--(i, 0.05), black + 0.5bp);
+  if (i % 3 == 0) dot((i, f(i)), red + 1bp);
+}
+label("sin(x) exp(-x/8)", (12, 0.8), blue);
+`
+        },
+        lissajous: {
+          description:
+            "Builds a smooth-looking parametric curve by sampling a pair-valued function. Change the frequency ratios to reshape its symmetry.",
+          source: `size(220);
+import math;
+
+pair curvePoint(real t) {
+  return (1.2 * cos(3 * t), 0.9 * sin(2 * t));
+}
+
+int samples = 360;
+path curve = curvePoint(0);
+for (int i = 1; i <= samples; ++i) {
+  real t = 2 * pi * i / samples;
+  curve = curve -- curvePoint(t);
+}
+
+draw((-1.5, 0)--(1.5, 0), gray + 0.5bp);
+draw((0, -1.2)--(0, 1.2), gray + 0.5bp);
+draw(curve, blue + 1.5bp);
+dot(curvePoint(0), red + 2bp);
+`
+        }
+      };
+
+      const examples3d = {
+        "sphere-cube": {
+          description: "A sphere and cube establish the basics of the interactive 3D viewer.",
+          source: `import three;
+currentprojection=orthographic(5,4,2);
+draw(unitsphere, blue);
+draw(shift(2,0,0)*unitcube, red);
+`
+        },
+        "solid-assembly": {
+          description:
+            "Composes spheres and cubes with nested scale and shift transforms. Change the camera or object sizes to explore the scene.",
+          source: `import three;
+currentprojection=orthographic(7,6,5);
+
+draw((-3,0,0)--(3,0,0), gray + 0.5bp);
+draw((0,-3,0)--(0,3,0), gray + 0.5bp);
+draw((0,0,-2)--(0,0,2), gray + 0.5bp);
+
+draw(scale3(1.25)*unitsphere, blue);
+draw(shift(2,0,0)*scale3(0.55)*unitsphere, red);
+draw(shift(-2,0,0)*scale3(0.65)*unitcube, green);
+draw(shift(0,1.8,0)*scale3(0.45)*unitcube, orange);
+draw(shift(0,-1.8,0)*scale3(0.4)*unitsphere, yellow);
+`
+        },
+        "orbital-scene": {
+          description:
+            "Places scaled solids around a center using a loop and trigonometric coordinates. Adjust the object count or orbit radius.",
+          source: `import three;
+import math;
+currentprojection=orthographic(7,6,5);
+
+draw(unitsphere, blue);
+int count = 8;
+real orbitRadius = 2.4;
+for (int i = 0; i < count; ++i) {
+  real angle = 2 * pi * i / count;
+  triple position = (orbitRadius * cos(angle), orbitRadius * sin(angle), 0.35 * sin(2 * angle));
+  if (i % 2 == 0)
+    draw(shift(position) * scale3(0.38) * unitsphere, red);
+  else
+    draw(shift(position) * scale3(0.38) * unitcube, orange);
+}
+`
+        }
+      };
+
+      function updateExampleDescription(select, examples, target) {
+        target.textContent = examples[select.value].description;
+      }
+
+      exampleSelect.addEventListener("change", () =>
+        updateExampleDescription(exampleSelect, examples2d, exampleDescription)
+      );
+      document.getElementById("load-example-btn").addEventListener("click", () => {
+        document.getElementById("source").value = examples2d[exampleSelect.value].source;
+      });
+      example3dSelect.addEventListener("change", () =>
+        updateExampleDescription(example3dSelect, examples3d, example3dDescription)
+      );
+      document.getElementById("load3d-example-btn").addEventListener("click", () => {
+        document.getElementById("source3d").value = examples3d[example3dSelect.value].source;
+      });
 
       let asy = null;
 
