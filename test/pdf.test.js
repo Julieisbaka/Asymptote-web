@@ -74,14 +74,14 @@ async function withMockSvgEnvironment(run) {
           return {
             fillStyle: "",
             fillRect() {},
-            drawImage() {},
+            drawImage() {}
           };
         },
         toBlob(callback) {
           callback(new Blob([jpeg], { type: "image/jpeg" }));
-        },
+        }
       };
-    },
+    }
   };
   globalThis.FileReader = MockFileReader;
   globalThis.Image = MockImage;
@@ -293,7 +293,7 @@ test("svgToPdfBytes accepts supported SVG length forms", async () => {
       [".5cm", 0.5],
       ["3.", 3],
       ["1E2pt", 100],
-      ["2e+1IN", 20],
+      ["2e+1IN", 20]
     ]) {
       const pdf = latin1(await svgToPdfBytes(`<svg width="${width}" height="7"></svg>`));
       assert.deepEqual(mediaBox(pdf), [expectedWidth, 7]);

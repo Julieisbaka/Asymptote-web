@@ -127,7 +127,7 @@ function severityFor(
         : label === "error" || label === "runtime" || (label === "note" && hasLocation)
           ? "error"
           : "info",
-    message: classified.message.trim(),
+    message: classified.message.trim()
   };
 }
 

@@ -72,25 +72,25 @@ test("preserves diagnostic severity parsing across rewritten branches", () => {
         "RuNtImE failed without colon",
         "note: background detail",
         "diagram.asy: 7.9: NoTe : located detail",
-        "warningly not a warning",
-      ].join("\n"),
+        "warningly not a warning"
+      ].join("\n")
     ),
     [
       {
         severity: "error",
         code: "syntax",
         message: "exploded",
-        raw: "ERROR  : [syntax] exploded",
+        raw: "ERROR  : [syntax] exploded"
       },
       {
         severity: "error",
         message: "failed without colon",
-        raw: "RuNtImE failed without colon",
+        raw: "RuNtImE failed without colon"
       },
       {
         severity: "info",
         message: "background detail",
-        raw: "note: background detail",
+        raw: "note: background detail"
       },
       {
         severity: "error",
@@ -98,13 +98,13 @@ test("preserves diagnostic severity parsing across rewritten branches", () => {
         sourceFile: "diagram.asy",
         line: 7,
         column: 9,
-        raw: "diagram.asy: 7.9: NoTe : located detail",
+        raw: "diagram.asy: 7.9: NoTe : located detail"
       },
       {
         severity: "info",
         message: "warningly not a warning",
-        raw: "warningly not a warning",
-      },
-    ],
+        raw: "warningly not a warning"
+      }
+    ]
   );
 });
