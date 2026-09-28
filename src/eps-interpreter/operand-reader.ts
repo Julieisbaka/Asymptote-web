@@ -52,7 +52,8 @@ export class OperandReader {
   readValue(token: string): Operand {
     if (token === "[") return this.readArray();
     if (token === "<<") return this.readDictionary();
-    if (token.startsWith("(") && token.endsWith(")")) return unescapePostScriptString(token);
+    if (token.startsWith("(") && token.endsWith(")"))
+      return unescapePostScriptString(token);
     if (NUMBER_RE.test(token)) return parseFloat(token);
     return token.startsWith("/") ? token.slice(1) : token;
   }

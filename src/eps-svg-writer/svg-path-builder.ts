@@ -101,11 +101,17 @@ export class SvgPathBuilder {
     const segments = Math.max(1, Math.ceil(Math.abs(sweep) / 90));
     const delta = sweep / segments;
     const start = (startDegrees * Math.PI) / 180;
-    const startPoint = { x: cx + radius * Math.cos(start), y: cy + radius * Math.sin(start) };
-    if (!this.pathStarted) this.appendPoint(state, "M", startPoint.x, startPoint.y);
+    const startPoint = {
+      x: cx + radius * Math.cos(start),
+      y: cy + radius * Math.sin(start)
+    };
+    if (!this.pathStarted)
+      this.appendPoint(state, "M", startPoint.x, startPoint.y);
     else {
       const current = this.userPoint(state);
-      if (Math.hypot(current.x - startPoint.x, current.y - startPoint.y) > 1e-7) {
+      if (
+        Math.hypot(current.x - startPoint.x, current.y - startPoint.y) > 1e-7
+      ) {
         this.appendPoint(state, "L", startPoint.x, startPoint.y);
       }
     }
@@ -113,8 +119,14 @@ export class SvgPathBuilder {
     for (let index = 0; index < segments; index += 1) {
       const nextAngle = angle + (delta * Math.PI) / 180;
       const factor = (4 / 3) * Math.tan((nextAngle - angle) / 4);
-      const p0 = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
-      const p3 = { x: cx + radius * Math.cos(nextAngle), y: cy + radius * Math.sin(nextAngle) };
+      const p0 = {
+        x: cx + radius * Math.cos(angle),
+        y: cy + radius * Math.sin(angle)
+      };
+      const p3 = {
+        x: cx + radius * Math.cos(nextAngle),
+        y: cy + radius * Math.sin(nextAngle)
+      };
       const p1 = {
         x: p0.x - factor * radius * Math.sin(angle),
         y: p0.y + factor * radius * Math.cos(angle)

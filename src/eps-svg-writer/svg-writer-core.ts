@@ -67,7 +67,15 @@ export class SvgWriterCore {
     endDegrees: number,
     counterClockwise: boolean
   ): void {
-    this.path.appendArc(state, cx, cy, radius, startDegrees, endDegrees, counterClockwise);
+    this.path.appendArc(
+      state,
+      cx,
+      cy,
+      radius,
+      startDegrees,
+      endDegrees,
+      counterClockwise
+    );
   }
 
   closePath(): void {
@@ -81,7 +89,12 @@ export class SvgWriterCore {
     pixels: string,
     imageMatrix: Matrix
   ): boolean {
-    if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0)
+    if (
+      !Number.isInteger(width) ||
+      !Number.isInteger(height) ||
+      width <= 0 ||
+      height <= 0
+    )
       return false;
     if (width * height > 262144 || pixels.length < width * height) return false;
     const rects: string[] = [];
@@ -89,11 +102,17 @@ export class SvgWriterCore {
       let column = 0;
       while (column < width) {
         const value = pixels.charCodeAt(row * width + column);
-        const gray = Math.max(0, Math.min(255, Number.isFinite(value) ? value : 0));
+        const gray = Math.max(
+          0,
+          Math.min(255, Number.isFinite(value) ? value : 0)
+        );
         let end = column + 1;
         while (end < width) {
           const next = pixels.charCodeAt(row * width + end);
-          const nextGray = Math.max(0, Math.min(255, Number.isFinite(next) ? next : 0));
+          const nextGray = Math.max(
+            0,
+            Math.min(255, Number.isFinite(next) ? next : 0)
+          );
           if (nextGray !== gray) break;
           end += 1;
         }
@@ -127,7 +146,9 @@ export class SvgWriterCore {
     const id = `asy-clip-${(this.clipCounter += 1)}`;
     const d = this.path.pathData();
     const path = `<path d="${d}"${evenodd ? ' clip-rule="evenodd"' : ""}/>`;
-    const content = state.clipId ? `<g clip-path="url(#${state.clipId})">${path}</g>` : path;
+    const content = state.clipId
+      ? `<g clip-path="url(#${state.clipId})">${path}</g>`
+      : path;
     this.defs.push(`<clipPath id="${id}">${content}</clipPath>`);
     state.clipId = id;
     this.newPath();
@@ -140,7 +161,8 @@ export class SvgWriterCore {
       return;
     }
     const clipAttr = state.clipId ? ` clip-path="url(#${state.clipId})"` : "";
-    const opacityAttr = state.opacity < 1 ? ` opacity="${formatOpacity(state.opacity)}"` : "";
+    const opacityAttr =
+      state.opacity < 1 ? ` opacity="${formatOpacity(state.opacity)}"` : "";
     if (mode === "stroke") {
       const dash =
         state.dasharray.length > 0
@@ -153,8 +175,12 @@ export class SvgWriterCore {
       );
     } else {
       const rule = mode === "eofill" ? ' fill-rule="evenodd"' : "";
-      const fill = state.gradient ? this.gradientFill(state.gradient, state) : state.fill;
-      this.pushElement(`<path d="${d}" fill="${fill}"${rule}${opacityAttr}${clipAttr}/>`);
+      const fill = state.gradient
+        ? this.gradientFill(state.gradient, state)
+        : state.fill;
+      this.pushElement(
+        `<path d="${d}" fill="${fill}"${rule}${opacityAttr}${clipAttr}/>`
+      );
     }
     this.newPath();
   }
@@ -172,7 +198,9 @@ export class SvgWriterCore {
         .filter(([name]) => name !== "kind" && name !== "stops")
         .flatMap(([, value]) => [String(value)]),
       ...transform.map(String),
-      ...gradient.stops.flatMap((stop) => [stop.offset, stop.color, stop.opacity].map(String))
+      ...gradient.stops.flatMap((stop) =>
+        [stop.offset, stop.color, stop.opacity].map(String)
+      )
     ].join("|");
     const existingId = this.gradientIds.get(key);
     if (existingId) return `url(#${existingId})`;

@@ -21,7 +21,10 @@ export async function renderToPdfBlob(
   source: string,
   options: RenderToPdfOptions = {}
 ): Promise<Blob> {
-  const result = await engine.render(source, { ...options.render, format: "svg" });
+  const result = await engine.render(source, {
+    ...options.render,
+    format: "svg"
+  });
   return svgToPdfBlob(result.svg, options);
 }
 
@@ -32,7 +35,10 @@ export async function downloadPdf(
   filename = "asymptote.pdf",
   options: RenderToPdfOptions = {}
 ): Promise<RenderResult> {
-  const result = await engine.render(source, { ...options.render, format: "svg" });
+  const result = await engine.render(source, {
+    ...options.render,
+    format: "svg"
+  });
   const blob = await svgToPdfBlob(result.svg, options);
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

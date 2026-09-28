@@ -8,7 +8,8 @@ import { SvgWriter } from "./eps-svg-writer/writer.js";
 import type { SvgAccessibility, SvgFontMap } from "./types.js";
 
 /** Numeric grammar accepted in EPS bounding-box comments. */
-const BOUNDING_BOX_NUMBER = "[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?";
+const BOUNDING_BOX_NUMBER =
+  "[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?";
 
 /** Options for the in-process EPS/PS-to-SVG converter. */
 export interface EpsToSvgOptions {
@@ -63,7 +64,10 @@ export function epsToSvg(eps: string, options: EpsToSvgOptions = {}): string {
  * Convert EPS/PS and return both SVG and non-fatal conversion diagnostics.
  * Unsupported content is skipped so conversion continues to completion.
  */
-export function epsToSvgWithWarnings(eps: string, options: EpsToSvgOptions = {}): EpsToSvgResult {
+export function epsToSvgWithWarnings(
+  eps: string,
+  options: EpsToSvgOptions = {}
+): EpsToSvgResult {
   const precision = options.precision ?? 3;
   if (!Number.isInteger(precision) || precision < 0 || precision > 12) {
     throw new RangeError("epsToSvg: precision must be an integer from 0 to 12");
@@ -102,7 +106,10 @@ export function epsToSvgWithWarnings(eps: string, options: EpsToSvgOptions = {})
     options.fonts,
     options.accessibility
   );
-  const interpreter = new PostScriptInterpreter(new PostScriptTokenizer(eps), writer);
+  const interpreter = new PostScriptInterpreter(
+    new PostScriptTokenizer(eps),
+    writer
+  );
   interpreter.run();
   return {
     svg: writer.serialize(),

@@ -21,15 +21,36 @@ interface FontFamilyRule {
 }
 
 const FONT_FAMILY_RULES: readonly FontFamilyRule[] = [
-  { aliases: ["helveticanarrow", "arialnarrow"], family: "Arial Narrow, Arial, sans-serif" },
-  { aliases: ["helveticaneue", "helvetica", "arial"], family: "Arial, sans-serif" },
+  {
+    aliases: ["helveticanarrow", "arialnarrow"],
+    family: "Arial Narrow, Arial, sans-serif"
+  },
+  {
+    aliases: ["helveticaneue", "helvetica", "arial"],
+    family: "Arial, sans-serif"
+  },
   { aliases: ["couriernew", "courier"], family: "Courier New, monospace" },
   { aliases: ["timesnewroman", "times"], family: "Times New Roman, serif" },
-  { aliases: ["palatinolinotype", "palatino"], family: "Palatino Linotype, Palatino, serif" },
-  { aliases: ["bookmanoldstyle", "bookman"], family: "Bookman Old Style, serif" },
-  { aliases: ["newcenturyschlbk", "centuryschoolbook"], family: "Century Schoolbook, serif" },
-  { aliases: ["avantgarde"], family: "Avant Garde, Century Gothic, sans-serif" },
-  { aliases: ["zapfchancery"], family: "Apple Chancery, Zapf Chancery, cursive" },
+  {
+    aliases: ["palatinolinotype", "palatino"],
+    family: "Palatino Linotype, Palatino, serif"
+  },
+  {
+    aliases: ["bookmanoldstyle", "bookman"],
+    family: "Bookman Old Style, serif"
+  },
+  {
+    aliases: ["newcenturyschlbk", "centuryschoolbook"],
+    family: "Century Schoolbook, serif"
+  },
+  {
+    aliases: ["avantgarde"],
+    family: "Avant Garde, Century Gothic, sans-serif"
+  },
+  {
+    aliases: ["zapfchancery"],
+    family: "Apple Chancery, Zapf Chancery, cursive"
+  },
   { aliases: ["zapfdingbats"], family: "Zapf Dingbats, sans-serif" },
   { aliases: ["symbol"], family: "Symbol, serif" }
 ];
@@ -74,7 +95,8 @@ function inferStyle(normalized: string): string | undefined {
 
 /** Infer a CSS font stretch from a normalized font name. */
 function inferStretch(normalized: string): string | undefined {
-  if (/(ultracondensed|extracondensed)/.test(normalized)) return "extra-condensed";
+  if (/(ultracondensed|extracondensed)/.test(normalized))
+    return "extra-condensed";
   if (/(semicondensed|condensed|narrow)/.test(normalized)) return "condensed";
   if (/expanded/.test(normalized)) return "expanded";
   if (/(extraexpanded|extended)/.test(normalized)) return "extra-expanded";
@@ -83,22 +105,33 @@ function inferStretch(normalized: string): string | undefined {
 
 /** Select a generic CSS fallback for an unknown font family. */
 function inferGenericFallback(normalized: string): string {
-  if (/(mono|courier|code|typewriter|console)/.test(normalized)) return "monospace";
+  if (/(mono|courier|code|typewriter|console)/.test(normalized))
+    return "monospace";
   if (/(script|chancery)/.test(normalized)) return "cursive";
   if (/(symbol|dingbat|math)/.test(normalized)) return "serif";
-  if (/(serif|roman|garamond|times|georgia|palatino|bookman|schoolbook|cambria)/.test(normalized))
+  if (
+    /(serif|roman|garamond|times|georgia|palatino|bookman|schoolbook|cambria)/.test(
+      normalized
+    )
+  )
     return "serif";
   return "sans-serif";
 }
 
 /** Validate and normalize a caller-provided font descriptor. */
-function normalizeDescriptor(value: unknown): SvgFontDescriptorNormalized | null {
+function normalizeDescriptor(
+  value: unknown
+): SvgFontDescriptorNormalized | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const descriptor = value as SvgFontDescriptor;
-  const family = typeof descriptor.family === "string" ? descriptor.family.trim() : undefined;
+  const family =
+    typeof descriptor.family === "string"
+      ? descriptor.family.trim()
+      : undefined;
   const fallbacks = Array.isArray(descriptor.fallbacks)
     ? descriptor.fallbacks.filter(
-        (fallback): fallback is string => typeof fallback === "string" && fallback.trim().length > 0
+        (fallback): fallback is string =>
+          typeof fallback === "string" && fallback.trim().length > 0
       )
     : undefined;
   const weight =
@@ -107,9 +140,19 @@ function normalizeDescriptor(value: unknown): SvgFontDescriptorNormalized | null
       : typeof descriptor.weight === "string"
         ? descriptor.weight.trim()
         : undefined;
-  const style = typeof descriptor.style === "string" ? descriptor.style.trim() : undefined;
-  const stretch = typeof descriptor.stretch === "string" ? descriptor.stretch.trim() : undefined;
-  if (!family && (!fallbacks || fallbacks.length === 0) && !weight && !style && !stretch)
+  const style =
+    typeof descriptor.style === "string" ? descriptor.style.trim() : undefined;
+  const stretch =
+    typeof descriptor.stretch === "string"
+      ? descriptor.stretch.trim()
+      : undefined;
+  if (
+    !family &&
+    (!fallbacks || fallbacks.length === 0) &&
+    !weight &&
+    !style &&
+    !stretch
+  )
     return null;
   return {
     family,
@@ -125,7 +168,8 @@ function resolveCustomFont(
   font: string,
   customFonts: SvgFontMap
 ): string | SvgFontDescriptor | undefined {
-  if (Object.prototype.hasOwnProperty.call(customFonts, font)) return customFonts[font];
+  if (Object.prototype.hasOwnProperty.call(customFonts, font))
+    return customFonts[font];
   const normalized = normalizeFontName(font);
   const normalizedAlias = normalizeFontAlias(font);
   for (const [name, descriptor] of Object.entries(customFonts)) {
@@ -133,7 +177,8 @@ function resolveCustomFont(
     if (candidate === normalized) return descriptor;
     if (
       candidate.length > 0 &&
-      (normalized.startsWith(candidate) || normalizedAlias.startsWith(candidate))
+      (normalized.startsWith(candidate) ||
+        normalizedAlias.startsWith(candidate))
     ) {
       return descriptor;
     }
@@ -151,7 +196,9 @@ export function toCssFont(
   const normalized = normalizeFontAlias(font);
   const knownFamily = knownFontFamily(normalized);
   const inferred: CssFont = {
-    family: knownFamily ?? (font ? `${font}, ${inferGenericFallback(normalized)}` : "sans-serif"),
+    family:
+      knownFamily ??
+      (font ? `${font}, ${inferGenericFallback(normalized)}` : "sans-serif"),
     weight: inferWeight(normalized),
     style: inferStyle(normalized),
     stretch: inferStretch(normalized)
@@ -167,8 +214,12 @@ export function toCssFont(
       warnMalformedDescriptor(font);
       return inferred;
     }
-    const families = [descriptor.family, ...(descriptor.fallbacks ?? [])].filter(
-      (value): value is string => typeof value === "string" && value.trim().length > 0
+    const families = [
+      descriptor.family,
+      ...(descriptor.fallbacks ?? [])
+    ].filter(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0
     );
     return {
       family: families.length > 0 ? families.join(", ") : inferred.family,

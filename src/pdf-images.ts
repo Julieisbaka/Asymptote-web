@@ -1,4 +1,8 @@
-import type { ImageToPdfOptions, ImagesToPdfOptions, PdfImagePage } from "./pdf-types.js";
+import type {
+  ImageToPdfOptions,
+  ImagesToPdfOptions,
+  PdfImagePage
+} from "./pdf-types.js";
 import {
   assertFinitePositive,
   buildPdf,
@@ -24,23 +28,33 @@ export function imagesToPdfBytes(
   options: ImagesToPdfOptions = {}
 ): Uint8Array {
   if (pages.length === 0)
-    throw new TypeError("asymptote-web/pdf: at least one image page is required");
+    throw new TypeError(
+      "asymptote-web/pdf: at least one image page is required"
+    );
 
   const fontObjectId = 3 + pages.length * 3;
-  const pageTextModes = pages.map((page) => page.textMode ?? options.textMode ?? "invisible");
+  const pageTextModes = pages.map(
+    (page) => page.textMode ?? options.textMode ?? "invisible"
+  );
   const gstateCounts = pages.map(
     (page, index) =>
-      (page.textRuns ?? []).filter((run) => needsTextOpacity(run, pageTextModes[index])).length
+      (page.textRuns ?? []).filter((run) =>
+        needsTextOpacity(run, pageTextModes[index])
+      ).length
   );
   const gstateStartId = fontObjectId + 3;
   const gstateCount = gstateCounts.reduce((sum, count) => sum + count, 0);
   const pageObjects: number[] = [];
-  const objects: PdfObject[] = [{ id: 1, body: "<< /Type /Catalog /Pages 2 0 R >>" }];
+  const objects: PdfObject[] = [
+    { id: 1, body: "<< /Type /Catalog /Pages 2 0 R >>" }
+  ];
 
   for (let index = 0; index < pages.length; index += 1) {
     const page = pages[index];
     if (page.image.length === 0)
-      throw new TypeError(`asymptote-web/pdf: image page ${index + 1} must not be empty`);
+      throw new TypeError(
+        `asymptote-web/pdf: image page ${index + 1} must not be empty`
+      );
     assertFinitePositive(page.imageWidth, `pages[${index}].imageWidth`);
     assertFinitePositive(page.imageHeight, `pages[${index}].imageHeight`);
     const pageWidth = page.pageWidth ?? page.imageWidth;
@@ -53,10 +67,14 @@ export function imagesToPdfBytes(
     const contentObjectId = pageObjectId + 2;
     pageObjects.push(pageObjectId);
 
-    const gstateOffset = gstateCounts.slice(0, index).reduce((sum, count) => sum + count, 0);
+    const gstateOffset = gstateCounts
+      .slice(0, index)
+      .reduce((sum, count) => sum + count, 0);
     let nextGstate = gstateOffset;
     const gstateIds = (page.textRuns ?? []).map((run) =>
-      needsTextOpacity(run, pageTextModes[index]) ? gstateStartId + nextGstate++ : undefined
+      needsTextOpacity(run, pageTextModes[index])
+        ? gstateStartId + nextGstate++
+        : undefined
     );
     const gstates = gstateIds.some((id) => id !== undefined)
       ? ` /ExtGState << ${gstateIds.flatMap((id, runIndex) => (id === undefined ? [] : [`/GS${runIndex} ${id} 0 R`])).join(" ")} >>`
@@ -106,12 +124,23 @@ export function imagesToPdfBytes(
     body: `<< /Type /Pages /Kids [${pageObjects.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageObjects.length} >>`
   });
   objects.push(
-    { id: fontObjectId, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>" },
-    { id: fontObjectId + 1, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>" },
-    { id: fontObjectId + 2, body: "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>" }
+    {
+      id: fontObjectId,
+      body: "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
+    },
+    {
+      id: fontObjectId + 1,
+      body: "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>"
+    },
+    {
+      id: fontObjectId + 2,
+      body: "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>"
+    }
   );
   for (let index = 0; index < pages.length; index += 1) {
-    let nextGstate = gstateCounts.slice(0, index).reduce((sum, count) => sum + count, 0);
+    let nextGstate = gstateCounts
+      .slice(0, index)
+      .reduce((sum, count) => sum + count, 0);
     for (const run of pages[index].textRuns ?? []) {
       if (!needsTextOpacity(run, pageTextModes[index])) continue;
       const opacity = Math.max(0, Math.min(1, run.opacity ?? 1));
@@ -131,7 +160,10 @@ export function imagesToPdfBytes(
  * Create a single-page image-backed PDF from JPEG bytes and optional real text overlay.
  * This low-level helper is dependency-free and works in browsers and Node.
  */
-export function imageToPdfBytes(image: Uint8Array, options: ImageToPdfOptions): Uint8Array {
+export function imageToPdfBytes(
+  image: Uint8Array,
+  options: ImageToPdfOptions
+): Uint8Array {
   return imagesToPdfBytes(
     [
       {

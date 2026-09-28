@@ -17,7 +17,11 @@ export class PostScriptInterpreter extends PostScriptOperatorInterpreter {
   run(): void {
     const values = new OperandReader(this.tokens);
     try {
-      for (let tok = this.tokens.next(); tok !== null; tok = this.tokens.next()) {
+      for (
+        let tok = this.tokens.next();
+        tok !== null;
+        tok = this.tokens.next()
+      ) {
         if (NUMBER_RE.test(tok)) {
           this.stack.push(parseFloat(tok));
           continue;
@@ -43,9 +47,13 @@ export class PostScriptInterpreter extends PostScriptOperatorInterpreter {
       }
     } catch (error) {
       if (error instanceof EpsNestingLimitError) {
-        this.warn("stopped parsing: exceeded maximum nested array/dictionary depth");
+        this.warn(
+          "stopped parsing: exceeded maximum nested array/dictionary depth"
+        );
       } else if (error instanceof RangeError) {
-        this.warn("stopped parsing: input exceeded the interpreter's safe recursion depth");
+        this.warn(
+          "stopped parsing: input exceeded the interpreter's safe recursion depth"
+        );
       } else {
         throw error;
       }

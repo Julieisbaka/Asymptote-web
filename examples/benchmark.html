@@ -102,8 +102,9 @@
   <body>
     <h1>Asymptote Web Performance Benchmark</h1>
     <p>
-      One warm-up render is excluded, followed by ten identical measured SVG renders. Keep the
-      browser, tab state, and build unchanged when comparing results.
+      One warm-up render is excluded, followed by ten identical measured SVG
+      renders. Keep the browser, tab state, and build unchanged when comparing
+      results.
     </p>
 
     <button id="run" disabled>Loading WASM…</button>
@@ -122,9 +123,10 @@
       <tbody id="results"></tbody>
     </table>
     <p class="note">
-      Memory uses Chromium's non-standard <code>performance.memory</code> when available. It reports
-      JavaScript heap usage, not total WebAssembly memory. Browser CPU percentage is not reliably
-      exposed, so render duration is used as the comparable CPU-work measurement.
+      Memory uses Chromium's non-standard <code>performance.memory</code> when
+      available. It reports JavaScript heap usage, not total WebAssembly memory.
+      Browser CPU percentage is not reliably exposed, so render duration is used
+      as the comparable CPU-work measurement.
     </p>
     <h2>Benchmark source</h2>
     <pre id="source"></pre>
@@ -160,7 +162,9 @@ label("sin(x) exp(-x/8)", (12, 0.8), blue);
 
       function heapBytes() {
         const memory = performance.memory;
-        return memory && Number.isFinite(memory.usedJSHeapSize) ? memory.usedJSHeapSize : null;
+        return memory && Number.isFinite(memory.usedJSHeapSize)
+          ? memory.usedJSHeapSize
+          : null;
       }
 
       function formatBytes(bytes) {
@@ -177,7 +181,9 @@ label("sin(x) exp(-x/8)", (12, 0.8), blue);
       function median(values) {
         const sorted = [...values].sort((a, b) => a - b);
         const middle = Math.floor(sorted.length / 2);
-        return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+        return sorted.length % 2
+          ? sorted[middle]
+          : (sorted[middle - 1] + sorted[middle]) / 2;
       }
 
       function addMetric(label, value) {
@@ -189,7 +195,8 @@ label("sin(x) exp(-x/8)", (12, 0.8), blue);
 
       function renderReport(report) {
         const durations = report.samples.map((sample) => sample.durationMs);
-        const average = durations.reduce((sum, value) => sum + value, 0) / durations.length;
+        const average =
+          durations.reduce((sum, value) => sum + value, 0) / durations.length;
         const reportWithStats = {
           ...report,
           averageMs: average,
@@ -208,7 +215,9 @@ label("sin(x) exp(-x/8)", (12, 0.8), blue);
         addMetric("Total", formatMs(reportWithStats.totalMs));
         addMetric(
           "Memory delta",
-          report.memoryDeltaBytes === null ? "Unavailable" : formatBytes(report.memoryDeltaBytes)
+          report.memoryDeltaBytes === null
+            ? "Unavailable"
+            : formatBytes(report.memoryDeltaBytes)
         );
 
         resultsBody.replaceChildren();
@@ -262,7 +271,9 @@ label("sin(x) exp(-x/8)", (12, 0.8), blue);
           heapBeforeBytes: heapBefore,
           heapAfterBytes: heapAfter,
           memoryDeltaBytes:
-            heapBefore === null || heapAfter === null ? null : heapAfter - heapBefore,
+            heapBefore === null || heapAfter === null
+              ? null
+              : heapAfter - heapBefore,
           samples
         });
         status.textContent = `Complete: ${ITERATIONS} measured renders.`;

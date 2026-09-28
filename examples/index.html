@@ -180,7 +180,8 @@
   <body>
     <h1>Asymptote Web</h1>
     <p class="subtitle">
-      Renders <a href="https://asymptote.sourceforge.io/" target="_blank">Asymptote</a>
+      Renders
+      <a href="https://asymptote.sourceforge.io/" target="_blank">Asymptote</a>
       vector graphics entirely in your browser — no server required.
     </p>
 
@@ -195,12 +196,19 @@
               <option value="damped-wave">Damped wave plot</option>
               <option value="lissajous">Lissajous curve</option>
             </select>
-            <button id="load-example-btn" class="render-btn secondary" type="button">
+            <button
+              id="load-example-btn"
+              class="render-btn secondary"
+              type="button">
               Load example
             </button>
           </div>
-          <p id="example-description" class="example-description" aria-live="polite">
-            A filled star with a selectable-text label for trying the optional PDF export.
+          <p
+            id="example-description"
+            class="example-description"
+            aria-live="polite">
+            A filled star with a selectable-text label for trying the optional
+            PDF export.
           </p>
         </div>
         <textarea id="source" spellcheck="false">
@@ -221,9 +229,17 @@ star = star -- cycle;
 filldraw(star, yellow, black+1.5);
 label("Selectable PDF text", (0,-1.35), blue);
 </textarea>
-        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap">
+        <div
+          style="
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+          ">
           <button id="render-btn" class="render-btn">Render</button>
-          <button id="pdf-btn" class="render-btn secondary">Download PDF</button>
+          <button id="pdf-btn" class="render-btn secondary">
+            Download PDF
+          </button>
           <span id="status" class="status info">Loading Asymptote…</span>
         </div>
       </div>
@@ -231,7 +247,9 @@ label("Selectable PDF text", (0,-1.35), blue);
       <div class="panel">
         <label>Output (SVG)</label>
         <div id="output-panel" class="output-panel">
-          <span style="color: #aaa; font-size: 0.9rem">Press Render to see output</span>
+          <span style="color: #aaa; font-size: 0.9rem"
+            >Press Render to see output</span
+          >
         </div>
       </div>
     </div>
@@ -248,11 +266,17 @@ label("Selectable PDF text", (0,-1.35), blue);
               <option value="solid-assembly">Transformed solids</option>
               <option value="orbital-scene">Orbital arrangement</option>
             </select>
-            <button id="load3d-example-btn" class="render-btn secondary" type="button">
+            <button
+              id="load3d-example-btn"
+              class="render-btn secondary"
+              type="button">
               Load example
             </button>
           </div>
-          <p id="example3d-description" class="example-description" aria-live="polite">
+          <p
+            id="example3d-description"
+            class="example-description"
+            aria-live="polite">
             A sphere and cube establish the basics of the interactive 3D viewer.
           </p>
         </div>
@@ -262,11 +286,23 @@ currentprojection=orthographic(5,4,2);
 draw(unitsphere, blue);
 draw(shift(2,0,0)*unitcube, red);
 </textarea>
-        <label style="font-weight: 400; display: flex; gap: 0.5rem; align-items: center">
+        <label
+          style="
+            font-weight: 400;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+          ">
           <input id="offline-webgl" type="checkbox" />
           Embed the WebGL viewer for offline use
         </label>
-        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap">
+        <div
+          style="
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+          ">
           <button id="render3d-btn" class="render-btn">Render 3D</button>
           <span id="status3d" class="status info">Loading Asymptote…</span>
         </div>
@@ -275,7 +311,9 @@ draw(shift(2,0,0)*unitcube, red);
       <div class="panel">
         <label>Output (WebGL)</label>
         <div id="output3d-panel" class="output-panel">
-          <span style="color: #aaa; font-size: 0.9rem">Press Render 3D to see output</span>
+          <span style="color: #aaa; font-size: 0.9rem"
+            >Press Render 3D to see output</span
+          >
         </div>
       </div>
     </div>
@@ -287,7 +325,10 @@ draw(shift(2,0,0)*unitcube, red);
     <script type="module">
       // During local dev, point to the built library.
       // Replace with the published CDN URL for production use.
-      import { createAsymptote, AsymptoteError } from "../dist/asymptote-web.js";
+      import {
+        createAsymptote,
+        AsymptoteError
+      } from "../dist/asymptote-web.js";
 
       const btn = document.getElementById("render-btn");
       const pdfBtn = document.getElementById("pdf-btn");
@@ -300,7 +341,9 @@ draw(shift(2,0,0)*unitcube, red);
       const exampleSelect = document.getElementById("example-select");
       const exampleDescription = document.getElementById("example-description");
       const example3dSelect = document.getElementById("example3d-select");
-      const example3dDescription = document.getElementById("example3d-description");
+      const example3dDescription = document.getElementById(
+        "example3d-description"
+      );
 
       const examples2d = {
         pentagram: {
@@ -370,7 +413,8 @@ dot(curvePoint(0), red + 2bp);
 
       const examples3d = {
         "sphere-cube": {
-          description: "A sphere and cube establish the basics of the interactive 3D viewer.",
+          description:
+            "A sphere and cube establish the basics of the interactive 3D viewer.",
           source: `import three;
 currentprojection=orthographic(5,4,2);
 draw(unitsphere, blue);
@@ -423,15 +467,25 @@ for (int i = 0; i < count; ++i) {
       exampleSelect.addEventListener("change", () =>
         updateExampleDescription(exampleSelect, examples2d, exampleDescription)
       );
-      document.getElementById("load-example-btn").addEventListener("click", () => {
-        document.getElementById("source").value = examples2d[exampleSelect.value].source;
-      });
+      document
+        .getElementById("load-example-btn")
+        .addEventListener("click", () => {
+          document.getElementById("source").value =
+            examples2d[exampleSelect.value].source;
+        });
       example3dSelect.addEventListener("change", () =>
-        updateExampleDescription(example3dSelect, examples3d, example3dDescription)
+        updateExampleDescription(
+          example3dSelect,
+          examples3d,
+          example3dDescription
+        )
       );
-      document.getElementById("load3d-example-btn").addEventListener("click", () => {
-        document.getElementById("source3d").value = examples3d[example3dSelect.value].source;
-      });
+      document
+        .getElementById("load3d-example-btn")
+        .addEventListener("click", () => {
+          document.getElementById("source3d").value =
+            examples3d[example3dSelect.value].source;
+        });
 
       let asy = null;
 
@@ -467,7 +521,10 @@ for (int i = 0; i < count; ++i) {
       }
 
       function svgDimensions(svgText) {
-        const svg = new DOMParser().parseFromString(svgText, "image/svg+xml").documentElement;
+        const svg = new DOMParser().parseFromString(
+          svgText,
+          "image/svg+xml"
+        ).documentElement;
         const width = Number.parseFloat(svg.getAttribute("width") || "150");
         const height = Number.parseFloat(svg.getAttribute("height") || "150");
         return {
@@ -479,7 +536,10 @@ for (int i = 0; i < count; ++i) {
       function demoPdfSource(svgWithLabel, svgWithoutLabel) {
         const parser = new DOMParser();
         const withDoc = parser.parseFromString(svgWithLabel, "image/svg+xml");
-        const withoutDoc = parser.parseFromString(svgWithoutLabel, "image/svg+xml");
+        const withoutDoc = parser.parseFromString(
+          svgWithoutLabel,
+          "image/svg+xml"
+        );
         const svg = withDoc.documentElement;
         const backgroundPathCount = withoutDoc.querySelectorAll("path").length;
         const paths = Array.from(svg.querySelectorAll("path"));
@@ -509,7 +569,8 @@ for (int i = 0; i < count; ++i) {
         const mountedLabelPaths = mountedPaths.slice(backgroundPathCount);
         const bounds = mountedLabelPaths.reduce((box, path) => {
           const next = path.getBBox();
-          if (!Number.isFinite(next.width) || !Number.isFinite(next.height)) return box;
+          if (!Number.isFinite(next.width) || !Number.isFinite(next.height))
+            return box;
           if (!box)
             return {
               x1: next.x,
@@ -571,7 +632,10 @@ for (int i = 0; i < count; ++i) {
         // reach SVG, so there is no text object for PDF viewers to select. For
         // the demo PDF, render the graphic without the sample path-label and add
         // that label back as real visible PDF text in the margin.
-        return source.replace(/^\s*label\("Selectable PDF text", \(0,-1\.35\), blue\);\s*$/m, "");
+        return source.replace(
+          /^\s*label\("Selectable PDF text", \(0,-1\.35\), blue\);\s*$/m,
+          ""
+        );
       }
 
       btn.addEventListener("click", async () => {
@@ -589,11 +653,14 @@ for (int i = 0; i < count; ++i) {
           status.textContent = result.warnings.length
             ? "Done (with warnings):\n" + result.warnings.join("\n")
             : "Done ✓";
-          status.className = result.warnings.length ? "status error" : "status info";
+          status.className = result.warnings.length
+            ? "status error"
+            : "status info";
         } catch (err) {
           output.innerHTML = "";
           const errSpan = document.createElement("span");
-          errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
+          errSpan.style.cssText =
+            "color:#dc2626;font-size:0.85rem;font-family:monospace;";
           errSpan.textContent = describeError(err);
           output.appendChild(errSpan);
           status.textContent = "Render failed.";
@@ -620,7 +687,10 @@ for (int i = 0; i < count; ++i) {
             asy.render(source),
             asy.render(pdfBackgroundSource(source))
           ]);
-          const pdfSource = demoPdfSource(previewResult.svg, pdfBackgroundResult.svg);
+          const pdfSource = demoPdfSource(
+            previewResult.svg,
+            pdfBackgroundResult.svg
+          );
           const pdf = await svgToPdfBlob(pdfSource.svg, {
             title: "Asymptote Web demo export",
             scale: 3,
@@ -629,7 +699,10 @@ for (int i = 0; i < count; ++i) {
           });
           downloadBlob(pdf, "asymptote-web-demo.pdf");
           output.innerHTML = previewResult.svg;
-          const warnings = [...previewResult.warnings, ...pdfBackgroundResult.warnings];
+          const warnings = [
+            ...previewResult.warnings,
+            ...pdfBackgroundResult.warnings
+          ];
           status.textContent = warnings.length
             ? "PDF downloaded (with warnings):\n" + warnings.join("\n")
             : "PDF downloaded ✓";
@@ -638,7 +711,8 @@ for (int i = 0; i < count; ++i) {
           status.textContent = "PDF export failed.";
           status.className = "status error";
           const errSpan = document.createElement("span");
-          errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
+          errSpan.style.cssText =
+            "color:#dc2626;font-size:0.85rem;font-family:monospace;";
           errSpan.textContent = describeError(err);
           output.replaceChildren(errSpan);
         } finally {
@@ -660,11 +734,14 @@ for (int i = 0; i < count; ++i) {
           status3d.textContent = result.warnings.length
             ? "Done (with warnings):\n" + result.warnings.join("\n")
             : "Done ✓";
-          status3d.className = result.warnings.length ? "status error" : "status info";
+          status3d.className = result.warnings.length
+            ? "status error"
+            : "status info";
         } catch (err) {
           output3d.innerHTML = "";
           const errSpan = document.createElement("span");
-          errSpan.style.cssText = "color:#dc2626;font-size:0.85rem;font-family:monospace;";
+          errSpan.style.cssText =
+            "color:#dc2626;font-size:0.85rem;font-family:monospace;";
           const isAsymptoteError = err instanceof AsymptoteError;
           errSpan.textContent = isAsymptoteError
             ? `ASYMPTOTE ERROR:\n${err.stderr}`
