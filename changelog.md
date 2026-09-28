@@ -2,7 +2,6 @@
 
 ## 0.3.3 - In development
 
-- Internal stuff
 - Bump asymptote to 3.15
 
 ## 0.3.2
