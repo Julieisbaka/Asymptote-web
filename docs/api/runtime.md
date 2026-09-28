@@ -21,7 +21,9 @@ Use `baseUrl` when the four runtime assets have been copied to a public
 directory or hosted on a CDN. The directory must also contain `asy.data`:
 
 ```ts
-const asy = await createAsymptote(getAssetUrls("https://cdn.example.com/asymptote/"));
+const asy = await createAsymptote(
+  getAssetUrls("https://cdn.example.com/asymptote/")
+);
 ```
 
 | Option     | Type     | Default   | Description                         |

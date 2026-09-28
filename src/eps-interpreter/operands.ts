@@ -1,5 +1,5 @@
-import type { Matrix } from "./eps-graphics.js";
-import type { Dictionary, Operand } from "./eps-interpreter-types.js";
+import type { Matrix } from "../eps-graphics.js";
+import type { Dictionary, Operand } from "./interpreter-types.js";
 
 /** Matches the numeric token forms emitted by Asymptote's EPS writer. */
 export const NUMBER_RE = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
@@ -78,7 +78,14 @@ export function matrixFromOperand(value: Operand | undefined): Matrix | null {
   ) {
     return null;
   }
-  return { a: value[0], b: value[1], c: value[2], d: value[3], e: value[4], f: value[5] };
+  return {
+    a: value[0],
+    b: value[1],
+    c: value[2],
+    d: value[3],
+    e: value[4],
+    f: value[5]
+  };
 }
 
 /** Type guard for a nullable matrix value. */
@@ -89,6 +96,8 @@ export function isMatrix(value: Matrix | null): value is Matrix {
 /** Narrow an operand to a six-number matrix array. */
 export function isMatrixArray(value: Operand | undefined): value is Operand[] {
   return (
-    Array.isArray(value) && value.length === 6 && value.every((item) => typeof item === "number")
+    Array.isArray(value) &&
+    value.length === 6 &&
+    value.every((item) => typeof item === "number")
   );
 }

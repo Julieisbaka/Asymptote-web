@@ -26,7 +26,10 @@ export default defineConfig(
         "warn",
         { anonymous: "always", named: "never", asyncArrow: "always" }
       ],
-      "@typescript-eslint/consistent-type-imports": ["warn", { prefer: "type-imports" }],
+      "@typescript-eslint/consistent-type-imports": [
+        "warn",
+        { prefer: "type-imports" }
+      ],
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }

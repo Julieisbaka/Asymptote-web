@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.3.2 - In development
+## 0.3.3 - In development
+
+- Bump asymptote to 3.15
+
+## 0.3.2
+
+- Internal stuff
 
 ## 0.3.1
 

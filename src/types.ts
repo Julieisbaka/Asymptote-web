@@ -295,7 +295,10 @@ export interface AsymptoteEngine {
    * @param sources - Asymptote source strings to render.
    * @param options - Optional render options applied to every source.
    */
-  renderBatch(sources: readonly string[], options?: RenderOptions): Promise<RenderResult[]>;
+  renderBatch(
+    sources: readonly string[],
+    options?: RenderOptions
+  ): Promise<RenderResult[]>;
 
   /**
    * Render source code and trigger a browser download.
@@ -304,7 +307,11 @@ export interface AsymptoteEngine {
    * @param filename - Download filename. Defaults based on the output format.
    * @param options - Optional render options.
    */
-  download(source: string, filename?: string, options?: RenderOptions): Promise<RenderResult>;
+  download(
+    source: string,
+    filename?: string,
+    options?: RenderOptions
+  ): Promise<RenderResult>;
 
   /**
    * Render Asymptote source code and mount the resulting SVG into a DOM element.
@@ -315,7 +322,11 @@ export interface AsymptoteEngine {
    * @throws {AsymptoteError} when Asymptote exits with a non-zero status.
    * @throws {Error} when the selected output format is not SVG.
    */
-  mount(target: string | Element, source: string, options?: RenderOptions): Promise<RenderResult>;
+  mount(
+    target: string | Element,
+    source: string,
+    options?: RenderOptions
+  ): Promise<RenderResult>;
 
   /**
    * **WARNING: unsafe API.** Trusted direct-DOM mounting API for pre-rendered

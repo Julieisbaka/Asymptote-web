@@ -28,10 +28,14 @@ for (const relativePath of requiredFiles) {
 }
 
 if (missing.length > 0) {
-  console.error("Package verification failed. Missing required release assets:");
+  console.error(
+    "Package verification failed. Missing required release assets:"
+  );
   for (const relativePath of missing) console.error(`- ${relativePath}`);
   console.error("Run the WASM build before packing or publishing.");
   process.exitCode = 1;
 } else {
-  console.log(`Package verification passed: ${requiredFiles.length} required files found.`);
+  console.log(
+    `Package verification passed: ${requiredFiles.length} required files found.`
+  );
 }

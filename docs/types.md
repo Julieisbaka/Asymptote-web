@@ -51,7 +51,11 @@ function parseCompilerDiagnostics(stderr: string): CompilerDiagnostic[];
 function identityMatrix(): Matrix;
 function composeMatrix(first: Matrix, second: Matrix): Matrix;
 function colorFromComponents(components: number[]): string;
-function hsbToColor(hue: number, saturation: number, brightness: number): string;
+function hsbToColor(
+  hue: number,
+  saturation: number,
+  brightness: number
+): string;
 ```
 
 `Matrix` uses the standard six-value affine order (`a`, `b`, `c`, `d`, `e`,
@@ -167,9 +171,20 @@ interface AsymptoteEngine {
   version(): Promise<string>;
   render(source: string, options?: RenderOptions): Promise<RenderResult>;
   renderToBlob(source: string, options?: RenderOptions): Promise<Blob>;
-  renderBatch(sources: readonly string[], options?: RenderOptions): Promise<RenderResult[]>;
-  download(source: string, filename?: string, options?: RenderOptions): Promise<RenderResult>;
-  mount(target: string | Element, source: string, options?: RenderOptions): Promise<RenderResult>;
+  renderBatch(
+    sources: readonly string[],
+    options?: RenderOptions
+  ): Promise<RenderResult[]>;
+  download(
+    source: string,
+    filename?: string,
+    options?: RenderOptions
+  ): Promise<RenderResult>;
+  mount(
+    target: string | Element,
+    source: string,
+    options?: RenderOptions
+  ): Promise<RenderResult>;
   mountWebGL(
     target: string | Element,
     source: string,
@@ -291,5 +306,8 @@ function downloadPdf(
   options?: RenderToPdfOptions
 ): Promise<RenderResult>;
 
-function imagesToPdfBytes(pages: readonly PdfImagePage[], options?: ImagesToPdfOptions): Uint8Array;
+function imagesToPdfBytes(
+  pages: readonly PdfImagePage[],
+  options?: ImagesToPdfOptions
+): Uint8Array;
 ```

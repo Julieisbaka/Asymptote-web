@@ -124,7 +124,9 @@ function severityFor(
     severity:
       label === "warning"
         ? "warning"
-        : label === "error" || label === "runtime" || (label === "note" && hasLocation)
+        : label === "error" ||
+            label === "runtime" ||
+            (label === "note" && hasLocation)
           ? "error"
           : "info",
     message: classified.message.trim()
@@ -158,7 +160,14 @@ export function parseCompilerDiagnostics(stderr: string): CompilerDiagnostic[] {
 }
 
 /** A six-value affine transform in PostScript/SVG matrix order. */
-export type Matrix = { a: number; b: number; c: number; d: number; e: number; f: number };
+export type Matrix = {
+  a: number;
+  b: number;
+  c: number;
+  d: number;
+  e: number;
+  f: number;
+};
 
 /** Return a new identity affine transform. */
 export function identityMatrix(): Matrix {
@@ -200,7 +209,11 @@ export function colorFromComponents(nums: number[]): string {
 }
 
 /** Convert normalized HSB components to an SVG RGB value. */
-export function hsbToColor(hue: number, saturation: number, brightness: number): string {
+export function hsbToColor(
+  hue: number,
+  saturation: number,
+  brightness: number
+): string {
   const h = ((hue % 1) + 1) % 1;
   const s = Math.max(0, Math.min(1, saturation));
   const v = Math.max(0, Math.min(1, brightness));

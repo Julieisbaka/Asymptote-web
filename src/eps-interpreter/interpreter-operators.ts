@@ -2,123 +2,31 @@ import {
   cloneState,
   compose,
   hsbToColor,
-  IDENTITY,
   toColor,
-  type Gradient,
-  type GraphicsState
-} from "./eps-graphics.js";
+  type Gradient
+} from "../eps-graphics.js";
 import {
-  NUMBER_RE,
   isDictionary,
   isMatrix,
   isMatrixArray,
   matrixFromOperand,
-  textChars,
-  unescapePostScriptString
-} from "./eps-interpreter-operands.js";
+  textChars
+} from "./operands.js";
 import {
   colorComponentCount,
   gradientFromValue,
-  parseStops,
-  unsupportedShadingMessage
-} from "./eps-interpreter-gradients.js";
-import type { Dictionary, Operand } from "./eps-interpreter-types.js";
-import type { SvgWriter } from "./eps-svg-writer.js";
-import type { PostScriptTokenizer } from "./eps-tokenizer.js";
+  parseStops
+} from "./gradients.js";
+import { InterpreterState } from "./interpreter-state.js";
+import type { SvgWriter } from "../eps-svg-writer/writer.js";
 
-// Thrown internally when nested array/dictionary literals go deeper than
-// MAX_NESTING_DEPTH, so malformed or adversarial input can't exhaust the
-// call stack; caught and turned into a warning in `run()`.
-class EpsNestingLimitError extends Error {}
-
-interface SavedGraphicsState {
-  state: GraphicsState;
-  colorComponentCount: number | null;
-}
-
-/** Interpret the constrained PostScript subset emitted by Asymptote. */
-export class PostScriptInterpreter {
-  private static readonly MAX_NESTING_DEPTH = 64;
-  private nestingDepth = 0;
-  private state: GraphicsState = {
-    ctm: IDENTITY,
-    fill: "black",
-    gradient: null,
-    stroke: "black",
-    opacity: 1,
-    fontFamily: "sans-serif",
-    fontSize: 12,
-    linewidth: 1,
-    linecap: 0,
-    linejoin: 0,
-    miterlimit: 10,
-    dasharray: [],
-    dashoffset: 0,
-    clipId: null
-  };
-  private readonly stateStack: SavedGraphicsState[] = [];
-  private readonly stack: Operand[] = [];
-  private readonly warnings: string[] = [];
-  private colorComponentCount: number | null = null;
-
-  constructor(
-    private readonly tokens: PostScriptTokenizer,
-    private readonly writer: SvgWriter
-  ) {}
-
-  /** Consume all tokens and emit supported operations to the SVG writer. */
-  run(): void {
-    try {
-      for (let tok = this.tokens.next(); tok !== null; tok = this.tokens.next()) {
-        if (NUMBER_RE.test(tok)) {
-          this.stack.push(parseFloat(tok));
-          continue;
-        }
-        if (tok.startsWith("(") && tok.endsWith(")")) {
-          this.stack.push(unescapePostScriptString(tok));
-          continue;
-        }
-        if (tok === "[") {
-          this.stack.push(this.readArray());
-          continue;
-        }
-        if (tok === "<<") {
-          this.stack.push(this.readDictionary());
-          continue;
-        }
-        if (tok.startsWith("/")) {
-          this.stack.push(tok.slice(1));
-          continue;
-        }
-
-        this.dispatch(tok);
-      }
-    } catch (error) {
-      if (error instanceof EpsNestingLimitError) {
-        this.warn("stopped parsing: exceeded maximum nested array/dictionary depth");
-      } else if (error instanceof RangeError) {
-        this.warn("stopped parsing: input exceeded the interpreter's safe recursion depth");
-      } else {
-        throw error;
-      }
-    }
+/** Applies supported PostScript operators to the shared interpreter state. */
+export class PostScriptOperatorInterpreter extends InterpreterState {
+  constructor(writer: SvgWriter) {
+    super(writer);
   }
 
-  /** Return non-fatal conversion warnings collected during interpretation. */
-  getWarnings(): string[] {
-    return [...this.warnings];
-  }
-
-  private warn(message: string): void {
-    this.warnings.push(`EPS/PS: ${message}`);
-  }
-
-  private warnUnsupportedShading(value: Operand | undefined): void {
-    const message = unsupportedShadingMessage(value);
-    if (message) this.warn(message);
-  }
-
-  private dispatch(tok: string): void {
+  protected dispatch(tok: string): void {
     switch (tok) {
       case "newpath":
         this.writer.newPath();
@@ -167,7 +75,15 @@ export class PostScriptInterpreter {
       case "arc":
       case "arcn": {
         const [cx, cy, radius, start, end] = this.popN(5);
-        this.writer.appendArc(this.state, cx, cy, radius, start, end, tok === "arc");
+        this.writer.appendArc(
+          this.state,
+          cx,
+          cy,
+          radius,
+          start,
+          end,
+          tok === "arc"
+        );
         break;
       }
       case "arct": {
@@ -203,12 +119,26 @@ export class PostScriptInterpreter {
       }
       case "translate": {
         const [tx, ty] = this.popN(2);
-        this.state.ctm = compose(this.state.ctm, { a: 1, b: 0, c: 0, d: 1, e: tx, f: ty });
+        this.state.ctm = compose(this.state.ctm, {
+          a: 1,
+          b: 0,
+          c: 0,
+          d: 1,
+          e: tx,
+          f: ty
+        });
         break;
       }
       case "scale": {
         const [sx, sy] = this.popN(2);
-        this.state.ctm = compose(this.state.ctm, { a: sx, b: 0, c: 0, d: sy, e: 0, f: 0 });
+        this.state.ctm = compose(this.state.ctm, {
+          a: sx,
+          b: 0,
+          c: 0,
+          d: sy,
+          e: 0,
+          f: 0
+        });
         break;
       }
       case "rotate": {
@@ -268,7 +198,8 @@ export class PostScriptInterpreter {
       }
       case "setcolor":
         if (this.colorComponentCount === null) {
-          while (typeof this.stack[this.stack.length - 1] === "number") this.stack.pop();
+          while (typeof this.stack[this.stack.length - 1] === "number")
+            this.stack.pop();
           this.warn(`ignored unsupported color space/operator '${tok}'`);
         } else {
           const color = this.popN(this.colorComponentCount);
@@ -298,12 +229,13 @@ export class PostScriptInterpreter {
         break;
       case "setopacityalpha":
       case "setalpha":
-      case "setopacity":
-        {
-          const opacity = this.popN(1)[0];
-          this.state.opacity = Number.isFinite(opacity) ? Math.max(0, Math.min(1, opacity)) : 0;
-        }
+      case "setopacity": {
+        const opacity = this.popN(1)[0];
+        this.state.opacity = Number.isFinite(opacity)
+          ? Math.max(0, Math.min(1, opacity))
+          : 0;
         break;
+      }
       case "show": {
         const text = this.stack.pop();
         if (typeof text === "string") this.writer.show(this.state, text);
@@ -342,7 +274,9 @@ export class PostScriptInterpreter {
           this.writer.show(
             this.state,
             text,
-            textChars(text).map((value) => (value === char ? [ax + cx, ay + cy] : [ax, ay]))
+            textChars(text).map((value) =>
+              value === char ? [ax + cx, ay + cy] : [ax, ay]
+            )
           );
         }
         break;
@@ -366,10 +300,13 @@ export class PostScriptInterpreter {
         this.state.dasharray = Array.isArray(arr)
           ? arr.filter(
               (value): value is number =>
-                typeof value === "number" && Number.isFinite(value) && value >= 0
+                typeof value === "number" &&
+                Number.isFinite(value) &&
+                value >= 0
             )
           : [];
-        this.state.dashoffset = typeof offset === "number" && Number.isFinite(offset) ? offset : 0;
+        this.state.dashoffset =
+          typeof offset === "number" && Number.isFinite(offset) ? offset : 0;
         break;
       }
       case "fill":
@@ -384,7 +321,10 @@ export class PostScriptInterpreter {
       case "makepattern": {
         const matrix = this.stack.pop();
         const pattern = this.stack.pop();
-        if (isDictionary(pattern) && (Array.isArray(matrix) || matrix === undefined))
+        if (
+          isDictionary(pattern) &&
+          (Array.isArray(matrix) || matrix === undefined)
+        )
           this.stack.push(pattern);
         break;
       }
@@ -416,10 +356,18 @@ export class PostScriptInterpreter {
           typeof width === "number" &&
           typeof height === "number" &&
           isMatrixArray(matrix) &&
-          this.writer.image(this.state, width, height, data, matrixFromOperand(matrix)!)
+          this.writer.image(
+            this.state,
+            width,
+            height,
+            data,
+            matrixFromOperand(matrix)!
+          )
         )
           break;
-        this.warn("ignored raster image: only 8-bit grayscale string data is supported");
+        this.warn(
+          "ignored raster image: only 8-bit grayscale string data is supported"
+        );
         break;
       }
       case "colorimage":
@@ -439,7 +387,8 @@ export class PostScriptInterpreter {
         break;
       }
       case "asy_label_end":
-        if (!this.writer.endNativeLabel()) this.warn("ignored unmatched native-label end marker");
+        if (!this.writer.endNativeLabel())
+          this.warn("ignored unmatched native-label end marker");
         break;
       case "showpage":
         break;
@@ -449,78 +398,29 @@ export class PostScriptInterpreter {
     }
   }
 
-  private popN(n: number): number[] {
-    const nums: number[] = [];
-    for (let i = 0; i < n; i += 1) {
-      const value = this.stack.pop();
-      nums.unshift(typeof value === "number" ? value : 0);
-    }
-    return nums;
-  }
-
-  private finiteNumber(value: number): number {
-    return Number.isFinite(value) ? value : 0;
-  }
-
-  private readArray(): Operand[] {
-    this.nestingDepth += 1;
-    if (this.nestingDepth > PostScriptInterpreter.MAX_NESTING_DEPTH)
-      throw new EpsNestingLimitError();
-    try {
-      const values: Operand[] = [];
-      for (
-        let token = this.tokens.next();
-        token !== null && token !== "]";
-        token = this.tokens.next()
-      ) {
-        values.push(this.readValue(token));
-      }
-      return values;
-    } finally {
-      this.nestingDepth -= 1;
-    }
-  }
-
-  private readDictionary(): Dictionary {
-    this.nestingDepth += 1;
-    if (this.nestingDepth > PostScriptInterpreter.MAX_NESTING_DEPTH)
-      throw new EpsNestingLimitError();
-    try {
-      const dictionary: Dictionary = {};
-      for (let token = this.tokens.next(); token !== null && token !== ">>";) {
-        const key = token.startsWith("/") ? token.slice(1) : token;
-        const valueToken = this.tokens.next();
-        if (valueToken === null) break;
-        dictionary[key] = this.readValue(valueToken);
-        token = this.tokens.next() ?? ">>";
-      }
-      return dictionary;
-    } finally {
-      this.nestingDepth -= 1;
-    }
-  }
-
-  private readValue(token: string): Operand {
-    if (token === "[") return this.readArray();
-    if (token === "<<") return this.readDictionary();
-    if (token.startsWith("(") && token.endsWith(")")) return unescapePostScriptString(token);
-    if (NUMBER_RE.test(token)) return parseFloat(token);
-    return token.startsWith("/") ? token.slice(1) : token;
-  }
-
   private makeExplicitGradient(kind: "linear" | "radial"): Gradient | null {
     const stops = parseStops(this.stack.pop());
     const count = kind === "linear" ? 4 : 6;
     if (this.stack.length < count) return null;
     const values = this.stack.splice(this.stack.length - count, count);
     if (
-      !values.every((value): value is number => typeof value === "number" && Number.isFinite(value))
+      !values.every(
+        (value): value is number =>
+          typeof value === "number" && Number.isFinite(value)
+      )
     ) {
       return null;
     }
     if (!stops) return null;
     return kind === "linear"
-      ? { kind, x1: values[0], y1: values[1], x2: values[2], y2: values[3], stops }
+      ? {
+          kind,
+          x1: values[0],
+          y1: values[1],
+          x2: values[2],
+          y2: values[3],
+          stops
+        }
       : {
           kind,
           x1: values[0],
@@ -533,7 +433,13 @@ export class PostScriptInterpreter {
         };
   }
 
-  private appendTangentArc(x1: number, y1: number, x2: number, y2: number, radius: number): void {
+  private appendTangentArc(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    radius: number
+  ): void {
     const current = this.writer.userPoint(this.state);
     if (radius <= 0 || !Number.isFinite(radius)) {
       this.writer.appendPoint(this.state, "L", x1, y1);
@@ -547,24 +453,49 @@ export class PostScriptInterpreter {
       this.writer.appendPoint(this.state, "L", x1, y1);
       return;
     }
-    const u = { x: incoming.x / incomingLength, y: incoming.y / incomingLength };
-    const v = { x: outgoing.x / outgoingLength, y: outgoing.y / outgoingLength };
+    const u = {
+      x: incoming.x / incomingLength,
+      y: incoming.y / incomingLength
+    };
+    const v = {
+      x: outgoing.x / outgoingLength,
+      y: outgoing.y / outgoingLength
+    };
     const dot = Math.max(-1, Math.min(1, u.x * v.x + u.y * v.y));
     const halfAngle = Math.acos(dot) / 2;
     const bisectorLength = Math.hypot(u.x + v.x, u.y + v.y);
-    if (halfAngle < 1e-7 || bisectorLength < 1e-7 || Math.abs(Math.sin(halfAngle)) < 1e-7) {
+    if (
+      halfAngle < 1e-7 ||
+      bisectorLength < 1e-7 ||
+      Math.abs(Math.sin(halfAngle)) < 1e-7
+    ) {
       this.writer.appendPoint(this.state, "L", x1, y1);
       return;
     }
     const tangentDistance = radius / Math.tan(halfAngle);
-    const tangentStart = { x: x1 + u.x * tangentDistance, y: y1 + u.y * tangentDistance };
-    const tangentEnd = { x: x1 + v.x * tangentDistance, y: y1 + v.y * tangentDistance };
-    const bisector = { x: (u.x + v.x) / bisectorLength, y: (u.y + v.y) / bisectorLength };
+    const tangentStart = {
+      x: x1 + u.x * tangentDistance,
+      y: y1 + u.y * tangentDistance
+    };
+    const tangentEnd = {
+      x: x1 + v.x * tangentDistance,
+      y: y1 + v.y * tangentDistance
+    };
+    const bisector = {
+      x: (u.x + v.x) / bisectorLength,
+      y: (u.y + v.y) / bisectorLength
+    };
     const centerDistance = radius / Math.sin(halfAngle);
-    const center = { x: x1 + bisector.x * centerDistance, y: y1 + bisector.y * centerDistance };
+    const center = {
+      x: x1 + bisector.x * centerDistance,
+      y: y1 + bisector.y * centerDistance
+    };
     const startAngle =
-      (Math.atan2(tangentStart.y - center.y, tangentStart.x - center.x) * 180) / Math.PI;
-    const endAngle = (Math.atan2(tangentEnd.y - center.y, tangentEnd.x - center.x) * 180) / Math.PI;
+      (Math.atan2(tangentStart.y - center.y, tangentStart.x - center.x) * 180) /
+      Math.PI;
+    const endAngle =
+      (Math.atan2(tangentEnd.y - center.y, tangentEnd.x - center.x) * 180) /
+      Math.PI;
     this.writer.appendPoint(this.state, "L", tangentStart.x, tangentStart.y);
     this.writer.appendArc(
       this.state,

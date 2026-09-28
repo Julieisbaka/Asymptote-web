@@ -1,0 +1,343 @@
+import { imageToPdfBytes } from "./pdf-images.js";
+import type { PdfMargin, PdfOptions, PdfTextRun } from "./pdf-types.js";
+import {
+  assertFinitePositive,
+  assertFiniteRasterSize,
+  pdfNumber
+} from "./pdf-writer.js";
+
+const PDF_MIME_TYPE = "application/pdf";
+const DEFAULT_SCALE = 2;
+const DEFAULT_BACKGROUND = "white";
+
+interface SvgDimensions {
+  minX: number;
+  minY: number;
+  width: number;
+  height: number;
+}
+
+interface ResolvedMargin {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+/** Parse a positive SVG length, ignoring percentages. */
+function parseLength(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.endsWith("%")) return undefined;
+
+  const lower = trimmed.toLowerCase();
+  const units = ["px", "pt", "pc", "mm", "cm", "in"] as const;
+  const numeric = units.find((unit) => lower.endsWith(unit)) ? trimmed.slice(0, -2) : trimmed;
+  if (!isSvgNumber(numeric)) return undefined;
+
+  const number = Number(numeric);
+  return Number.isFinite(number) && number > 0 ? number : undefined;
+}
+
+/** Read SVG dimensions and viewBox coordinates for PDF placement. */
+function svgDimensions(svg: string): SvgDimensions {
+  const tag = /<svg\b[^>]*>/i.exec(svg)?.[0] ?? "";
+  const width = parseLength(/\bwidth=["']([^"']+)["']/i.exec(tag)?.[1] ?? null);
+  const height = parseLength(
+    /\bheight=["']([^"']+)["']/i.exec(tag)?.[1] ?? null
+  );
+  const viewBoxText = /\bviewBox=["']([^"']*)["']/i.exec(tag)?.[1]?.trim();
+  const viewBox = viewBoxText ? viewBoxText.split(/[\s,]+/).map(Number) : undefined;
+  const viewBoxWidth =
+    viewBox?.length === 4 && Number.isFinite(viewBox[2]) && viewBox[2] > 0
+      ? viewBox[2]
+      : undefined;
+  const viewBoxHeight =
+    viewBox?.length === 4 && Number.isFinite(viewBox[3]) && viewBox[3] > 0
+      ? viewBox[3]
+      : undefined;
+  return {
+    minX: viewBox?.length === 4 && Number.isFinite(viewBox[0]) ? viewBox[0] : 0,
+    minY: viewBox?.length === 4 && Number.isFinite(viewBox[1]) ? viewBox[1] : 0,
+    width: width ?? viewBoxWidth ?? 100,
+    height: height ?? viewBoxHeight ?? 100
+  };
+}
+
+/** Return whether a string is a simple decimal number accepted in SVG lengths. */
+function isSvgNumber(value: string): boolean {
+  let cursor = 0;
+  if (value[cursor] === "+" || value[cursor] === "-") cursor += 1;
+
+  const integerStart = cursor;
+  while (value[cursor] !== undefined && value[cursor] >= "0" && value[cursor] <= "9") cursor += 1;
+  const hasIntegerDigits = cursor > integerStart;
+
+  let hasFractionDigits = false;
+  if (value[cursor] === ".") {
+    cursor += 1;
+    const fractionStart = cursor;
+    while (value[cursor] !== undefined && value[cursor] >= "0" && value[cursor] <= "9") cursor += 1;
+    hasFractionDigits = cursor > fractionStart;
+  }
+
+  if (!hasIntegerDigits && !hasFractionDigits) return false;
+
+  if (value[cursor] === "e" || value[cursor] === "E") {
+    cursor += 1;
+    if (value[cursor] === "+" || value[cursor] === "-") cursor += 1;
+    const exponentStart = cursor;
+    while (value[cursor] !== undefined && value[cursor] >= "0" && value[cursor] <= "9") cursor += 1;
+    if (cursor === exponentStart) return false;
+  }
+
+  return cursor === value.length;
+}
+
+/** Expand a margin specification into four validated sides. */
+function resolveMargin(margin: PdfMargin | undefined): ResolvedMargin {
+  if (margin === undefined) return { top: 0, right: 0, bottom: 0, left: 0 };
+  if (typeof margin === "number") {
+    if (!Number.isFinite(margin) || margin < 0) {
+      throw new RangeError(
+        "asymptote-web/pdf: margin must be a non-negative finite number"
+      );
+    }
+    return { top: margin, right: margin, bottom: margin, left: margin };
+  }
+  const resolved = {
+    top: margin.top ?? 0,
+    right: margin.right ?? 0,
+    bottom: margin.bottom ?? 0,
+    left: margin.left ?? 0
+  };
+  for (const [name, value] of Object.entries(resolved)) {
+    if (!Number.isFinite(value) || value < 0) {
+      throw new RangeError(
+        `asymptote-web/pdf: margin.${name} must be a non-negative finite number`
+      );
+    }
+  }
+  return resolved;
+}
+
+/** Return whether any page margin is non-zero. */
+function hasMargin(margin: ResolvedMargin): boolean {
+  return (
+    margin.top > 0 || margin.right > 0 || margin.bottom > 0 || margin.left > 0
+  );
+}
+
+/** Wrap SVG content in a translated, margin-expanded viewport. */
+function expandSvgViewport(
+  svg: string,
+  dimensions: SvgDimensions,
+  margin: ResolvedMargin
+): string {
+  if (!hasMargin(margin)) return svg;
+  const open = /<svg\b[^>]*>/i.exec(svg);
+  const close = /<\/svg>\s*$/i.exec(svg);
+  if (!open || !close) return svg;
+  const inner = svg.slice(open.index + open[0].length, close.index);
+  const pageWidth = dimensions.width + margin.left + margin.right;
+  const pageHeight = dimensions.height + margin.top + margin.bottom;
+  const translateX = margin.left - dimensions.minX;
+  const translateY = margin.top - dimensions.minY;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${pdfNumber(pageWidth)}" height="${pdfNumber(pageHeight)}" viewBox="0 0 ${pdfNumber(pageWidth)} ${pdfNumber(pageHeight)}"><g transform="translate(${pdfNumber(translateX)} ${pdfNumber(translateY)})">${inner}</g></svg>`;
+}
+
+/** Shift text-layer coordinates to account for SVG bounds and margins. */
+function shiftTextRuns(
+  runs: readonly PdfTextRun[],
+  dimensions: SvgDimensions,
+  margin: ResolvedMargin
+): PdfTextRun[] {
+  return runs.map((run) => ({
+    ...run,
+    x: run.x - dimensions.minX + margin.left,
+    y: run.y - dimensions.minY + margin.top
+  }));
+}
+
+/** Extract a rotation angle from an SVG transform attribute. */
+function transformRotation(transform: string | null): number | undefined {
+  if (!transform) return undefined;
+  const rotate = /rotate\(\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)\b/i.exec(
+    transform
+  );
+  if (rotate) return Number(rotate[1]);
+  const matrix = /matrix\(\s*([^)]+)\)/i
+    .exec(transform)?.[1]
+    ?.split(/[\s,]+/)
+    .map(Number);
+  if (matrix?.length === 6 && matrix.every(Number.isFinite)) {
+    return (Math.atan2(matrix[1], matrix[0]) * 180) / Math.PI;
+  }
+  return undefined;
+}
+
+/** Extract selectable text runs from SVG text elements when DOMParser exists. */
+function extractSvgTextRuns(svg: string): PdfTextRun[] {
+  if (typeof DOMParser === "undefined") return [];
+  const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
+  const runs: PdfTextRun[] = [];
+  for (const node of Array.from(doc.querySelectorAll("text"))) {
+    const text = node.textContent ?? "";
+    if (!text.trim()) continue;
+    const x = Number.parseFloat(node.getAttribute("x") ?? "0");
+    const y = Number.parseFloat(node.getAttribute("y") ?? "0");
+    const fontSize = parseLength(node.getAttribute("font-size"));
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    runs.push({
+      text,
+      x,
+      y,
+      fontSize,
+      fontFamily: node.getAttribute("font-family") ?? undefined,
+      color: node.getAttribute("fill") ?? undefined,
+      opacity: Number.parseFloat(node.getAttribute("opacity") ?? "1"),
+      rotate: transformRotation(node.getAttribute("transform"))
+    });
+  }
+  return runs;
+}
+
+/** Read a Blob as a data URL for browser image loading. */
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result)));
+    reader.addEventListener("error", () =>
+      reject(
+        reader.error ?? new Error("asymptote-web/pdf: failed to read SVG blob")
+      )
+    );
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** Load an image element and reject on browser decoding failure. */
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () =>
+      reject(new Error("asymptote-web/pdf: failed to rasterize SVG image"));
+    image.src = src;
+  });
+}
+
+/** Convert a canvas to JPEG bytes through the browser canvas API. */
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  quality?: number
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else
+          reject(
+            new Error("asymptote-web/pdf: canvas did not produce a JPEG blob")
+          );
+      },
+      "image/jpeg",
+      quality
+    );
+  });
+}
+
+/** Rasterize SVG markup into JPEG bytes for PDF embedding. */
+async function rasterizeSvgToJpeg(
+  svg: string,
+  width: number,
+  height: number,
+  scale: number,
+  background: string | null,
+  quality?: number
+): Promise<Uint8Array> {
+  if (typeof document === "undefined") {
+    throw new Error(
+      "asymptote-web/pdf: SVG rasterization requires browser DOM and canvas APIs"
+    );
+  }
+  const svgBlob = new Blob([svg], { type: "image/svg+xml" });
+  const image = await loadImage(await blobToDataUrl(svgBlob));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+  const context = canvas.getContext("2d");
+  if (!context)
+    throw new Error("asymptote-web/pdf: 2D canvas context is unavailable");
+  if (background !== null) {
+    context.fillStyle = background;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return new Uint8Array(
+    await (await canvasToBlob(canvas, quality)).arrayBuffer()
+  );
+}
+
+/** Convert a typed byte view into a Blob-compatible ArrayBuffer part. */
+function blobPart(bytes: Uint8Array): BlobPart {
+  return bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength
+  ) as ArrayBuffer;
+}
+
+/** Convert an SVG string to a raster-backed PDF with selectable SVG text runs. */
+export async function svgToPdfBytes(
+  svg: string,
+  options: PdfOptions = {}
+): Promise<Uint8Array> {
+  const dimensions = svgDimensions(svg);
+  const margin = resolveMargin(options.margin);
+  const contentWidth = options.width ?? dimensions.width;
+  const contentHeight = options.height ?? dimensions.height;
+  const width = contentWidth + margin.left + margin.right;
+  const height = contentHeight + margin.top + margin.bottom;
+  const scale = options.scale ?? DEFAULT_SCALE;
+  assertFinitePositive(width, "width");
+  assertFinitePositive(height, "height");
+  assertFinitePositive(scale, "scale");
+  assertFiniteRasterSize(width * scale, "width");
+  assertFiniteRasterSize(height * scale, "height");
+  const rasterSvg = expandSvgViewport(
+    svg,
+    { ...dimensions, width: contentWidth, height: contentHeight },
+    margin
+  );
+  const textRuns = shiftTextRuns(
+    options.textRuns ?? extractSvgTextRuns(svg),
+    dimensions,
+    margin
+  );
+  const image = await rasterizeSvgToJpeg(
+    rasterSvg,
+    width,
+    height,
+    scale,
+    options.background === undefined ? DEFAULT_BACKGROUND : options.background,
+    options.quality
+  );
+  return imageToPdfBytes(image, {
+    ...options,
+    imageWidth: Math.round(width * scale),
+    imageHeight: Math.round(height * scale),
+    pageWidth: width,
+    pageHeight: height,
+    textRuns
+  });
+}
+
+/** Convert an SVG string to a PDF Blob. Requires browser DOM and canvas APIs. */
+export async function svgToPdfBlob(
+  svg: string,
+  options: PdfOptions = {}
+): Promise<Blob> {
+  return new Blob([blobPart(await svgToPdfBytes(svg, options))], {
+    type: PDF_MIME_TYPE
+  });
+}
