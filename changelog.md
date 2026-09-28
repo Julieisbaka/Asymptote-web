@@ -2,6 +2,8 @@
 
 ## 0.3.3 - In development
 
+- Internal stuff
+
 ## 0.3.2
 
 - Internal stuff
