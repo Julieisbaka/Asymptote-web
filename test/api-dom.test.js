@@ -82,15 +82,22 @@ class FakeElement {
     return this._innerHTML;
   }
   setAttribute(name, value) {
-    const existing = this.attributes.find((attribute) => attribute.name === name);
+    const existing = this.attributes.find(
+      (attribute) => attribute.name === name
+    );
     if (existing) existing.value = String(value);
     else this.attributes.push({ name, value: String(value) });
   }
   getAttribute(name) {
-    return this.attributes.find((attribute) => attribute.name === name)?.value ?? null;
+    return (
+      this.attributes.find((attribute) => attribute.name === name)?.value ??
+      null
+    );
   }
   removeAttribute(name) {
-    this.attributes = this.attributes.filter((attribute) => attribute.name !== name);
+    this.attributes = this.attributes.filter(
+      (attribute) => attribute.name !== name
+    );
   }
   appendChild(child) {
     child.parentElement = this;
@@ -104,7 +111,10 @@ class FakeElement {
     this.childNodes = [];
     for (const child of children) this.appendChild(child);
     for (const child of children) {
-      if (child instanceof FakeIframe && globalThis.__asymptoteDomState.loadIframe) {
+      if (
+        child instanceof FakeIframe &&
+        globalThis.__asymptoteDomState.loadIframe
+      ) {
         queueMicrotask(() => child.dispatch("load"));
       }
     }
@@ -142,7 +152,8 @@ class FakeIframe extends FakeElement {
     );
   }
   dispatch(type) {
-    for (const listener of [...(this.listeners.get(type) ?? [])]) listener({ type });
+    for (const listener of [...(this.listeners.get(type) ?? [])])
+      listener({ type });
   }
 }
 
@@ -209,7 +220,11 @@ globalThis.DOMParser = class {
   }
 };
 globalThis.URL = TestURL;
-globalThis.__asymptoteDomState = { output: "normal", calls: [], loadIframe: true };
+globalThis.__asymptoteDomState = {
+  output: "normal",
+  calls: [],
+  loadIframe: true
+};
 
 const { createAsymptote } = await import("../dist/asymptote-web.js");
 const state = globalThis.__asymptoteDomState;
@@ -251,13 +266,18 @@ test("mounts SVG output and reuses an existing SVG", async () => {
   assert.equal(reused.format, "svg");
   assert.equal(target.firstElementChild, oldSvg);
   assert.equal(
-    target.firstElementChild.attributes.some((attribute) => attribute.name === "width"),
+    target.firstElementChild.attributes.some(
+      (attribute) => attribute.name === "width"
+    ),
     true
   );
 });
 
 test("reports mount target and format errors", async () => {
-  await assert.rejects(() => asy.mount("#missing", "draw"), /mount target not found/);
+  await assert.rejects(
+    () => asy.mount("#missing", "draw"),
+    /mount target not found/
+  );
   await assert.rejects(
     () => asy.mount(document.createElement("div"), "draw", { format: "eps" }),
     /only supports SVG/
@@ -273,7 +293,9 @@ test("supports unsafe SVG customization", async () => {
   });
   assert.equal(customized, true);
   assert.equal(
-    target.firstElementChild.attributes.some((attribute) => attribute.name === "data-custom"),
+    target.firstElementChild.attributes.some(
+      (attribute) => attribute.name === "data-custom"
+    ),
     true
   );
 });
@@ -286,7 +308,10 @@ test("exposes live mounted nodes through unsafe accessors", async () => {
   const svg = asy.unsafe.getSvg("#unsafe-access");
   assert.equal(svg, target.firstElementChild);
   svg.setAttribute("data-direct-edit", "yes");
-  assert.equal(target.firstElementChild.getAttribute("data-direct-edit"), "yes");
+  assert.equal(
+    target.firstElementChild.getAttribute("data-direct-edit"),
+    "yes"
+  );
 
   await asy.mountWebGL(target, "three");
   assert.equal(asy.unsafe.getSvg(target), null);
@@ -307,7 +332,13 @@ test("mounts WebGL and adds screen-space labels", async () => {
   const target = document.createElement("div");
   const result = await asy.mountWebGL(target, "three", {
     webglLabels: [
-      { text: "origin", x: 10, y: 20, className: "point", fontFamily: "Inter, sans-serif" }
+      {
+        text: "origin",
+        x: 10,
+        y: 20,
+        className: "point",
+        fontFamily: "Inter, sans-serif"
+      }
     ]
   });
   const iframe = target.firstElementChild;
@@ -322,11 +353,15 @@ test("mounts WebGL and adds screen-space labels", async () => {
     "Asymptote WebGL labels"
   );
   assert.equal(
-    iframe.contentDocument.body.firstElementChild.firstElementChild.style.fontFamily,
+    iframe.contentDocument.body.firstElementChild.firstElementChild.style
+      .fontFamily,
     "Inter, sans-serif"
   );
 
-  await assert.rejects(() => asy.mountWebGL("#missing", "three"), /mountWebGL target not found/);
+  await assert.rejects(
+    () => asy.mountWebGL("#missing", "three"),
+    /mountWebGL target not found/
+  );
 });
 
 test("waits for public WebGL iframe loading without labels", async () => {
@@ -377,7 +412,10 @@ test("respects prefers-reduced-motion for WebGL setup", async () => {
 test("rejects invalid WebGL iframe timeouts", async () => {
   const target = document.createElement("div");
   await assert.rejects(
-    () => asy.unsafe.mountWebGL(target, "three", () => {}, { webglIframeTimeoutMs: -1 }),
+    () =>
+      asy.unsafe.mountWebGL(target, "three", () => {}, {
+        webglIframeTimeoutMs: -1
+      }),
     /timeout must be a non-negative finite number/
   );
   assert.equal(target.children.length, 0);

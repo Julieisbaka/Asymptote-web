@@ -16,7 +16,10 @@ export class PostScriptTokenizer {
         this.index += 1;
         return first;
       }
-      if (this.source.startsWith("<<", this.index) || this.source.startsWith(">>", this.index)) {
+      if (
+        this.source.startsWith("<<", this.index) ||
+        this.source.startsWith(">>", this.index)
+      ) {
         this.index += 2;
         return this.source.slice(start, this.index);
       }
@@ -42,7 +45,10 @@ export class PostScriptTokenizer {
       if (/\s/.test(char)) {
         this.index += 1;
       } else if (char === "%") {
-        while (this.index < this.source.length && this.source[this.index] !== "\n") {
+        while (
+          this.index < this.source.length &&
+          this.source[this.index] !== "\n"
+        ) {
           this.index += 1;
         }
       } else if (char === "/" && this.skipProcedureDefinition()) {
@@ -67,7 +73,8 @@ export class PostScriptTokenizer {
     if (nameEnd === start + 1) return false;
 
     let bodyStart = nameEnd;
-    while (bodyStart < this.source.length && /\s/.test(this.source[bodyStart])) bodyStart += 1;
+    while (bodyStart < this.source.length && /\s/.test(this.source[bodyStart]))
+      bodyStart += 1;
     if (this.source[bodyStart] !== "{") return false;
 
     let depth = 0;
@@ -75,7 +82,10 @@ export class PostScriptTokenizer {
     let stringDepth = 0;
     let escaped = false;
     let inComment = false;
-    while ((bodyEnd < this.source.length && depth > 0) || bodyEnd === bodyStart) {
+    while (
+      (bodyEnd < this.source.length && depth > 0) ||
+      bodyEnd === bodyStart
+    ) {
       const char = this.source[bodyEnd];
       if (inComment) {
         if (char === "\n") inComment = false;
@@ -98,12 +108,20 @@ export class PostScriptTokenizer {
     if (depth !== 0 || stringDepth !== 0) return false;
 
     let suffix = bodyEnd;
-    while (suffix < this.source.length && /\s/.test(this.source[suffix])) suffix += 1;
-    if (this.source.startsWith("bind", suffix) && /\s/.test(this.source[suffix + 4] ?? "")) {
+    while (suffix < this.source.length && /\s/.test(this.source[suffix]))
+      suffix += 1;
+    if (
+      this.source.startsWith("bind", suffix) &&
+      /\s/.test(this.source[suffix + 4] ?? "")
+    ) {
       suffix += 4;
-      while (suffix < this.source.length && /\s/.test(this.source[suffix])) suffix += 1;
+      while (suffix < this.source.length && /\s/.test(this.source[suffix]))
+        suffix += 1;
     }
-    if (!this.source.startsWith("def", suffix) || /\S/.test(this.source[suffix + 3] ?? "")) {
+    if (
+      !this.source.startsWith("def", suffix) ||
+      /\S/.test(this.source[suffix + 3] ?? "")
+    ) {
       return false;
     }
     this.index = suffix + 3;

@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { epsToSvg, epsToSvgWithWarnings, psToSvg } from "../dist/asymptote-web.js";
+import {
+  epsToSvg,
+  epsToSvgWithWarnings,
+  psToSvg
+} from "../dist/asymptote-web.js";
 
 const header = `%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 100 100\n`;
 
@@ -10,7 +14,9 @@ function convert(body, options) {
 }
 
 test("converts a filled path with compact coordinates", () => {
-  const svg = convert("newpath 0 0 moveto 10.5000 20.0000 lineto closepath fill");
+  const svg = convert(
+    "newpath 0 0 moveto 10.5000 20.0000 lineto closepath fill"
+  );
 
   assert.match(svg, /<path d="M0,100 L10\.5,80 Z" fill="black"\/>/);
   assert.doesNotMatch(svg, /10\.500|20\.000/);
@@ -44,7 +50,9 @@ test("accepts scientific-notation coordinates emitted by Asymptote", () => {
 });
 
 test("accepts scientific-notation bounding boxes", () => {
-  const svg = epsToSvg("%!PS-Adobe-3.0 EPSF-3.0\n%%HiResBoundingBox: -1e1 -2e1 1e2 2e2\n");
+  const svg = epsToSvg(
+    "%!PS-Adobe-3.0 EPSF-3.0\n%%HiResBoundingBox: -1e1 -2e1 1e2 2e2\n"
+  );
 
   assert.match(svg, /width="110" height="220"/);
 });
@@ -61,7 +69,9 @@ test("prefers HiRes bounding boxes while accepting all numeric forms", () => {
 
 test("falls back safely for malformed long bounding-box numbers", () => {
   const malformedNumber = "9".repeat(10_000) + "x";
-  const svg = epsToSvg(`%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: ${malformedNumber} 0 100 100\n`);
+  const svg = epsToSvg(
+    `%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: ${malformedNumber} 0 100 100\n`
+  );
 
   assert.match(svg, /width="100" height="100"/);
 });
@@ -84,7 +94,9 @@ test("normalizes invalid dimensions and tiny negative coordinates", () => {
 });
 
 test("converts arc and arcn into cubic SVG curves", () => {
-  const svg = convert("newpath 50 50 25 0 90 arc stroke " + "newpath 50 50 25 0 90 arcn stroke");
+  const svg = convert(
+    "newpath 50 50 25 0 90 arc stroke " + "newpath 50 50 25 0 90 arcn stroke"
+  );
 
   assert.equal((svg.match(/<path /g) ?? []).length, 2);
   assert.match(svg, /C/);
@@ -101,7 +113,9 @@ test("supports relative curves and tangent arcs", () => {
 });
 
 test("keeps relative paths in user space under transforms", () => {
-  const svg = convert("2 2 scale newpath 10 10 moveto 5 0 rlineto 0 5 rlineto stroke");
+  const svg = convert(
+    "2 2 scale newpath 10 10 moveto 5 0 rlineto 0 5 rlineto stroke"
+  );
 
   assert.match(svg, /<path d="M20,80 L30,80 L30,70/);
 });
@@ -149,7 +163,9 @@ test("restores color-space state and unwinds nested saves with grestoreall", () 
 });
 
 test("clears the current path after painting", () => {
-  const svg = convert("newpath 0 0 moveto 10 0 lineto stroke 20 20 moveto 30 20 lineto stroke");
+  const svg = convert(
+    "newpath 0 0 moveto 10 0 lineto stroke 20 20 moveto 30 20 lineto stroke"
+  );
 
   const paths = svg.match(/<path d="([^"]+)" fill="none"/g) ?? [];
   assert.equal(paths.length, 2);
@@ -163,7 +179,10 @@ test("intersects successive clipping paths", () => {
       "newpath 0 0 moveto 100 0 lineto 100 100 lineto 0 100 lineto closepath fill"
   );
 
-  assert.match(svg, /<clipPath id="asy-clip-2"><g clip-path="url\(#asy-clip-1\)">/);
+  assert.match(
+    svg,
+    /<clipPath id="asy-clip-2"><g clip-path="url\(#asy-clip-1\)">/
+  );
   assert.match(svg, /clip-path="url\(#asy-clip-2\)"/);
 });
 
@@ -178,7 +197,9 @@ test("supports concat and setmatrix", () => {
 });
 
 test("preserves text escaping and standard font mapping", () => {
-  const svg = convert("/Helvetica findfont 12 scalefont setfont 10 20 moveto (A & <) show");
+  const svg = convert(
+    "/Helvetica findfont 12 scalefont setfont 10 20 moveto (A & <) show"
+  );
 
   assert.match(svg, /font-family="Arial, sans-serif"/);
   assert.match(svg, />A &amp; &lt;<\/text>/);
@@ -245,7 +266,9 @@ test("converts grayscale and CMYK shading stops", () => {
 });
 
 test("does not erase unrelated operands for unknown setcolor", () => {
-  const svg = convert("(keep) /DeviceN setcolorspace 1 setcolor 0 0 moveto (keep) show");
+  const svg = convert(
+    "(keep) /DeviceN setcolorspace 1 setcolor 0 0 moveto (keep) show"
+  );
 
   assert.match(svg, />keep<\/text>/);
 });
@@ -261,14 +284,17 @@ test("ignores braces inside procedure strings and comments", () => {
 });
 
 test("converts HSB colors to RGB", () => {
-  const svg = convert("0 1 1 sethsbcolor newpath 0 0 moveto 10 0 lineto stroke");
+  const svg = convert(
+    "0 1 1 sethsbcolor newpath 0 0 moveto 10 0 lineto stroke"
+  );
 
   assert.match(svg, /stroke="rgb\(255,0,0\)"/);
 });
 
 test("clamps colors and opacity to valid SVG values", () => {
   const svg = convert(
-    "2 setgray -1 0 3 setrgbcolor -1 setopacityalpha " + "newpath 0 0 moveto 10 0 lineto stroke"
+    "2 setgray -1 0 3 setrgbcolor -1 setopacityalpha " +
+      "newpath 0 0 moveto 10 0 lineto stroke"
   );
 
   assert.match(svg, /stroke="rgb\(0,0,255\)"/);
@@ -287,8 +313,14 @@ test("merges adjacent same-color image pixels into single runs", () => {
   const encoded = svg.match(/base64,([^"]+)/)[1];
   const embedded = Buffer.from(encoded, "base64").toString("utf8");
 
-  assert.match(embedded, /<rect x="0" y="0" width="2" height="1" fill="rgb\(0,0,0\)"\/>/);
-  assert.match(embedded, /<rect x="2" y="0" width="1" height="1" fill="rgb\(128,128,128\)"\/>/);
+  assert.match(
+    embedded,
+    /<rect x="0" y="0" width="2" height="1" fill="rgb\(0,0,0\)"\/>/
+  );
+  assert.match(
+    embedded,
+    /<rect x="2" y="0" width="1" height="1" fill="rgb\(128,128,128\)"\/>/
+  );
   assert.equal(embedded.match(/<rect /g).length, 2);
 });
 
@@ -311,8 +343,14 @@ test("maps styled and symbolic PostScript fonts", () => {
     svg,
     /font-family="Times New Roman, serif"[^>]*font-weight="700"[^>]*font-style="italic"/
   );
-  assert.match(svg, /font-family="Courier New, monospace"[^>]*font-style="italic"/);
-  assert.match(svg, /font-family="Palatino Linotype, Palatino, serif"[^>]*font-weight="700"/);
+  assert.match(
+    svg,
+    /font-family="Courier New, monospace"[^>]*font-style="italic"/
+  );
+  assert.match(
+    svg,
+    /font-family="Palatino Linotype, Palatino, serif"[^>]*font-weight="700"/
+  );
   assert.match(
     svg,
     /font-family="Avant Garde, Century Gothic, sans-serif"[^>]*font-style="oblique"/
@@ -377,7 +415,11 @@ test("supports rich custom font descriptors with inferred fallback styles", () =
       "/UnknownNarrowPS-BoldMT findfont 12 scalefont setfont 20 20 moveto (B) show",
     {
       fonts: {
-        Helvetica: { family: "Inter", fallbacks: ["Arial", "sans-serif"], weight: 500 }
+        Helvetica: {
+          family: "Inter",
+          fallbacks: ["Arial", "sans-serif"],
+          weight: 500
+        }
       }
     }
   );
@@ -400,7 +442,9 @@ test("reports unknown fonts once per font name", () => {
       "/AnotherMystery findfont 10 scalefont setfont 0 30 moveto (C) show"
   );
 
-  const warnings = result.warnings.filter((warning) => /unknown font/.test(warning));
+  const warnings = result.warnings.filter((warning) =>
+    /unknown font/.test(warning)
+  );
   assert.equal(warnings.length, 2);
 });
 
@@ -425,7 +469,10 @@ test("groups native-label paths and emits semantic metadata", () => {
       "asy_label_end"
   );
 
-  assert.match(result.svg, /<g class="asy-native-label"[^>]*data-asy-label-text="alpha"[^>]*>/);
+  assert.match(
+    result.svg,
+    /<g class="asy-native-label"[^>]*data-asy-label-text="alpha"[^>]*>/
+  );
   assert.match(result.svg, /<g class="asy-native-label"[\s\S]*<path /);
   assert.match(
     result.svg,
@@ -435,10 +482,16 @@ test("groups native-label paths and emits semantic metadata", () => {
 
 test("warns on malformed or unmatched native-label markers", () => {
   const result = epsToSvgWithWarnings(
-    header + "(bad) asy_label_begin " + "newpath 0 0 moveto 10 0 lineto stroke " + "asy_label_end"
+    header +
+      "(bad) asy_label_begin " +
+      "newpath 0 0 moveto 10 0 lineto stroke " +
+      "asy_label_end"
   );
 
-  assert.match(result.warnings.join("\n"), /malformed native-label begin marker/);
+  assert.match(
+    result.warnings.join("\n"),
+    /malformed native-label begin marker/
+  );
   assert.match(result.warnings.join("\n"), /unmatched native-label end marker/);
 });
 

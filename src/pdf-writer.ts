@@ -8,14 +8,18 @@ interface PdfObject {
 /** Require a finite positive PDF dimension or scale. */
 export function assertFinitePositive(value: number, name: string): void {
   if (!Number.isFinite(value) || value <= 0) {
-    throw new RangeError(`asymptote-web/pdf: ${name} must be a positive finite number`);
+    throw new RangeError(
+      `asymptote-web/pdf: ${name} must be a positive finite number`
+    );
   }
 }
 
 /** Reject raster dimensions whose multiplication by scale overflows. */
 export function assertFiniteRasterSize(value: number, name: string): void {
   if (!Number.isFinite(value)) {
-    throw new RangeError(`asymptote-web/pdf: ${name} multiplied by scale must be finite`);
+    throw new RangeError(
+      `asymptote-web/pdf: ${name} multiplied by scale must be finite`
+    );
   }
 }
 
@@ -50,14 +54,19 @@ export function pdfNumber(value: number): string {
 /** Map a CSS font-family hint to one of the PDF Base 14 fonts. */
 function pdfName(value: string): "F1" | "F2" | "F3" {
   const normalized = value.toLowerCase();
-  if (normalized.includes("courier") || normalized.includes("mono")) return "F3";
+  if (normalized.includes("courier") || normalized.includes("mono"))
+    return "F3";
   if (
     normalized.includes("helvetica") ||
     normalized.includes("arial") ||
     normalized.includes("sans-serif")
   )
     return "F1";
-  if (normalized.includes("times") || /(?:^|[,\s])serif(?:$|[,\s])/.test(normalized)) return "F2";
+  if (
+    normalized.includes("times") ||
+    /(?:^|[,\s])serif(?:$|[,\s])/.test(normalized)
+  )
+    return "F2";
   return "F1";
 }
 
@@ -68,7 +77,9 @@ function hexUtf16(value: string): string {
     const code = value.charCodeAt(index);
     bytes.push((code >> 8) & 0xff, code & 0xff);
   }
-  return bytes.map((byte) => byte.toString(16).padStart(2, "0").toUpperCase()).join("");
+  return bytes
+    .map((byte) => byte.toString(16).padStart(2, "0").toUpperCase())
+    .join("");
 }
 
 /** Escape a text run as a PDF literal string. */
@@ -78,7 +89,10 @@ function pdfLiteralText(value: string): string {
     const code = char.codePointAt(0) ?? 0x3f;
     const byte = code >= 0x20 && code <= 0x7e ? code : 0x3f;
     const current = String.fromCharCode(byte);
-    output += current === "(" || current === ")" || current === "\\" ? `\\${current}` : current;
+    output +=
+      current === "(" || current === ")" || current === "\\"
+        ? `\\${current}`
+        : current;
   }
   return `(${output})`;
 }
@@ -99,9 +113,10 @@ function rgb(color: string | undefined): [number, number, number] {
       (offset) => Number.parseInt(value.slice(offset, offset + 2), 16) / 255
     ) as [number, number, number];
   }
-  const fn = /^rgb\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*\)$/i.exec(
-    color.trim()
-  );
+  const fn =
+    /^rgb\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*\)$/i.exec(
+      color.trim()
+    );
   if (fn) {
     return [Number(fn[1]) / 255, Number(fn[2]) / 255, Number(fn[3]) / 255];
   }
@@ -132,7 +147,9 @@ export function textOperators(
       const [r, g, b] = rgb(run.color);
       const renderingMode = textMode === "invisible" ? "3" : "0";
       return [
-        textMode === "visible" && gstateIds[index] !== undefined ? `/GS${index} gs` : "",
+        textMode === "visible" && gstateIds[index] !== undefined
+          ? `/GS${index} gs`
+          : "",
         "BT",
         `/${pdfName(run.fontFamily ?? "")} ${pdfNumber(size)} Tf`,
         `${renderingMode} Tr`,
@@ -167,7 +184,8 @@ export function metadataObject(metadata: PdfMetadata): string | undefined {
     ["Keywords", metadata.keywords],
     ["Creator", metadata.creator ?? "asymptote-web/pdf"]
   ].filter(
-    (entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0
+    (entry): entry is [string, string] =>
+      typeof entry[1] === "string" && entry[1].length > 0
   );
   if (entries.length === 0) return undefined;
   return `<< ${entries.map(([key, value]) => `/${key} <${hexUtf16(value)}>`).join(" ")} >>`;
@@ -185,7 +203,8 @@ export function buildPdf(
   for (const object of objects) {
     offsets[object.id] = position;
     const prefix = utf8(`${object.id} 0 obj\n`);
-    const body = typeof object.body === "string" ? utf8(object.body) : object.body;
+    const body =
+      typeof object.body === "string" ? utf8(object.body) : object.body;
     const suffix = utf8("\nendobj\n");
     chunks.push(prefix, body, suffix);
     position += prefix.length + body.length + suffix.length;

@@ -71,7 +71,9 @@ test("handles malformed matrices and patterns with warnings", () => {
 });
 
 test("handles singular transforms without throwing", () => {
-  const svg = convert("[0 0 0 0 0 0] setmatrix newpath 10 10 moveto 20 20 rlineto stroke");
+  const svg = convert(
+    "[0 0 0 0 0 0] setmatrix newpath 10 10 moveto 20 20 rlineto stroke"
+  );
 
   assert.match(svg, /^<svg/);
 });

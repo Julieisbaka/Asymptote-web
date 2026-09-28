@@ -23,7 +23,11 @@ import { epsToSvgWithWarnings } from "./eps-to-svg.js";
 
 interface EmscriptenModule {
   FS: {
-    writeFile(path: string, data: string | Uint8Array, opts?: { encoding?: string }): void;
+    writeFile(
+      path: string,
+      data: string | Uint8Array,
+      opts?: { encoding?: string }
+    ): void;
     readFile(path: string, opts: { encoding: "utf8" }): string;
     mkdir(path: string): void;
     unlink(path: string): void;
@@ -37,7 +41,9 @@ interface EmscriptenModule {
 }
 
 // The Emscripten-generated factory function (MODULARIZE=1, EXPORT_ES6=1)
-type ModuleFactory = (opts?: Partial<EmscriptenModule>) => Promise<EmscriptenModule>;
+type ModuleFactory = (
+  opts?: Partial<EmscriptenModule>
+) => Promise<EmscriptenModule>;
 
 // ---------------------------------------------------------------------------
 // Module-level singleton so the WASM binary is only loaded once per page.
@@ -103,7 +109,8 @@ async function loadModule(options: CreateOptions): Promise<EmscriptenModule> {
   void modulePromise.catch(() => {
     // Allow a later call to retry after a transient load or initialization
     // failure, without clearing a newer successful initialization.
-    if (_modulePromises.get(cacheKey) === modulePromise) _modulePromises.delete(cacheKey);
+    if (_modulePromises.get(cacheKey) === modulePromise)
+      _modulePromises.delete(cacheKey);
   });
   return modulePromise;
 }
@@ -121,7 +128,10 @@ export async function preloadModule(options: CreateOptions): Promise<void> {
 const RENDER_ROOT = "/tmp/asymptote-web";
 let renderCounter = 0;
 /** Append a task to the queue for one runtime without blocking other runtimes. */
-function enqueueRender<T>(cacheKey: string, task: () => Promise<T>): Promise<T> {
+function enqueueRender<T>(
+  cacheKey: string,
+  task: () => Promise<T>
+): Promise<T> {
   const queue = _renderQueues.get(cacheKey) ?? Promise.resolve();
   const result = queue.then(task);
   _renderQueues.set(
@@ -143,18 +153,29 @@ function abortError(): DOMException {
 function validateRenderOptions(renderOptions: RenderOptions): void {
   if (
     renderOptions.devicePixelRatio !== undefined &&
-    (!Number.isFinite(renderOptions.devicePixelRatio) || renderOptions.devicePixelRatio <= 0)
+    (!Number.isFinite(renderOptions.devicePixelRatio) ||
+      renderOptions.devicePixelRatio <= 0)
   ) {
-    throw new RangeError("asymptote-web: devicePixelRatio must be a positive finite number");
+    throw new RangeError(
+      "asymptote-web: devicePixelRatio must be a positive finite number"
+    );
   }
-  if (renderOptions.position && renderOptions.position.some((value) => !Number.isFinite(value))) {
-    throw new RangeError("asymptote-web: position values must be finite numbers");
+  if (
+    renderOptions.position &&
+    renderOptions.position.some((value) => !Number.isFinite(value))
+  ) {
+    throw new RangeError(
+      "asymptote-web: position values must be finite numbers"
+    );
   }
   if (
     renderOptions.webglIframeTimeoutMs !== undefined &&
-    (!Number.isFinite(renderOptions.webglIframeTimeoutMs) || renderOptions.webglIframeTimeoutMs < 0)
+    (!Number.isFinite(renderOptions.webglIframeTimeoutMs) ||
+      renderOptions.webglIframeTimeoutMs < 0)
   ) {
-    throw new TypeError("asymptote-web: WebGL iframe timeout must be a non-negative finite number");
+    throw new TypeError(
+      "asymptote-web: WebGL iframe timeout must be a non-negative finite number"
+    );
   }
 }
 
@@ -171,7 +192,11 @@ function ensureDirectory(mod: EmscriptenModule, path: string): void {
 /** Resolve and validate a caller-provided path inside a render directory. */
 function virtualFilePath(renderDir: string, relativePath: string): string {
   const normalized = relativePath.replace(/\\/g, "/");
-  if (!normalized || normalized.startsWith("/") || /^[A-Za-z]:/.test(normalized)) {
+  if (
+    !normalized ||
+    normalized.startsWith("/") ||
+    /^[A-Za-z]:/.test(normalized)
+  ) {
     throw new TypeError(`Render file path must be relative: ${relativePath}`);
   }
   const parts = normalized.split("/");
@@ -205,11 +230,17 @@ function remapDiagnosticSources(
   return diagnostics.map((diagnostic) => {
     if (!diagnostic.sourceFile) return diagnostic;
     if (diagnostic.sourceFile === inputFile) {
-      return { ...diagnostic, sourceFile: renderOptions.sourceFile ?? "input.asy" };
+      return {
+        ...diagnostic,
+        sourceFile: renderOptions.sourceFile ?? "input.asy"
+      };
     }
     const prefix = `${renderDir}/`;
     if (diagnostic.sourceFile.startsWith(prefix)) {
-      return { ...diagnostic, sourceFile: diagnostic.sourceFile.slice(prefix.length) };
+      return {
+        ...diagnostic,
+        sourceFile: diagnostic.sourceFile.slice(prefix.length)
+      };
     }
     return diagnostic;
   });
@@ -226,7 +257,9 @@ function getWebGLFlags(renderOptions: RenderOptions): string[] {
     flags.push("-devicepixelratio", String(renderOptions.devicePixelRatio));
   }
   if (renderOptions.autobillboard !== undefined) {
-    flags.push(renderOptions.autobillboard ? "-autobillboard" : "-noautobillboard");
+    flags.push(
+      renderOptions.autobillboard ? "-autobillboard" : "-noautobillboard"
+    );
   }
 
   return flags;
@@ -252,7 +285,12 @@ function getOutputFormat(
             ? flag.slice(9)
             : undefined;
 
-    if (value === "svg" || value === "eps" || value === "ps" || value === "webgl") {
+    if (
+      value === "svg" ||
+      value === "eps" ||
+      value === "ps" ||
+      value === "webgl"
+    ) {
       format = value;
       if (flag === "-f" || flag === "--format") i += 1;
     }
@@ -305,7 +343,9 @@ async function runAsymptoteUnsafe(
     // Write source and caller-provided files into this render's isolated
     // virtual filesystem. Relative imports resolve beside input.asy.
     mod.FS.writeFile(inputFile, source);
-    for (const [relativePath, data] of Object.entries(renderOptions.files ?? {})) {
+    for (const [relativePath, data] of Object.entries(
+      renderOptions.files ?? {}
+    )) {
       const path = virtualFilePath(renderDir, relativePath);
       const directory = path.slice(0, path.lastIndexOf("/"));
       ensureDirectory(mod, directory);
@@ -322,9 +362,12 @@ async function runAsymptoteUnsafe(
     // `-f html` is Asymptote's WebGL 3D output (a self-contained document
     // embedding a <script> reference to the asygl.js viewer) — no conversion
     // needed, but it does need the bundled asygl.js resolved as -asygl=<url>.
-    const asyFormat = format === "svg" ? "eps" : format === "webgl" ? "html" : format;
+    const asyFormat =
+      format === "svg" ? "eps" : format === "webgl" ? "html" : format;
     const outputFile = `${outputPrefix}.${asyFormat}`;
-    const asyglUrl = createOptions.asyglUrl ?? new URL("asygl.js", getGlueUrl(createOptions)).href;
+    const asyglUrl =
+      createOptions.asyglUrl ??
+      new URL("asygl.js", getGlueUrl(createOptions)).href;
 
     const args = [
       "-f",
@@ -419,7 +462,9 @@ async function runAsymptoteUnsafe(
 }
 
 /** @internal */
-export function getAsymptoteVersion(createOptions: CreateOptions): Promise<string> {
+export function getAsymptoteVersion(
+  createOptions: CreateOptions
+): Promise<string> {
   return enqueueRender(getModuleCacheKey(createOptions), async () => {
     const mod = await loadModule(createOptions);
     const output: string[] = [];

@@ -41,14 +41,20 @@ export class SvgWriter extends SvgWriterCore {
     if (!context) return false;
     const group = serializeNativeLabel(context);
     if (this.nativeLabelStack.length > 0) {
-      this.nativeLabelStack[this.nativeLabelStack.length - 1].elements.push(group);
+      this.nativeLabelStack[this.nativeLabelStack.length - 1].elements.push(
+        group
+      );
     } else {
       this.elements.push(group);
     }
     return true;
   }
 
-  show(state: GraphicsState, text: string, adjustments: Array<[number, number]> = []): void {
+  show(
+    state: GraphicsState,
+    text: string,
+    adjustments: Array<[number, number]> = []
+  ): void {
     const point = this.currentPoint;
     const x = point.x - this.llx;
     const y = this.height - (point.y - this.lly);
@@ -64,7 +70,8 @@ export class SvgWriter extends SvgWriterCore {
       angle !== 0
         ? ` transform="rotate(${this.formatNumber(angle)} ${this.formatNumber(x)} ${this.formatNumber(y)})"`
         : "";
-    const opacityAttr = state.opacity < 1 ? ` opacity="${formatOpacity(state.opacity)}"` : "";
+    const opacityAttr =
+      state.opacity < 1 ? ` opacity="${formatOpacity(state.opacity)}"` : "";
     const weightAttr = font.weight ? ` font-weight="${font.weight}"` : "";
     const styleAttr = font.style ? ` font-style="${font.style}"` : "";
     const stretchAttr = font.stretch ? ` font-stretch="${font.stretch}"` : "";
@@ -94,7 +101,9 @@ export class SvgWriter extends SvgWriterCore {
 
   protected override pushElement(element: string): void {
     if (this.nativeLabelStack.length > 0) {
-      this.nativeLabelStack[this.nativeLabelStack.length - 1].elements.push(element);
+      this.nativeLabelStack[this.nativeLabelStack.length - 1].elements.push(
+        element
+      );
       return;
     }
     this.elements.push(element);
@@ -107,7 +116,9 @@ export class SvgWriter extends SvgWriterCore {
   private warnUnknownFont(fontName: string): void {
     if (this.warnedUnknownFonts.has(fontName)) return;
     this.warnedUnknownFonts.add(fontName);
-    this.warn(`unknown font '${fontName}'; preserving family with generic fallback`);
+    this.warn(
+      `unknown font '${fontName}'; preserving family with generic fallback`
+    );
   }
 
   private warnMalformedFontDescriptor(fontName: string): void {
@@ -118,7 +129,9 @@ export class SvgWriter extends SvgWriterCore {
 
   private finalizeOpenNativeLabels(): void {
     while (this.nativeLabelStack.length > 0) {
-      this.warn("unmatched native-label begin marker; auto-closing at end of file");
+      this.warn(
+        "unmatched native-label begin marker; auto-closing at end of file"
+      );
       this.endNativeLabel();
     }
   }
@@ -128,10 +141,13 @@ export class SvgWriter extends SvgWriterCore {
     const title = this.accessibility.title;
     const description = this.accessibility.description;
     const titleId = title ? `asy-title-${(accessibilityId += 1)}` : undefined;
-    const descriptionId = description ? `asy-description-${(accessibilityId += 1)}` : undefined;
+    const descriptionId = description
+      ? `asy-description-${(accessibilityId += 1)}`
+      : undefined;
     const labelledBy = this.accessibility.labelledBy ?? titleId;
     const describedBy = this.accessibility.describedBy ?? descriptionId;
-    const role = this.accessibility.role ?? (title || description ? "img" : undefined);
+    const role =
+      this.accessibility.role ?? (title || description ? "img" : undefined);
     const accessibilityAttributes = [
       role ? ` role="${escapeXml(role)}"` : "",
       labelledBy ? ` aria-labelledby="${escapeXml(labelledBy)}"` : "",
@@ -139,7 +155,9 @@ export class SvgWriter extends SvgWriterCore {
     ].join("");
     const metadata = [
       title ? `<title id="${titleId}">${escapeXml(title)}</title>` : "",
-      description ? `<desc id="${descriptionId}">${escapeXml(description)}</desc>` : ""
+      description
+        ? `<desc id="${descriptionId}">${escapeXml(description)}</desc>`
+        : ""
     ].join("");
     return (
       `<svg xmlns="http://www.w3.org/2000/svg" width="${this.width}" height="${this.height}" ` +

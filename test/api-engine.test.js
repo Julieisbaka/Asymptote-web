@@ -7,7 +7,9 @@ import test, { after, beforeEach } from "node:test";
 
 const testDirectory = await mkdtemp(join(tmpdir(), "asymptote-web-api-test-"));
 const gluePath = pathToFileURL(join(testDirectory, "asymptote.js"));
-const customGluePath = pathToFileURL(join(testDirectory, "asymptote-custom.js"));
+const customGluePath = pathToFileURL(
+  join(testDirectory, "asymptote-custom.js")
+);
 const glueSource = `
 const state = globalThis.__asymptoteWebTestState ??= {
   calls: [],
@@ -107,8 +109,12 @@ globalThis.__asymptoteWebTestState = {
   stderr: []
 };
 
-const { AsymptoteError, createAsymptote, getAssetUrls, parseCompilerDiagnostics } =
-  await import("../dist/asymptote-web.js");
+const {
+  AsymptoteError,
+  createAsymptote,
+  getAssetUrls,
+  parseCompilerDiagnostics
+} = await import("../dist/asymptote-web.js");
 const state = globalThis.__asymptoteWebTestState;
 const createTestAsymptote = (options = {}) =>
   createAsymptote({ glueUrl: gluePath.href, ...options });
@@ -120,8 +126,14 @@ test("resolves runtime asset URLs", () => {
   assert.match(defaults.asyglUrl, /asygl\.js$/);
 
   const custom = getAssetUrls("https://cdn.example.test/asymptote/");
-  assert.equal(custom.glueUrl, "https://cdn.example.test/asymptote/asymptote.js");
-  assert.equal(custom.wasmUrl, "https://cdn.example.test/asymptote/asymptote.wasm");
+  assert.equal(
+    custom.glueUrl,
+    "https://cdn.example.test/asymptote/asymptote.js"
+  );
+  assert.equal(
+    custom.wasmUrl,
+    "https://cdn.example.test/asymptote/asymptote.wasm"
+  );
   assert.equal(custom.asyglUrl, "https://cdn.example.test/asymptote/asygl.js");
 });
 
@@ -152,7 +164,10 @@ test("does not reuse a module loaded with different asset URLs", async () => {
     wasmUrl: "https://cdn.example.test/custom.wasm"
   });
   assert.equal(state.factoryCalls, factoryCalls + 1);
-  assert.equal(state.locateFile("asymptote.wasm"), "https://cdn.example.test/custom.wasm");
+  assert.equal(
+    state.locateFile("asymptote.wasm"),
+    "https://cdn.example.test/custom.wasm"
+  );
 });
 
 test("renders SVG and reports compiler/converter warnings", async () => {
@@ -292,7 +307,10 @@ test("preserves format flag precedence and WebGL options", async () => {
   assert.equal(webgl.format, "webgl");
   assert.match(webgl.output, /Asymptote/);
   assert.deepEqual(
-    webglCall.slice(webglCall.indexOf("-position"), webglCall.indexOf("-position") + 2),
+    webglCall.slice(
+      webglCall.indexOf("-position"),
+      webglCall.indexOf("-position") + 2
+    ),
     ["-position", "10,20"]
   );
   assert.equal(webglCall.includes("-devicepixelratio"), true);
@@ -303,12 +321,18 @@ test("preserves format flag precedence and WebGL options", async () => {
 test("rejects invalid numeric render options before invoking Asymptote", async () => {
   const asy = await createTestAsymptote();
   const callsBefore = state.calls.length;
-  await assert.rejects(() => asy.render("invalid", { devicePixelRatio: 0 }), /devicePixelRatio/);
+  await assert.rejects(
+    () => asy.render("invalid", { devicePixelRatio: 0 }),
+    /devicePixelRatio/
+  );
   await assert.rejects(
     () => asy.render("invalid", { position: [Number.NaN, 0] }),
     /position values/
   );
-  await assert.rejects(() => asy.render("invalid", { webglIframeTimeoutMs: -1 }), /timeout/);
+  await assert.rejects(
+    () => asy.render("invalid", { webglIframeTimeoutMs: -1 }),
+    /timeout/
+  );
   assert.equal(state.calls.length, callsBefore);
 });
 
@@ -334,7 +358,10 @@ test("supports raw output, blobs, batches, and isolated files", async () => {
 
 test("rejects unsafe virtual file paths and supports abort", async () => {
   const asy = await createTestAsymptote();
-  await assert.rejects(() => asy.render("bad", { files: { "../escape.asy": "nope" } }), TypeError);
+  await assert.rejects(
+    () => asy.render("bad", { files: { "../escape.asy": "nope" } }),
+    TypeError
+  );
   const callsBeforeAbort = state.calls.length;
   const controller = new AbortController();
   controller.abort();
@@ -347,7 +374,10 @@ test("rejects unsafe virtual file paths and supports abort", async () => {
 
 test("serializes concurrent renders and exposes AsymptoteError", async () => {
   const asy = await createTestAsymptote();
-  const results = await Promise.all([asy.render("queued-one"), asy.render("queued-two")]);
+  const results = await Promise.all([
+    asy.render("queued-one"),
+    asy.render("queued-two")
+  ]);
   assert.equal(results.length, 2);
   assert.deepEqual(
     state.calls.slice(-2).map((call) => call.source),

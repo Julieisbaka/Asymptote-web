@@ -35,8 +35,10 @@ function colorStop(value: number[], colorSpace?: Operand): ParsedStop | null {
     return { offset: 0, color: toColor(value.slice(0, 4)), opacity: 1 };
   }
   if (components === null) {
-    if (value.length === 1) return { offset: 0, color: toColor(value), opacity: 1 };
-    if (value.length === 3) return { offset: 0, color: toColor(value), opacity: 1 };
+    if (value.length === 1)
+      return { offset: 0, color: toColor(value), opacity: 1 };
+    if (value.length === 3)
+      return { offset: 0, color: toColor(value), opacity: 1 };
     if (value.length >= 4 && Number.isFinite(value[3]))
       return {
         offset: 0,
@@ -87,12 +89,28 @@ export function gradientFromValue(value: Operand | undefined): Gradient | null {
   const type = value.ShadingType;
   const coords = numbers(value.Coords);
   if (type !== 2 && type !== 3) return null;
-  if (!coords || (type === 2 && coords.length < 4) || (type === 3 && coords.length < 6))
+  if (
+    !coords ||
+    (type === 2 && coords.length < 4) ||
+    (type === 3 && coords.length < 6)
+  )
     return null;
-  const stops = parseStops(value.ColorStops, value.C0, value.C1, value.ColorSpace);
+  const stops = parseStops(
+    value.ColorStops,
+    value.C0,
+    value.C1,
+    value.ColorSpace
+  );
   if (!stops) return null;
   return type === 2
-    ? { kind: "linear", x1: coords[0], y1: coords[1], x2: coords[2], y2: coords[3], stops }
+    ? {
+        kind: "linear",
+        x1: coords[0],
+        y1: coords[1],
+        x2: coords[2],
+        y2: coords[3],
+        stops
+      }
     : {
         kind: "radial",
         x1: coords[0],
@@ -106,7 +124,9 @@ export function gradientFromValue(value: Operand | undefined): Gradient | null {
 }
 
 /** Describe why an unsupported shading dictionary was skipped. */
-export function unsupportedShadingMessage(value: Operand | undefined): string | null {
+export function unsupportedShadingMessage(
+  value: Operand | undefined
+): string | null {
   if (!isDictionary(value)) return null;
   const type = value.ShadingType;
   return type === 1
