@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.3.3 - In development
+## 0.3.4 - In development
+
+- Replaced ReDoS-prone regular-expression parsing in PDF SVG dimensions and compiler diagnostics with linear parsing while preserving supported input formats.
+
+## 0.3.3
 
 - Bump asymptote to 3.15
 
