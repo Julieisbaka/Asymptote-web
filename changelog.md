@@ -2,7 +2,7 @@
 
 ## 0.3.4 - In development
 
-- Hardened SVG dimension parsing during PDF export against polynomial-time regular-expression denial of service while preserving supported numeric lengths.
+- Replaced ReDoS-prone regular-expression parsing in PDF SVG dimensions and compiler diagnostics with linear parsing while preserving supported input formats.
 
 ## 0.3.3
 
