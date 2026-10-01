@@ -9,6 +9,7 @@ import {
 const PDF_MIME_TYPE = "application/pdf";
 const DEFAULT_SCALE = 2;
 const DEFAULT_BACKGROUND = "white";
+const SVG_LENGTH_UNITS = ["px", "pt", "pc", "mm", "cm", "in"] as const;
 
 interface SvgDimensions {
   minX: number;
@@ -26,27 +27,158 @@ interface ResolvedMargin {
 
 /** Parse a positive SVG length, ignoring percentages. */
 function parseLength(value: string | null): number | undefined {
-  if (!value || value.endsWith("%")) return undefined;
-  const match =
-    /^\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)(?:px|pt|pc|mm|cm|in)?\s*$/i.exec(
-      value
-    );
-  if (!match) return undefined;
-  const number = Number(match[1]);
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.endsWith("%")) return undefined;
+  let numeric = trimmed;
+  for (const unit of SVG_LENGTH_UNITS) {
+    if (!trimmed.toLowerCase().endsWith(unit)) continue;
+    numeric = trimmed.slice(0, -unit.length);
+    break;
+  }
+  if (!numeric || !isSvgNumber(numeric)) return undefined;
+  const number = Number(numeric);
   return Number.isFinite(number) && number > 0 ? number : undefined;
+}
+
+function isAsciiWhitespace(charCode: number): boolean {
+  return charCode === 9 || charCode === 10 || charCode === 12 || charCode === 13 || charCode === 32;
+}
+
+function readSvgAttribute(tag: string, attribute: string): string | undefined {
+  const lowerTag = tag.replace(/[A-Z]/g, (char) => char.toLowerCase());
+  const name = attribute.toLowerCase();
+  let index = 0;
+  while (true) {
+    index = lowerTag.indexOf(name, index);
+    if (index < 0) return undefined;
+    const before = index > 0 ? lowerTag.charCodeAt(index - 1) : 0;
+    if (
+      (before >= 48 && before <= 57) ||
+      (before >= 65 && before <= 90) ||
+      (before >= 97 && before <= 122) ||
+      before === 45 ||
+      before === 58 ||
+      before === 95
+    ) {
+      index += name.length;
+      continue;
+    }
+    let cursor = index + name.length;
+    while (cursor < tag.length && isAsciiWhitespace(tag.charCodeAt(cursor))) cursor += 1;
+    if (cursor >= tag.length || tag[cursor] !== "=") {
+      index += name.length;
+      continue;
+    }
+    cursor += 1;
+    while (cursor < tag.length && isAsciiWhitespace(tag.charCodeAt(cursor))) cursor += 1;
+    if (cursor >= tag.length) return undefined;
+    const quote = tag[cursor];
+    if (quote !== "'" && quote !== '"') {
+      index += name.length;
+      continue;
+    }
+    cursor += 1;
+    const end = tag.indexOf(quote, cursor);
+    if (end < 0) return undefined;
+    return tag.slice(cursor, end);
+  }
+}
+
+function isWordChar(charCode: number): boolean {
+  return (
+    (charCode >= 48 && charCode <= 57) ||
+    (charCode >= 65 && charCode <= 90) ||
+    (charCode >= 97 && charCode <= 122) ||
+    charCode === 95
+  );
+}
+
+function readSvgOpenTag(svg: string): string {
+  for (let i = 0; i + 3 < svg.length; i += 1) {
+    if (svg[i] !== "<") continue;
+    const s = svg.charCodeAt(i + 1) | 32;
+    const v = svg.charCodeAt(i + 2) | 32;
+    const g = svg.charCodeAt(i + 3) | 32;
+    if (s !== 115 || v !== 118 || g !== 103) continue;
+    const next = i + 4 < svg.length ? svg.charCodeAt(i + 4) : 0;
+    if (next && isWordChar(next)) continue;
+    const end = svg.indexOf(">", i + 4);
+    if (end < 0) return "";
+    return svg.slice(i, end + 1);
+  }
+  return "";
+}
+
+function parseViewBox(value: string | undefined): number[] | undefined {
+  if (!value) return undefined;
+  const parts: string[] = [];
+  let tokenStart = -1;
+  for (let i = 0; i < value.length; i += 1) {
+    const code = value.charCodeAt(i);
+    const separator = code === 44 || isAsciiWhitespace(code);
+    if (separator) {
+      if (tokenStart >= 0) {
+        parts.push(value.slice(tokenStart, i));
+        tokenStart = -1;
+      }
+      continue;
+    }
+    if (tokenStart < 0) tokenStart = i;
+  }
+  if (tokenStart >= 0) parts.push(value.slice(tokenStart));
+  if (parts.length !== 4) return undefined;
+  const numbers = parts.map(Number);
+  return numbers.every(Number.isFinite) ? numbers : undefined;
+}
+
+/** Return whether a string is a valid SVG numeric token in linear time. */
+function isSvgNumber(value: string): boolean {
+  let i = 0;
+  const length = value.length;
+
+  const first = value[i];
+  if (first === "+" || first === "-") i += 1;
+
+  let seenDigits = false;
+  while (i < length && value.charCodeAt(i) >= 48 && value.charCodeAt(i) <= 57) {
+    seenDigits = true;
+    i += 1;
+  }
+
+  if (i < length && value[i] === ".") {
+    i += 1;
+    while (i < length && value.charCodeAt(i) >= 48 && value.charCodeAt(i) <= 57) {
+      seenDigits = true;
+      i += 1;
+    }
+  }
+
+  if (!seenDigits) return false;
+  if (i === length) return true;
+
+  const exponent = value[i];
+  if (exponent !== "e" && exponent !== "E") return false;
+  i += 1;
+  if (i === length) return false;
+
+  const sign = value[i];
+  if (sign === "+" || sign === "-") {
+    i += 1;
+    if (i === length) return false;
+  }
+
+  const exponentStart = i;
+  while (i < length && value.charCodeAt(i) >= 48 && value.charCodeAt(i) <= 57) i += 1;
+  return i === length && i > exponentStart;
 }
 
 /** Read SVG dimensions and viewBox coordinates for PDF placement. */
 function svgDimensions(svg: string): SvgDimensions {
-  const tag = /<svg\b[^>]*>/i.exec(svg)?.[0] ?? "";
-  const width = parseLength(/\bwidth=["']([^"']+)["']/i.exec(tag)?.[1] ?? null);
-  const height = parseLength(
-    /\bheight=["']([^"']+)["']/i.exec(tag)?.[1] ?? null
-  );
-  const viewBox = /\bviewBox=["']\s*([^"']+?)\s*["']/i
-    .exec(tag)?.[1]
-    ?.split(/[\s,]+/)
-    .map(Number);
+  const tag = readSvgOpenTag(svg);
+  const width = parseLength(readSvgAttribute(tag, "width") ?? null);
+  const height = parseLength(readSvgAttribute(tag, "height") ?? null);
+  const viewBox = parseViewBox(readSvgAttribute(tag, "viewBox"));
   const viewBoxWidth =
     viewBox?.length === 4 && Number.isFinite(viewBox[2]) && viewBox[2] > 0
       ? viewBox[2]
@@ -104,10 +236,11 @@ function expandSvgViewport(
   margin: ResolvedMargin
 ): string {
   if (!hasMargin(margin)) return svg;
-  const open = /<svg\b[^>]*>/i.exec(svg);
+  const openTag = readSvgOpenTag(svg);
+  const openIndex = openTag ? svg.indexOf(openTag) : -1;
   const close = /<\/svg>\s*$/i.exec(svg);
-  if (!open || !close) return svg;
-  const inner = svg.slice(open.index + open[0].length, close.index);
+  if (openIndex < 0 || !close) return svg;
+  const inner = svg.slice(openIndex + openTag.length, close.index);
   const pageWidth = dimensions.width + margin.left + margin.right;
   const pageHeight = dimensions.height + margin.top + margin.bottom;
   const translateX = margin.left - dimensions.minX;

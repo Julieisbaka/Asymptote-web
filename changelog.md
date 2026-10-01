@@ -5,6 +5,7 @@
 ## 0.3.3
 
 - Bump asymptote to 3.15
+- Hardened SVG dimension parsing during PDF export against polynomial-time regular-expression denial of service while preserving supported numeric lengths.
 
 ## 0.3.2
 

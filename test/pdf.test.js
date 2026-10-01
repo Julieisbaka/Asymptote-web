@@ -210,6 +210,23 @@ test("svgToPdfBytes applies viewBox offsets and margins to size and text placeme
     assert.match(text, /\/MediaBox \[0 0 130 70\]/);
     assert.match(text, /\/Width 260 \/Height 140/);
     assert.match(text, /1 0 0 1 40 45 Tm/);
+
+    const supportedForms = await svgToPdfBytes('<svg width="+12.5pt" height=".5e2"></svg>', {
+      scale: 1
+    });
+    assert.match(latin1(supportedForms), /\/MediaBox \[0 0 12\.5 50\]/);
+
+    const invalidWhitespace = await svgToPdfBytes(
+      '<svg width="10 px" height="20" viewBox="0 0 77 33"></svg>',
+      { scale: 1 }
+    );
+    assert.match(latin1(invalidWhitespace), /\/MediaBox \[0 0 77 20\]/);
+
+    const malformedExponent = await svgToPdfBytes(
+      '<svg width="1e+2e3" height="20" viewBox="0 0 88 44"></svg>',
+      { scale: 1 }
+    );
+    assert.match(latin1(malformedExponent), /\/MediaBox \[0 0 88 20\]/);
   } finally {
     for (const [name, value] of Object.entries(originalGlobals)) {
       if (value === undefined) delete globalThis[name];
