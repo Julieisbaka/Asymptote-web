@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.3 - In development
+## 0.3.3
 
 - Bump asymptote to 3.15
 
