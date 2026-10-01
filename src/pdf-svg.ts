@@ -46,7 +46,7 @@ function isAsciiWhitespace(charCode: number): boolean {
 }
 
 function readSvgAttribute(tag: string, attribute: string): string | undefined {
-  const lowerTag = tag.toLowerCase();
+  const lowerTag = tag.replace(/[A-Z]/g, (char) => char.toLowerCase());
   const name = attribute.toLowerCase();
   let index = 0;
   while (true) {
