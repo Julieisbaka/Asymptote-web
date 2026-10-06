@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.3.5 In Development
+
 ## 0.3.4
 
 - Replaced ReDoS-prone regular-expression parsing in PDF SVG dimensions and compiler diagnostics with linear parsing while preserving supported input formats.
