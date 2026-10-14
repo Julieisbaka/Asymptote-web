@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.3.5 In Development
+## 0.3.5
+
+- Bump to 0.3.5 because of an NPM publishing issue
 
 ## 0.3.4
 
